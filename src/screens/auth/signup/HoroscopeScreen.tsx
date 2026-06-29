@@ -61,8 +61,13 @@ export default function HoroscopeScreen({ navigation }: any) {
     }
     try {
       setLoading(true);
+      // skip API if unchanged (prevents backend step rewind)
+      const horoNow = { rashi, nakshatra };
+      if (JSON.stringify(data.horoscope || {}) === JSON.stringify(horoNow)) {
+        return navigation.navigate('AddressDetails');
+      }
       await apiClient.patch('/onboarding/profile', { horoscopeDetail });
-      setField('horoscope', { rashi, nakshatra });
+      setField('horoscope', horoNow);
       navigation.navigate('AddressDetails');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');

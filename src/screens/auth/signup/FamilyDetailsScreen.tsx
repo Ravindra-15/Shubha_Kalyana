@@ -49,6 +49,10 @@ export default function FamilyDetailsScreen({ navigation }: any) {
 
     try {
       setLoading(true);
+      // skip API if unchanged (prevents backend step rewind)
+      if (JSON.stringify(data.family || {}) === JSON.stringify(family)) {
+        return navigation.navigate('BasicLifestyle');
+      }
       await apiClient.patch('/onboarding/profile', { family });
       setField('family', family);
       navigation.navigate('BasicLifestyle');

@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import apiClient from '../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getResumeScreen } from '../../utils/resumeOnboarding';
 
 export default function LoginScreen({ navigation }: any) {
   const [mobile, setMobile] = useState('');
@@ -56,6 +57,38 @@ export default function LoginScreen({ navigation }: any) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSignup = async () => {
+    const onboardingToken = await AsyncStorage.getItem('onboardingToken');
+    if (!onboardingToken) {
+      // no in-progress onboarding → fresh signup
+      return navigation.navigate('SignupProfileFor');
+    }
+
+    const resumeScreen = await getResumeScreen();
+    if (!resumeScreen || resumeScreen === 'ReviewProfile') {
+      // completed or nothing to resume → start fresh
+      await AsyncStorage.removeItem('onboardingToken');
+      return navigation.navigate('SignupProfileFor');
+    }
+
+    // mid-way → ask
+    Alert.alert(
+      'Continue Signup?',
+      'You have an incomplete registration. Continue where you left off?',
+      [
+        {
+          text: 'Start New',
+          style: 'destructive',
+          onPress: async () => {
+            await AsyncStorage.removeItem('onboardingToken');
+            navigation.navigate('SignupProfileFor');
+          },
+        },
+        { text: 'Continue', onPress: () => navigation.navigate(resumeScreen as never) },
+      ]
+    );
   };
 
   return (
@@ -127,7 +160,7 @@ export default function LoginScreen({ navigation }: any) {
 
           <View style={styles.signupRow}>
             <Text style={styles.signupText}>Don't have a Account ? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('SignupProfileFor')}>
+            <TouchableOpacity onPress={handleSignup}>
               <Text style={styles.signupLink}>Sign up</Text>
             </TouchableOpacity>
           </View>

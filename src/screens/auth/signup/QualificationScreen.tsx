@@ -44,6 +44,11 @@ export default function QualificationScreen({ navigation }: any) {
         highestQualification: qualification.trim(),
         college: college.trim(),
       };
+      // skip API if unchanged (prevents backend step rewind on back-navigation)
+      const prev = data.education || {};
+      if (prev.highestQualification === education.highestQualification && prev.college === education.college) {
+        return navigation.navigate('Employment');
+      }
       await apiClient.patch('/onboarding/profile', { education });
       setField('education', education);
       navigation.navigate('Employment');

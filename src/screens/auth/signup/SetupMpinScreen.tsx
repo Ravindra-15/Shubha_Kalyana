@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ProgressBar from '../../../components/ProgressBar';
 import apiClient from '../../../api/client';
+import { getResumeScreen } from '../../../utils/resumeOnboarding';
+
 
 const PIN_LENGTH = 4;
 
@@ -25,6 +27,16 @@ export default function SetupMpinScreen({ navigation }: any) {
 
   const mpinRefs = useRef<Array<TextInput | null>>([]);
   const confirmRefs = useRef<Array<TextInput | null>>([]);
+
+  useEffect(() => {
+    (async () => {
+      const screen = await getResumeScreen();
+      // if backend already past MPIN, skip this screen
+      if (screen && screen !== 'SetupMpin' && screen !== 'VerifyMobile') {
+        navigation.replace(screen as never);
+      }
+    })();
+  }, []);
 
   const handleChange = (
     value: string,
@@ -67,7 +79,12 @@ export default function SetupMpinScreen({ navigation }: any) {
       setCreated(true);
       setTimeout(() => navigation.navigate('ProfilePhoto'), 1200);
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not create MPIN');
+      const msg = err?.response?.data?.message || 'Could not create MPIN';
+      if (/already created/i.test(msg)) {
+        navigation.replace('ProfilePhoto');
+        return;
+      }
+      Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }

@@ -59,8 +59,13 @@ export default function BasicLifestyleScreen({ navigation }: any) {
 
     try {
       setLoading(true);
+      // skip API if unchanged (prevents backend step rewind)
+      const blNow = { maritalStatus, feet, inches, weight, diet };
+      if (JSON.stringify(data.basicLifestyle || {}) === JSON.stringify(blNow)) {
+        return navigation.navigate('Horoscope');
+      }
       await apiClient.patch('/onboarding/profile', payload);
-      setField('basicLifestyle', { maritalStatus, feet, inches, weight, diet });
+      setField('basicLifestyle', blNow);
       navigation.navigate('Horoscope');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');

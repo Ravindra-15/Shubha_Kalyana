@@ -105,11 +105,16 @@ export default function AddressDetailsScreen({ navigation }: any) {
 
     try {
       setLoading(true);
-      await apiClient.patch('/onboarding/profile', { address: { current, permanent } });
-      setField('address', {
+      const addrNow = {
         residenceType, addressLine1, taluka, district, state, pincode, country, stateOrProvince, city, postalCode,
         sameAsCurrent, pResidenceType, pAddressLine1, pTaluka, pDistrict, pState, pPincode, pCountry, pStateOrProvince, pCity, pPostalCode,
-      });
+      };
+      // skip API if unchanged (prevents backend step rewind)
+      if (JSON.stringify(data.address || {}) === JSON.stringify(addrNow)) {
+        return navigation.navigate('AboutYou');
+      }
+      await apiClient.patch('/onboarding/profile', { address: { current, permanent } });
+      setField('address', addrNow);
       navigation.navigate('AboutYou');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');

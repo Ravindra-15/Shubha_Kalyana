@@ -43,6 +43,10 @@ export default function AboutYouScreen({ navigation }: any) {
 
     try {
       setLoading(true);
+      // skip API if unchanged (prevents backend step rewind)
+      if ((data.about || '') === aboutMe.trim()) {
+        return navigation.navigate('PartnerPreference');
+      }
       await apiClient.patch('/onboarding/profile', {
         about: { aboutMe: aboutMe.trim() },
       });

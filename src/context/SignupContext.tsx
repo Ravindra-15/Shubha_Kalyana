@@ -15,6 +15,7 @@ type SignupData = {
   email?: string;
   motherTongue?: string;
   lookingFor?: string;
+  hobbies?: string[];
   // profile details
   education?: any;
   employment?: any;

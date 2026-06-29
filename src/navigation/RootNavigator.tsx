@@ -22,6 +22,10 @@ import AddressDetailsScreen from '../screens/auth/signup/AddressDetailsScreen';
 import AboutYouScreen from '../screens/auth/signup/AboutYouScreen';
 import VerifyMobileScreen from '../screens/auth/signup/VerifyMobileScreen';
 import SetupMpinScreen from '../screens/auth/signup/SetupMpinScreen';
+import ProfilePhotoScreen from '../screens/auth/signup/ProfilePhotoScreen';
+import HobbiesScreen from '../screens/auth/signup/HobbiesScreen';
+import UploadAadhaarScreen from '../screens/auth/signup/UploadAadhaarScreen';
+import ReviewProfileScreen from '../screens/auth/signup/ReviewProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -61,6 +65,10 @@ export default function RootNavigator() {
             <Stack.Screen name="PartnerPreference" component={PartnerPreferenceScreen} />
             <Stack.Screen name="VerifyMobile" component={VerifyMobileScreen} />
             <Stack.Screen name="SetupMpin" component={SetupMpinScreen} />
+            <Stack.Screen name="ProfilePhoto" component={ProfilePhotoScreen} />
+            <Stack.Screen name="Hobbies" component={HobbiesScreen} />
+            <Stack.Screen name="UploadAadhaar" component={UploadAadhaarScreen} />
+            <Stack.Screen name="ReviewProfile" component={ReviewProfileScreen} />
           </>
         )}
       </Stack.Navigator>

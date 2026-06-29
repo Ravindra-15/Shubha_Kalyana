@@ -74,6 +74,10 @@ export default function EmploymentScreen({ navigation }: any) {
 
     try {
       setLoading(true);
+      // skip API if unchanged (prevents backend step rewind)
+      if (JSON.stringify(data.employment || {}) === JSON.stringify(employment)) {
+        return navigation.navigate('FamilyDetails');
+      }
       await apiClient.patch('/onboarding/profile', { employment });
       setField('employment', employment);
       navigation.navigate('FamilyDetails');

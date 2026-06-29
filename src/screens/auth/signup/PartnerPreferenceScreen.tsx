@@ -114,10 +114,13 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
 
     try {
       setLoading(true);
+      const ppNow = { ageMin, ageMax, maritalStatus, religion, casteIds, education, profession, resident };
+      // skip API if unchanged (prevents backend step rewind)
+      if (JSON.stringify(data.partnerPreference || {}) === JSON.stringify(ppNow)) {
+        return navigation.navigate('VerifyMobile');
+      }
       await apiClient.put('/onboarding/partner-preference', payload);
-      setField('partnerPreference', {
-        ageMin, ageMax, maritalStatus, religion, casteIds, education, profession, resident,
-      });
+      setField('partnerPreference', ppNow);
       navigation.navigate('VerifyMobile');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');
