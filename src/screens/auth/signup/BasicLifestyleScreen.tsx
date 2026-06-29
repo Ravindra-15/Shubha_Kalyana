@@ -37,7 +37,7 @@ export default function BasicLifestyleScreen({ navigation }: any) {
 
   const submit = async (skip = false) => {
     if (skip) {
-      navigation.navigate('PartnerPreference');
+      navigation.navigate('Horoscope');
       return;
     }
 
@@ -56,7 +56,7 @@ export default function BasicLifestyleScreen({ navigation }: any) {
     try {
       setLoading(true);
       await apiClient.patch('/onboarding/profile', payload);
-      navigation.navigate('PartnerPreference');
+      navigation.navigate('Horoscope');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');
     } finally {

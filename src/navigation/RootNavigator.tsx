@@ -17,6 +17,9 @@ import EmploymentScreen from '../screens/auth/signup/EmploymentScreen';
 import FamilyDetailsScreen from '../screens/auth/signup/FamilyDetailsScreen';
 import BasicLifestyleScreen from '../screens/auth/signup/BasicLifestyleScreen';
 import PartnerPreferenceScreen from '../screens/auth/signup/PartnerPreferenceScreen';
+import HoroscopeScreen from '../screens/auth/signup/HoroscopeScreen';
+import AddressDetailsScreen from '../screens/auth/signup/AddressDetailsScreen';
+import AboutYouScreen from '../screens/auth/signup/AboutYouScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
@@ -49,6 +52,9 @@ export default function RootNavigator() {
             <Stack.Screen name="Employment" component={EmploymentScreen} />
             <Stack.Screen name="FamilyDetails" component={FamilyDetailsScreen} />
             <Stack.Screen name="BasicLifestyle" component={BasicLifestyleScreen} />
+            <Stack.Screen name="Horoscope" component={HoroscopeScreen} />
+            <Stack.Screen name="AddressDetails" component={AddressDetailsScreen} />
+            <Stack.Screen name="AboutYou" component={AboutYouScreen} />
             <Stack.Screen name="PartnerPreference" component={PartnerPreferenceScreen} />
           </>
         )}
