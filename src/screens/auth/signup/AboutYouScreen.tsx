@@ -12,9 +12,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ProgressBar from '../../../components/ProgressBar';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
+import { useSignup } from '../../../context/SignupContext';
 
 export default function AboutYouScreen({ navigation }: any) {
-  const [aboutMe, setAboutMe] = useState('');
+  const { data, setField } = useSignup();
+  const [aboutMe, setAboutMe] = useState(data.about || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
@@ -35,6 +37,7 @@ export default function AboutYouScreen({ navigation }: any) {
 
     // nothing entered → just move on
     if (!aboutMe.trim()) {
+      setField('about', aboutMe.trim());
       return navigation.navigate('PartnerPreference');
     }
 
@@ -43,6 +46,7 @@ export default function AboutYouScreen({ navigation }: any) {
       await apiClient.patch('/onboarding/profile', {
         about: { aboutMe: aboutMe.trim() },
       });
+      setField('about', aboutMe.trim());
       navigation.navigate('PartnerPreference');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');

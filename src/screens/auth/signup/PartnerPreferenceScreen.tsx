@@ -14,6 +14,7 @@ import SearchableDropdown from '../../../components/SearchableDropdown';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { getCastes, Caste } from '../../../api/caste';
+import { useSignup } from '../../../context/SignupContext';
 
 const MARITAL = [
   { label: 'Never Married', value: 'NEVER_MARRIED' },
@@ -58,14 +59,16 @@ function Chips({
 }
 
 export default function PartnerPreferenceScreen({ navigation }: any) {
-  const [ageMin, setAgeMin] = useState('');
-  const [ageMax, setAgeMax] = useState('');
-  const [maritalStatus, setMaritalStatus] = useState<string[]>([]);
-  const [religion, setReligion] = useState<string[]>([]);
-  const [casteIds, setCasteIds] = useState<string[]>([]);
-  const [education, setEducation] = useState<string[]>([]);
-  const [profession, setProfession] = useState<string[]>([]);
-  const [resident, setResident] = useState<string[]>([]);
+  const { data, setField } = useSignup();
+  const pp = data.partnerPreference || {};
+  const [ageMin, setAgeMin] = useState(pp.ageMin || '');
+  const [ageMax, setAgeMax] = useState(pp.ageMax || '');
+  const [maritalStatus, setMaritalStatus] = useState<string[]>(pp.maritalStatus || []);
+  const [religion, setReligion] = useState<string[]>(pp.religion || []);
+  const [casteIds, setCasteIds] = useState<string[]>(pp.casteIds || []);
+  const [education, setEducation] = useState<string[]>(pp.education || []);
+  const [profession, setProfession] = useState<string[]>(pp.profession || []);
+  const [resident, setResident] = useState<string[]>(pp.resident || []);
 
   const [castes, setCastes] = useState<Caste[]>([]);
   const [loading, setLoading] = useState(false);
@@ -112,6 +115,9 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
     try {
       setLoading(true);
       await apiClient.put('/onboarding/partner-preference', payload);
+      setField('partnerPreference', {
+        ageMin, ageMax, maritalStatus, religion, casteIds, education, profession, resident,
+      });
       navigation.navigate('VerifyMobile');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');

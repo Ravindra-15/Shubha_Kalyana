@@ -13,6 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ProgressBar from '../../../components/ProgressBar';
 import SearchableDropdown from '../../../components/SearchableDropdown';
 import apiClient from '../../../api/client';
+import { useSignup } from '../../../context/SignupContext';
+
 
 const MARITAL_STATUS = [
   { label: 'Never Married', value: 'NEVER_MARRIED' },
@@ -28,11 +30,13 @@ const DIET = [
 ];
 
 export default function BasicLifestyleScreen({ navigation }: any) {
-  const [maritalStatus, setMaritalStatus] = useState('');
-  const [feet, setFeet] = useState('');
-  const [inches, setInches] = useState('');
-  const [weight, setWeight] = useState('');
-  const [diet, setDiet] = useState('');
+  const { data, setField } = useSignup();
+  const bl = data.basicLifestyle || {};
+  const [maritalStatus, setMaritalStatus] = useState(bl.maritalStatus || '');
+  const [feet, setFeet] = useState(bl.feet || '');
+  const [inches, setInches] = useState(bl.inches || '');
+  const [weight, setWeight] = useState(bl.weight || '');
+  const [diet, setDiet] = useState(bl.diet || '');
   const [loading, setLoading] = useState(false);
 
   const submit = async (skip = false) => {
@@ -56,6 +60,7 @@ export default function BasicLifestyleScreen({ navigation }: any) {
     try {
       setLoading(true);
       await apiClient.patch('/onboarding/profile', payload);
+      setField('basicLifestyle', { maritalStatus, feet, inches, weight, diet });
       navigation.navigate('Horoscope');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');

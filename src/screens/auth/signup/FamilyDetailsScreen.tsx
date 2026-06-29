@@ -12,14 +12,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ProgressBar from '../../../components/ProgressBar';
 import apiClient from '../../../api/client';
-
+import { useSignup } from '../../../context/SignupContext';
 export default function FamilyDetailsScreen({ navigation }: any) {
-  const [fatherName, setFatherName] = useState('');
-  const [fatherOccupation, setFatherOccupation] = useState('');
-  const [motherName, setMotherName] = useState('');
-  const [motherOccupation, setMotherOccupation] = useState('');
-  const [brothers, setBrothers] = useState('');
-  const [sisters, setSisters] = useState('');
+  const { data, setField } = useSignup();
+  const fam = data.family || {};
+  const [fatherName, setFatherName] = useState(fam.fatherName || '');
+  const [fatherOccupation, setFatherOccupation] = useState(fam.fatherOccupation || '');
+  const [motherName, setMotherName] = useState(fam.motherName || '');
+  const [motherOccupation, setMotherOccupation] = useState(fam.motherOccupation || '');
+  const [brothers, setBrothers] = useState(fam.brothers !== undefined ? String(fam.brothers) : '');
+  const [sisters, setSisters] = useState(fam.sisters !== undefined ? String(fam.sisters) : '');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ brothers?: boolean; sisters?: boolean }>({});
 
@@ -48,6 +50,7 @@ export default function FamilyDetailsScreen({ navigation }: any) {
     try {
       setLoading(true);
       await apiClient.patch('/onboarding/profile', { family });
+      setField('family', family);
       navigation.navigate('BasicLifestyle');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');

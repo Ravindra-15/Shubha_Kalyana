@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ProgressBar from '../../../components/ProgressBar';
 import SearchableDropdown from '../../../components/SearchableDropdown';
 import apiClient from '../../../api/client';
+import { useSignup } from '../../../context/SignupContext';
 
 const EMPLOYED_TYPES = [
   { label: 'Government', value: 'GOVERNMENT' },
@@ -33,12 +34,14 @@ const INCOME_SLABS = [
 ];
 
 export default function EmploymentScreen({ navigation }: any) {
-  const [employedType, setEmployedType] = useState('');
-  const [annualIncome, setAnnualIncome] = useState('');
-  const [designation, setDesignation] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [companyLocation, setCompanyLocation] = useState('');
-  const [linkedIn, setLinkedIn] = useState('');
+  const { data, setField } = useSignup();
+  const emp = data.employment || {};
+  const [employedType, setEmployedType] = useState(emp.employedType || '');
+  const [annualIncome, setAnnualIncome] = useState(emp.annualIncome ? String(emp.annualIncome) : '');
+  const [designation, setDesignation] = useState(emp.designation || '');
+  const [companyName, setCompanyName] = useState(emp.companyName || '');
+  const [companyLocation, setCompanyLocation] = useState(emp.companyLocation || '');
+  const [linkedIn, setLinkedIn] = useState(emp.linkedInProfile || '');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
 
@@ -72,6 +75,7 @@ export default function EmploymentScreen({ navigation }: any) {
     try {
       setLoading(true);
       await apiClient.patch('/onboarding/profile', { employment });
+      setField('employment', employment);
       navigation.navigate('FamilyDetails');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');

@@ -12,6 +12,7 @@ import ProgressBar from '../../../components/ProgressBar';
 import SearchableDropdown from '../../../components/SearchableDropdown';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
+import { useSignup } from '../../../context/SignupContext';
 
 const RASHIS = [
   { label: 'Mesha (Aries)', value: 'MESHA' },
@@ -37,8 +38,10 @@ const NAKSHATRAS = [
 ];
 
 export default function HoroscopeScreen({ navigation }: any) {
-  const [rashi, setRashi] = useState('');
-  const [nakshatra, setNakshatra] = useState('');
+  const { data, setField } = useSignup();
+  const horo = data.horoscope || {};
+  const [rashi, setRashi] = useState(horo.rashi || '');
+  const [nakshatra, setNakshatra] = useState(horo.nakshatra || '');
   const [loading, setLoading] = useState(false);
 
   const submit = async (skip = false) => {
@@ -53,12 +56,13 @@ export default function HoroscopeScreen({ navigation }: any) {
 
     // nothing entered → just move on
     if (!rashi && !nakshatra) {
+      setField('horoscope', { rashi, nakshatra });
       return navigation.navigate('AddressDetails');
     }
-
     try {
       setLoading(true);
       await apiClient.patch('/onboarding/profile', { horoscopeDetail });
+      setField('horoscope', { rashi, nakshatra });
       navigation.navigate('AddressDetails');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');

@@ -13,6 +13,7 @@ import SearchableDropdown from '../../../components/SearchableDropdown';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ProgressBar from '../../../components/ProgressBar';
 import apiClient from '../../../api/client';
+import { useSignup } from '../../../context/SignupContext';
 const QUALIFICATIONS = [
   'B.Tech', 'B.E', 'B.Sc', 'B.Com', 'B.A', 'BBA', 'BCA', 'B.Pharm', 'LLB', 'MBBS',
   'M.Tech', 'M.E', 'M.Sc', 'M.Com', 'M.A', 'MBA', 'MCA', 'M.Pharm', 'LLM',
@@ -20,8 +21,9 @@ const QUALIFICATIONS = [
 ];
 
 export default function QualificationScreen({ navigation }: any) {
-  const [qualification, setQualification] = useState('');
-  const [college, setCollege] = useState('');
+  const { data, setField } = useSignup();
+  const [qualification, setQualification] = useState(data.education?.highestQualification || '');
+  const [college, setCollege] = useState(data.education?.college || '');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ qualification?: boolean }>({});
 
@@ -38,12 +40,12 @@ export default function QualificationScreen({ navigation }: any) {
 
     try {
       setLoading(true);
-      await apiClient.patch('/onboarding/profile', {
-        education: {
-          highestQualification: qualification.trim(),
-          college: college.trim(),
-        },
-      });
+      const education = {
+        highestQualification: qualification.trim(),
+        college: college.trim(),
+      };
+      await apiClient.patch('/onboarding/profile', { education });
+      setField('education', education);
       navigation.navigate('Employment');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');
