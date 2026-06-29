@@ -1,0 +1,57 @@
+import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useAuth } from '../context/AuthContext';
+import SplashScreen from '../screens/onboarding/SplashScreen';
+import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
+import LoginScreen from '../screens/auth/LoginScreen';
+import LoginOtpScreen from '../screens/auth/LoginOtpScreen';
+import HomeScreen from '../screens/home/HomeScreen';
+import SignupProfileForScreen from '../screens/auth/signup/SignupProfileForScreen';
+import SignupAboutScreen from '../screens/auth/signup/SignupAboutScreen';
+import SignupCasteScreen from '../screens/auth/signup/SignupCasteScreen';
+import SignupContactScreen from '../screens/auth/signup/SignupContactScreen';
+import QualificationScreen from '../screens/auth/signup/QualificationScreen';
+import EmploymentScreen from '../screens/auth/signup/EmploymentScreen';
+import FamilyDetailsScreen from '../screens/auth/signup/FamilyDetailsScreen';
+import BasicLifestyleScreen from '../screens/auth/signup/BasicLifestyleScreen';
+
+const Stack = createNativeStackNavigator();
+
+export default function RootNavigator() {
+  const { token, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#D20236" />
+      </View>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {token ? (
+          <Stack.Screen name="Home" component={HomeScreen} />
+        ) : (
+          <>
+            <Stack.Screen name="Splash" component={SplashScreen} />
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="LoginOtp" component={LoginOtpScreen} />
+            <Stack.Screen name="SignupProfileFor" component={SignupProfileForScreen} />
+            <Stack.Screen name="SignupAbout" component={SignupAboutScreen} />
+            <Stack.Screen name="SignupCaste" component={SignupCasteScreen} />
+            <Stack.Screen name="SignupContact" component={SignupContactScreen} />
+            <Stack.Screen name="Qualification" component={QualificationScreen} />
+            <Stack.Screen name="Employment" component={EmploymentScreen} />
+            <Stack.Screen name="FamilyDetails" component={FamilyDetailsScreen} />
+            <Stack.Screen name="BasicLifestyle" component={BasicLifestyleScreen} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
