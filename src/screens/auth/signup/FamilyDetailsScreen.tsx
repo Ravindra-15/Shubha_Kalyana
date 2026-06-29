@@ -21,11 +21,20 @@ export default function FamilyDetailsScreen({ navigation }: any) {
   const [brothers, setBrothers] = useState('');
   const [sisters, setSisters] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ brothers?: boolean; sisters?: boolean }>({});
 
   const submit = async (skip = false) => {
     if (skip) {
       navigation.navigate('BasicLifestyle');
       return;
+    }
+
+    const newErrors: { brothers?: boolean; sisters?: boolean } = {};
+    if (brothers.trim() && (Number(brothers) < 0 || Number(brothers) > 14)) newErrors.brothers = true;
+    if (sisters.trim() && (Number(sisters) < 0 || Number(sisters) > 14)) newErrors.sisters = true;
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      return Alert.alert('Invalid', 'Brothers / Sisters count must be between 0 and 14');
     }
 
     const family: any = {};
@@ -94,22 +103,24 @@ export default function FamilyDetailsScreen({ navigation }: any) {
         <View style={styles.row}>
           <View style={styles.half}>
             <TextInput
-              style={styles.input}
+              style={[styles.input, errors.brothers && styles.inputError]}
               placeholder="Brothers"
               placeholderTextColor="#999"
               value={brothers}
-              onChangeText={setBrothers}
+              onChangeText={(t) => { setBrothers(t); setErrors((e) => ({ ...e, brothers: false })); }}
               keyboardType="number-pad"
+              maxLength={2}
             />
           </View>
           <View style={styles.half}>
             <TextInput
-              style={styles.input}
+              style={[styles.input, errors.sisters && styles.inputError]}
               placeholder="Sisters"
               placeholderTextColor="#999"
               value={sisters}
-              onChangeText={setSisters}
+              onChangeText={(t) => { setSisters(t); setErrors((e) => ({ ...e, sisters: false })); }}
               keyboardType="number-pad"
+              maxLength={2}
             />
           </View>
         </View>
@@ -135,6 +146,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 36 },
   titleRed: { color: '#D20236' },
   label: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 10 },
+  inputError: { borderColor: '#D20236', borderWidth: 1.5 },
   input: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
