@@ -22,26 +22,52 @@ const EMPLOYED_TYPES = [
   { label: 'Not Working', value: 'NOT_WORKING' },
 ];
 
+const INCOME_SLABS = [
+  { label: 'Below ₹2 Lakh', value: '200000' },
+  { label: '₹2 - 5 Lakh', value: '500000' },
+  { label: '₹5 - 10 Lakh', value: '1000000' },
+  { label: '₹10 - 15 Lakh', value: '1500000' },
+  { label: '₹15 - 25 Lakh', value: '2500000' },
+  { label: '₹25 - 50 Lakh', value: '5000000' },
+  { label: 'Above ₹50 Lakh', value: '7500000' },
+];
+
 export default function EmploymentScreen({ navigation }: any) {
   const [employedType, setEmployedType] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [designation, setDesignation] = useState('');
   const [annualIncome, setAnnualIncome] = useState('');
+  const [designation, setDesignation] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [companyLocation, setCompanyLocation] = useState('');
+  const [linkedIn, setLinkedIn] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
 
   const submit = async (skip = false) => {
     if (skip) {
       navigation.navigate('FamilyDetails');
       return;
     }
-    if (!employedType) {
+
+    // mandatory: employment type
+    const newErrors: { [k: string]: boolean } = {};
+    if (!employedType) newErrors.employedType = true;
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
       return Alert.alert('Required', 'Please select employment type');
     }
 
+    // linkedin format check (only if entered)
+    if (linkedIn.trim() && !/linkedin\.com/i.test(linkedIn.trim())) {
+      setErrors({ linkedIn: true });
+      return Alert.alert('Invalid', 'Please enter a valid LinkedIn URL');
+    }
+
     const employment: any = { employedType };
-    if (companyName.trim()) employment.companyName = companyName.trim();
+    if (annualIncome) employment.annualIncome = Number(annualIncome);
     if (designation.trim()) employment.designation = designation.trim();
-    if (annualIncome.trim()) employment.annualIncome = Number(annualIncome);
+    if (companyName.trim()) employment.companyName = companyName.trim();
+    if (companyLocation.trim()) employment.companyLocation = companyLocation.trim();
+    if (linkedIn.trim()) employment.linkedInProfile = linkedIn.trim();
 
     try {
       setLoading(true);
@@ -67,40 +93,58 @@ export default function EmploymentScreen({ navigation }: any) {
           Add your{'\n'}<Text style={styles.titleRed}>Employment Details</Text>
         </Text>
 
-        <Text style={styles.label}>Employment Type</Text>
+        <Text style={styles.label}>Employment Type <Text style={styles.star}>*</Text></Text>
         <SearchableDropdown
           placeholder="Select Employment Type"
           value={employedType}
           options={EMPLOYED_TYPES}
-          onSelect={(val) => setEmployedType(val)}
+          onSelect={(val) => { setEmployedType(val); setErrors((e) => ({ ...e, employedType: false })); }}
+          error={errors.employedType}
         />
 
-        <Text style={styles.label}>Company Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter company name"
-          placeholderTextColor="#999"
-          value={companyName}
-          onChangeText={setCompanyName}
+        <Text style={styles.label}>Add your Annual Income Details</Text>
+        <SearchableDropdown
+          placeholder="Select Income Slab"
+          value={annualIncome}
+          options={INCOME_SLABS}
+          onSelect={(val) => setAnnualIncome(val)}
         />
 
-        <Text style={styles.label}>Designation</Text>
+        <Text style={styles.label}>You work as</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter designation"
+          placeholder="Designation"
           placeholderTextColor="#999"
           value={designation}
           onChangeText={setDesignation}
         />
 
-        <Text style={styles.label}>Annual Income (₹)</Text>
+        <Text style={styles.label}>You work with</Text>
         <TextInput
           style={styles.input}
-          placeholder="e.g 500000"
+          placeholder="Company name"
           placeholderTextColor="#999"
-          value={annualIncome}
-          onChangeText={setAnnualIncome}
-          keyboardType="number-pad"
+          value={companyName}
+          onChangeText={setCompanyName}
+        />
+
+        <Text style={styles.label}>Company Location</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Select your Company Location"
+          placeholderTextColor="#999"
+          value={companyLocation}
+          onChangeText={setCompanyLocation}
+        />
+
+        <Text style={styles.label}>LinkedIn Link</Text>
+        <TextInput
+          style={[styles.input, errors.linkedIn && styles.inputError]}
+          placeholder="Add your LinkedIn Link"
+          placeholderTextColor="#999"
+          value={linkedIn}
+          onChangeText={(t) => { setLinkedIn(t); setErrors((e) => ({ ...e, linkedIn: false })); }}
+          autoCapitalize="none"
         />
 
         <View style={styles.spacer} />
@@ -121,9 +165,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { paddingHorizontal: 24, paddingBottom: 30, flexGrow: 1 },
   back: { fontSize: 24, color: '#000', marginTop: 8 },
-  title: { fontSize: 26, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 36 },
+  title: { fontSize: 26, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 30 },
   titleRed: { color: '#D20236' },
   label: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 10 },
+  star: { color: '#D20236' },
   input: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
@@ -134,6 +179,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: '#000',
   },
+  inputError: { borderColor: '#D20236', borderWidth: 1.5 },
   spacer: { flex: 1, minHeight: 30 },
   nextBtn: {
     backgroundColor: '#D20236',

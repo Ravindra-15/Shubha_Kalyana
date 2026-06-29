@@ -9,14 +9,21 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import SearchableDropdown from '../../../components/SearchableDropdown';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ProgressBar from '../../../components/ProgressBar';
 import apiClient from '../../../api/client';
+const QUALIFICATIONS = [
+  'B.Tech', 'B.E', 'B.Sc', 'B.Com', 'B.A', 'BBA', 'BCA', 'B.Pharm', 'LLB', 'MBBS',
+  'M.Tech', 'M.E', 'M.Sc', 'M.Com', 'M.A', 'MBA', 'MCA', 'M.Pharm', 'LLM',
+  'PhD', 'Diploma', 'ITI', '12th', '10th', 'Other',
+];
 
 export default function QualificationScreen({ navigation }: any) {
   const [qualification, setQualification] = useState('');
   const [college, setCollege] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ qualification?: boolean }>({});
 
   const submit = async (skip = false) => {
     if (skip) {
@@ -24,8 +31,10 @@ export default function QualificationScreen({ navigation }: any) {
       return;
     }
     if (!qualification.trim()) {
+      setErrors({ qualification: true });
       return Alert.alert('Required', 'Please enter your highest qualification');
     }
+    setErrors({});
 
     try {
       setLoading(true);
@@ -56,13 +65,14 @@ export default function QualificationScreen({ navigation }: any) {
           Select your{'\n'}<Text style={styles.titleRed}>Qualification</Text>
         </Text>
 
-        <Text style={styles.label}>Highest Qualification</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g - B.Tech in Computer Science"
-          placeholderTextColor="#999"
+        <Text style={styles.label}>Highest Qualification <Text style={styles.star}>*</Text></Text>
+        <SearchableDropdown
+          placeholder="Select or type qualification"
           value={qualification}
-          onChangeText={setQualification}
+          options={QUALIFICATIONS.map((q) => ({ label: q, value: q }))}
+          onSelect={(val) => { setQualification(val); setErrors({}); }}
+          allowCustom
+          error={errors.qualification}
         />
 
         <Text style={styles.label}>College / University</Text>
@@ -95,6 +105,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 36 },
   titleRed: { color: '#D20236' },
   label: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 10 },
+  star: { color: '#D20236' },
+  inputError: { borderColor: '#D20236', borderWidth: 1.5 },
   input: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
