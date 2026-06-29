@@ -16,7 +16,7 @@ import QualificationScreen from '../screens/auth/signup/QualificationScreen';
 import EmploymentScreen from '../screens/auth/signup/EmploymentScreen';
 import FamilyDetailsScreen from '../screens/auth/signup/FamilyDetailsScreen';
 import BasicLifestyleScreen from '../screens/auth/signup/BasicLifestyleScreen';
-
+import PartnerPreferenceScreen from '../screens/auth/signup/PartnerPreferenceScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
@@ -49,6 +49,7 @@ export default function RootNavigator() {
             <Stack.Screen name="Employment" component={EmploymentScreen} />
             <Stack.Screen name="FamilyDetails" component={FamilyDetailsScreen} />
             <Stack.Screen name="BasicLifestyle" component={BasicLifestyleScreen} />
+            <Stack.Screen name="PartnerPreference" component={PartnerPreferenceScreen} />
           </>
         )}
       </Stack.Navigator>
