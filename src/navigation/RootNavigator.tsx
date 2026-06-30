@@ -7,7 +7,7 @@ import SplashScreen from '../screens/onboarding/SplashScreen';
 import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import LoginOtpScreen from '../screens/auth/LoginOtpScreen';
-import HomeScreen from '../screens/home/HomeScreen';
+import MainTabs from './MainTabs';
 import SignupProfileForScreen from '../screens/auth/signup/SignupProfileForScreen';
 import SignupAboutScreen from '../screens/auth/signup/SignupAboutScreen';
 import SignupCasteScreen from '../screens/auth/signup/SignupCasteScreen';
@@ -44,7 +44,8 @@ export default function RootNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {token ? (
-          <Stack.Screen name="Home" component={HomeScreen} />
+          // Logged in
+          <Stack.Screen name="MainTabs" component={MainTabs} />
         ) : (
           <>
             <Stack.Screen name="Splash" component={SplashScreen} />
