@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSignup } from '../../../context/SignupContext';
 
@@ -28,16 +23,19 @@ export default function ReviewProfileScreen({ navigation }: any) {
 
         <View style={styles.content}>
           <Text style={styles.title}>
-            We are reviewing your{'\n'}profile <Text style={styles.titleRed}>, stay tuned !</Text>
+            We are reviewing your{'\n'}profile{' '}
+            <Text style={styles.titleRed}>, stay tuned !</Text>
           </Text>
 
-          <View style={styles.iconCircle}>
-            <Text style={styles.icon}>📋</Text>
-          </View>
+          <Image
+            source={require('../../../assets/images/review-profile.png')}
+            style={styles.reviewImage}
+            resizeMode="contain"
+          />
 
           <Text style={styles.note}>
-            Your profile has been submitted for verification. Our team will review it shortly.
-            You'll be able to log in once it's approved.
+            Your profile has been submitted for verification. Our team will
+            review it shortly. You'll be able to log in once it's approved.
           </Text>
         </View>
 
@@ -54,15 +52,17 @@ const styles = StyleSheet.create({
   inner: { flex: 1, paddingHorizontal: 24, paddingBottom: 30 },
   back: { fontSize: 24, color: '#000', marginTop: 8 },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 22, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 40 },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#000',
+    textAlign: 'center',
+    marginBottom: 40,
+  },
   titleRed: { color: '#D20236' },
-  iconCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: '#fdf2f5',
-    alignItems: 'center',
-    justifyContent: 'center',
+  reviewImage: {
+    width: 260,
+    height: 260,
     marginBottom: 30,
   },
   icon: { fontSize: 60 },
