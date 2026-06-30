@@ -11,14 +11,43 @@ import { Bell } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../api/client';
 import WelcomePopup from './WelcomePopup';
+import { Crown, ArrowRight } from 'lucide-react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import { getActiveMembership } from '../../api/membership';
+import { ActivityIndicator } from 'react-native';
+import ProfileCard from '../../components/ProfileCard';
 
 export default function HomeScreen() {
   const [firstName, setFirstName] = useState('');
   const [showWelcome, setShowWelcome] = useState(false);
+  const [planName, setPlanName] = useState('Free Plan');
+  const [matches, setMatches] = useState<any[]>([]);
+  const [loadingMatches, setLoadingMatches] = useState(true);
 
   useEffect(() => {
     loadUser();
+    loadPlan();
+    loadMatches();
   }, []);
+
+  const loadMatches = async () => {
+    try {
+      setLoadingMatches(true);
+      const res = await apiClient.get('/user/search', { params: { limit: 5 } });
+      setMatches(res.data?.data?.profiles || []);
+    } catch (err) {
+      setMatches([]);
+    } finally {
+      setLoadingMatches(false);
+    }
+  };
+
+  const loadPlan = async () => {
+    const membership = await getActiveMembership();
+    // active paid membership has a plan name; otherwise Free
+    const name = membership?.plan?.name || membership?.planName;
+    setPlanName(name || 'Free Plan');
+  };
 
   const loadUser = async () => {
     try {
@@ -66,6 +95,54 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Plan card */}
+        <LinearGradient
+          colors={['#D20236', '#8B0020']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.planCard}
+        >
+          <View style={styles.planRow}>
+            <Crown color="#fff" size={20} />
+            <Text style={styles.planTitle}>{planName}</Text>
+          </View>
+          <Text style={styles.planSubtitle}>
+            Unlock full profile access and premium features
+          </Text>
+          <TouchableOpacity style={styles.upgradeBtn} activeOpacity={0.85}>
+            <Text style={styles.upgradeText}>Upgrade Now</Text>
+            <ArrowRight color="#D20236" size={16} />
+          </TouchableOpacity>
+        </LinearGradient>
+
+        {/* Recommended Matches */}
+        <View style={styles.sectionHeader}>
+          <View>
+            <Text style={styles.sectionTitle}>Recommended Matches</Text>
+            <Text style={styles.sectionSub}>Profiles matching your preferences</Text>
+          </View>
+          <TouchableOpacity>
+            <Text style={styles.viewAll}>View All</Text>
+          </TouchableOpacity>
+        </View>
+
+        {loadingMatches ? (
+          <ActivityIndicator color="#D20236" style={{ marginVertical: 20 }} />
+        ) : matches.length === 0 ? (
+          <Text style={styles.empty}>No matches found yet</Text>
+        ) : (
+          matches.map((p) => (
+            <ProfileCard
+              key={p.id}
+              profile={p}
+              actionLabel="Send Request"
+              onAction={() => {}}
+              onView={() => {}}
+              onInterested={() => {}}
+            />
+          ))
+        )}
+
         {/* Other sections will go here */}
       </ScrollView>
     </SafeAreaView>
@@ -93,4 +170,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  planCard: { borderRadius: 16, padding: 18, marginBottom: 24 },
+  planRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  planTitle: { color: '#fff', fontSize: 17, fontWeight: '700', marginLeft: 8 },
+  planSubtitle: { color: '#ffe0e6', fontSize: 13, marginBottom: 16, lineHeight: 18 },
+  upgradeBtn: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+  },
+  upgradeText: { color: '#D20236', fontSize: 14, fontWeight: '700', marginRight: 6 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  sectionSub: { fontSize: 13, color: '#666', marginTop: 2 },
+  viewAll: { fontSize: 14, color: '#D20236', fontWeight: '600' },
+  empty: { textAlign: 'center', color: '#999', marginVertical: 20 },
 });
