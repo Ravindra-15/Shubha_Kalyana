@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell } from 'lucide-react-native';
@@ -16,6 +17,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import { getActiveMembership } from '../../api/membership';
 import { ActivityIndicator } from 'react-native';
 import ProfileCard from '../../components/ProfileCard';
+import { Filter } from 'lucide-react-native';
+import FilterModal, { Filters } from '../../components/FilterModal';
 
 export default function HomeScreen() {
   const [firstName, setFirstName] = useState('');
@@ -23,6 +26,8 @@ export default function HomeScreen() {
   const [planName, setPlanName] = useState('Free Plan');
   const [matches, setMatches] = useState<any[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(true);
+  const [showFilter, setShowFilter] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<Filters | null>(null);
 
   useEffect(() => {
     loadUser();
@@ -30,15 +35,58 @@ export default function HomeScreen() {
     loadMatches();
   }, []);
 
-  const loadMatches = async () => {
+  const loadMatches = async (filters?: Filters | null) => {
     try {
       setLoadingMatches(true);
-      const res = await apiClient.get('/user/search', { params: { limit: 5 } });
-      setMatches(res.data?.data?.profiles || []);
+      const params: any = { limit: 5 };
+      if (filters) {
+        params.minAge = filters.minAge;
+        params.maxAge = filters.maxAge;
+        if (filters.caste) params.caste = filters.caste;
+        if (filters.subCaste) params.subCaste = filters.subCaste;
+        if (filters.education) params.education = filters.education;
+        if (filters.profession) params.profession = filters.profession;
+        if (filters.district) params.district = filters.district;
+      }
+      console.log("Search Params:", params);
+
+const res = await apiClient.get('/user/search', { params });
+
+console.log("Search Response:", res.data);
+
+setMatches(res.data?.data?.profiles || []);
     } catch (err) {
       setMatches([]);
     } finally {
       setLoadingMatches(false);
+    }
+  };
+
+  const applyFilters = (filters: Filters | null) => {
+    setActiveFilters(filters);
+    loadMatches(filters);
+  };
+
+  const sendRequest = async (profileId: string) => {
+    try {
+      await apiClient.post(`/relationship/requests/${profileId}`, {});
+      setMatches((prev) =>
+        prev.map((p) => (p.profileId === profileId ? { ...p, _requestSent: true } : p))
+      );
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
+    }
+  };
+
+  const addInterest = async (profileId: string) => {
+    try {
+      await apiClient.post(`/relationship/interests/${profileId}`, {});
+      setMatches((prev) =>
+        prev.map((p) => (p.profileId === profileId ? { ...p, _interested: true } : p))
+      );
+      Alert.alert('Added', 'Profile added to your interests');
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not add interest');
     }
   };
 
@@ -78,6 +126,13 @@ export default function HomeScreen() {
         userName={firstName}
       />
 
+      <FilterModal
+        visible={showFilter}
+        onClose={() => setShowFilter(false)}
+        onApply={applyFilters}
+        initial={activeFilters || undefined}
+      />
+
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {/* Header */}
         <View style={styles.header}>
@@ -115,6 +170,16 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </LinearGradient>
 
+        
+
+        {/* Filter bar */}
+        <View style={styles.filterBar}>
+          <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
+            <Filter color="#333" size={20} />
+            <Text style={styles.filterText}>Filter</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Recommended Matches */}
         <View style={styles.sectionHeader}>
           <View>
@@ -135,10 +200,17 @@ export default function HomeScreen() {
             <ProfileCard
               key={p.id}
               profile={p}
-              actionLabel="Send Request"
-              onAction={() => {}}
+              actionLabel={
+                p._requestSent || p.requestStatus === 'PENDING'
+                  ? 'Request Sent'
+                  : p.requestStatus === 'ACCEPTED'
+                  ? 'Connected'
+                  : 'Send Request'
+              }
+              actionDisabled={p._requestSent || !!p.requestStatus}
+              onAction={() => sendRequest(p.profileId)}
               onView={() => {}}
-              onInterested={() => {}}
+              onInterested={() => addInterest(p.profileId)}
             />
           ))
         )}
@@ -190,4 +262,16 @@ const styles = StyleSheet.create({
   sectionSub: { fontSize: 13, color: '#666', marginTop: 2 },
   viewAll: { fontSize: 14, color: '#D20236', fontWeight: '600' },
   empty: { textAlign: 'center', color: '#999', marginVertical: 20 },
+  filterBar: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 16 },
+  filterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  filterText: { fontSize: 14, color: '#333', fontWeight: '600' },
 });

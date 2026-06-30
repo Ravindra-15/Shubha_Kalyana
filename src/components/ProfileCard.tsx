@@ -42,7 +42,7 @@ export default function ProfileCard({
             <Text style={styles.name}>
               {profile.name}{profile.age ? `, ${profile.age}` : ''}
             </Text>
-            {profile.verified && <BadgeCheck color="#D20236" size={16} fill="#D20236" />}
+            {profile.verified && <BadgeCheck color="#FFFFFF" size={16} fill="#D20236" />}
           </View>
           <Text style={styles.detail}>{profile.profession || 'Not specified'}</Text>
           <Text style={styles.detail}>{profile.location}</Text>

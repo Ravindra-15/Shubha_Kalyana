@@ -65,7 +65,13 @@ export default function SearchableDropdown({
         <Text style={[styles.fieldText, !selectedLabel && styles.placeholder]}>
           {selectedLabel || placeholder}
         </Text>
-        <Text style={styles.arrow}>▾</Text>
+        {selectedLabel ? (
+          <TouchableOpacity onPress={() => onSelect('', '')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Text style={styles.clear}>✕</Text>
+          </TouchableOpacity>
+        ) : (
+          <Text style={styles.arrow}>▾</Text>
+        )}
       </TouchableOpacity>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -158,4 +164,5 @@ const styles = StyleSheet.create({
   customRow: { paddingVertical: 12, paddingHorizontal: 8, borderTopWidth: 1, borderTopColor: '#eee' },
   customText: { fontSize: 15, color: '#D20236', fontWeight: '600' },
   empty: { textAlign: 'center', color: '#999', paddingVertical: 20 },
+  clear: { fontSize: 15, color: '#999', fontWeight: '600' },
 });
