@@ -4,12 +4,14 @@ import { BadgeCheck, Eye, Heart } from 'lucide-react-native';
 
 type Props = {
   profile: any;
-  actionLabel?: string;          // e.g. "Send Request", "Request Sent", "Requested"
+  actionLabel?: string;
   actionDisabled?: boolean;
   onAction?: () => void;
   onView?: () => void;
   onInterested?: () => void;
   showInterested?: boolean;
+  onRemove?: () => void;        // "Remove from Interested"
+  removeLabel?: string;
 };
 
 export default function ProfileCard({
@@ -20,6 +22,8 @@ export default function ProfileCard({
   onView,
   onInterested,
   showInterested = true,
+  onRemove,
+  removeLabel,
 }: Props) {
   return (
     <View style={styles.card}>
@@ -59,16 +63,27 @@ export default function ProfileCard({
       </View>
 
       <View style={styles.bottomRow}>
-        {showInterested && (
-          <TouchableOpacity style={styles.linkBtn} onPress={onInterested}>
-            <Heart color="#666" size={15} />
-            <Text style={styles.linkText}>Interested</Text>
-          </TouchableOpacity>
-        )}
         <TouchableOpacity style={styles.linkBtn} onPress={onView}>
           <Eye color="#666" size={15} />
           <Text style={styles.linkText}>View</Text>
         </TouchableOpacity>
+        {showInterested && (
+          <TouchableOpacity style={styles.linkBtn} onPress={onInterested}>
+            <Heart
+              color={profile._interested || profile.isInterested ? '#D20236' : '#666'}
+              fill={profile._interested || profile.isInterested ? '#D20236' : 'transparent'}
+              size={15}
+            />
+            <Text style={[styles.linkText, (profile._interested || profile.isInterested) && { color: '#D20236' }]}>
+              Interested
+            </Text>
+          </TouchableOpacity>
+        )}
+        {onRemove && (
+          <TouchableOpacity style={styles.linkBtn} onPress={onRemove}>
+            <Text style={styles.removeText}>{removeLabel || 'Remove from Interested'}</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -124,4 +139,5 @@ const styles = StyleSheet.create({
   },
   linkBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   linkText: { fontSize: 13, color: '#666' },
+  removeText: { fontSize: 13, color: '#D20236', fontWeight: '600' },
 });

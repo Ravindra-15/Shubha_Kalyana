@@ -19,6 +19,7 @@ import { ActivityIndicator } from 'react-native';
 import ProfileCard from '../../components/ProfileCard';
 import { Filter } from 'lucide-react-native';
 import FilterModal, { Filters } from '../../components/FilterModal';
+import RequestCard from '../../components/RequestCard';
 
 export default function HomeScreen() {
   const [firstName, setFirstName] = useState('');
@@ -28,11 +29,15 @@ export default function HomeScreen() {
   const [loadingMatches, setLoadingMatches] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Filters | null>(null);
+  const [receivedRequests, setReceivedRequests] = useState<any[]>([]);
+  const [interestedProfiles, setInterestedProfiles] = useState<any[]>([]);
 
   useEffect(() => {
     loadUser();
     loadPlan();
     loadMatches();
+    loadReceivedRequests();
+    loadInterested();
   }, []);
 
   const loadMatches = async (filters?: Filters | null) => {
@@ -48,17 +53,125 @@ export default function HomeScreen() {
         if (filters.profession) params.profession = filters.profession;
         if (filters.district) params.district = filters.district;
       }
-      console.log("Search Params:", params);
+      console.log('Search Params:', params);
 
-const res = await apiClient.get('/user/search', { params });
+      const res = await apiClient.get('/user/search', { params });
 
-console.log("Search Response:", res.data);
+      console.log('Search Response:', res.data);
 
-setMatches(res.data?.data?.profiles || []);
+      setMatches(res.data?.data?.profiles || []);
     } catch (err) {
       setMatches([]);
     } finally {
       setLoadingMatches(false);
+    }
+  };
+
+  const getAgeFromDob = (dob?: string) => {
+    if (!dob) return null;
+    const b = new Date(dob);
+    if (isNaN(b.getTime())) return null;
+    const t = new Date();
+    let a = t.getFullYear() - b.getFullYear();
+    const m = t.getMonth() - b.getMonth();
+    if (m < 0 || (m === 0 && t.getDate() < b.getDate())) a--;
+    return a;
+  };
+
+  const mapRequestToCard = (req: any) => {
+    const basic = req.profile?.basicInfo || {};
+    const photo =
+      req.profile?.photos?.find((p: any) => p.isProfilePhoto)?.url ||
+      req.profile?.photos?.[0]?.url ||
+      '';
+    return {
+      requestId: req._id,
+      profileId: req.profile?._id,
+      name:
+        [req.user?.firstName, req.user?.lastName].filter(Boolean).join(' ') ||
+        'Profile',
+      age: getAgeFromDob(basic.dob),
+      caste: basic.caste?.casteName || basic.caste || '',
+      profession: req.profile?.employment?.designation || '',
+      image: photo,
+    };
+  };
+
+  const loadReceivedRequests = async () => {
+    try {
+      const res = await apiClient.get('/relationship/requests/received', {
+        params: { status: 'PENDING', limit: 5 },
+      });
+      const items = res.data?.data?.requests || [];
+      setReceivedRequests(items.map(mapRequestToCard));
+    } catch {
+      setReceivedRequests([]);
+    }
+  };
+
+  const acceptRequest = async (requestId: string) => {
+    try {
+      await apiClient.patch(`/relationship/requests/${requestId}/accept`);
+      setReceivedRequests(prev => prev.filter(r => r.requestId !== requestId));
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not accept');
+    }
+  };
+
+  const rejectRequest = async (requestId: string) => {
+    try {
+      await apiClient.patch(`/relationship/requests/${requestId}/reject`);
+      setReceivedRequests(prev => prev.filter(r => r.requestId !== requestId));
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not reject');
+    }
+  };
+
+  const mapInterestToCard = (item: any) => {
+    const basic = item.profile?.basicInfo || {};
+    const photo = item.profile?.photos?.find((p: any) => p.isProfilePhoto)?.url
+      || item.profile?.photos?.[0]?.url || '';
+    const addr = item.profile?.address?.current || {};
+    return {
+      profileId: item.profileId,
+      name: [item.user?.firstName, item.user?.lastName].filter(Boolean).join(' ') || 'Profile',
+      age: getAgeFromDob(basic.dob),
+      profession: item.profile?.employment?.designation || '',
+      location: [addr.city || addr.district, addr.state].filter(Boolean).join(', ') || 'Location not added',
+      image: photo,
+      verified: item.profile?.documents?.verificationStatus === 'VERIFIED',
+    };
+  };
+
+  const loadInterested = async () => {
+    try {
+      const res = await apiClient.get('/relationship/interests/me', { params: { limit: 5 } });
+      const items = res.data?.data?.interests || [];
+      console.log('INTERESTS:', JSON.stringify(items));   // <-- add this
+      setInterestedProfiles(items.map(mapInterestToCard));
+    } catch(e){
+       console.log('INTERESTS ERR:', e);           
+      setInterestedProfiles([]);
+    }
+  };
+
+  const removeInterest = async (profileId: string) => {
+    try {
+      await apiClient.delete(`/relationship/interests/${profileId}`);
+      setInterestedProfiles((prev) => prev.filter((p) => p.profileId !== profileId));
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not remove');
+    }
+  };
+
+  const sendRequestFromInterest = async (profileId: string) => {
+    try {
+      await apiClient.post(`/relationship/requests/${profileId}`, {});
+      setInterestedProfiles((prev) =>
+        prev.map((p) => (p.profileId === profileId ? { ...p, _requestSent: true } : p))
+      );
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
     }
   };
 
@@ -70,23 +183,34 @@ setMatches(res.data?.data?.profiles || []);
   const sendRequest = async (profileId: string) => {
     try {
       await apiClient.post(`/relationship/requests/${profileId}`, {});
-      setMatches((prev) =>
-        prev.map((p) => (p.profileId === profileId ? { ...p, _requestSent: true } : p))
+      setMatches(prev =>
+        prev.map(p =>
+          p.profileId === profileId ? { ...p, _requestSent: true } : p,
+        ),
       );
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
+      Alert.alert(
+        'Error',
+        err?.response?.data?.message || 'Could not send request',
+      );
     }
   };
 
   const addInterest = async (profileId: string) => {
     try {
       await apiClient.post(`/relationship/interests/${profileId}`, {});
-      setMatches((prev) =>
-        prev.map((p) => (p.profileId === profileId ? { ...p, _interested: true } : p))
+      setMatches(prev =>
+        prev.map(p =>
+          p.profileId === profileId ? { ...p, _interested: true } : p,
+        ),
       );
+      loadInterested(); // refresh interested section
       Alert.alert('Added', 'Profile added to your interests');
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not add interest');
+      Alert.alert(
+        'Error',
+        err?.response?.data?.message || 'Could not add interest',
+      );
     }
   };
 
@@ -133,14 +257,19 @@ setMatches(res.data?.data?.profiles || []);
         initial={activeFilters || undefined}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+      >
         {/* Header */}
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
             <Text style={styles.welcome}>
               Welcome <Text style={styles.name}>{firstName || 'there'} !</Text>
             </Text>
-            <Text style={styles.subtitle}>New verified matches are waiting for you</Text>
+            <Text style={styles.subtitle}>
+              New verified matches are waiting for you
+            </Text>
           </View>
           <TouchableOpacity style={styles.bellWrap}>
             <Bell color="#333" size={24} />
@@ -170,11 +299,12 @@ setMatches(res.data?.data?.profiles || []);
           </TouchableOpacity>
         </LinearGradient>
 
-        
-
         {/* Filter bar */}
         <View style={styles.filterBar}>
-          <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
+          <TouchableOpacity
+            style={styles.filterBtn}
+            onPress={() => setShowFilter(true)}
+          >
             <Filter color="#333" size={20} />
             <Text style={styles.filterText}>Filter</Text>
           </TouchableOpacity>
@@ -184,7 +314,9 @@ setMatches(res.data?.data?.profiles || []);
         <View style={styles.sectionHeader}>
           <View>
             <Text style={styles.sectionTitle}>Recommended Matches</Text>
-            <Text style={styles.sectionSub}>Profiles matching your preferences</Text>
+            <Text style={styles.sectionSub}>
+              Profiles matching your preferences
+            </Text>
           </View>
           <TouchableOpacity>
             <Text style={styles.viewAll}>View All</Text>
@@ -196,7 +328,7 @@ setMatches(res.data?.data?.profiles || []);
         ) : matches.length === 0 ? (
           <Text style={styles.empty}>No matches found yet</Text>
         ) : (
-          matches.map((p) => (
+          matches.map(p => (
             <ProfileCard
               key={p.id}
               profile={p}
@@ -215,6 +347,62 @@ setMatches(res.data?.data?.profiles || []);
           ))
         )}
 
+        {/* Received Requests */}
+        {receivedRequests.length > 0 && (
+          <>
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>Received Requests</Text>
+                <Text style={styles.sectionSub}>
+                  Profiles matching your preferences
+                </Text>
+              </View>
+              <TouchableOpacity>
+                <Text style={styles.viewAll}>View All</Text>
+              </TouchableOpacity>
+            </View>
+
+            {receivedRequests.map(r => (
+              <RequestCard
+                key={r.requestId}
+                profile={r}
+                onAccept={() => acceptRequest(r.requestId)}
+                onReject={() => rejectRequest(r.requestId)}
+                onView={() => {}}
+              />
+            ))}
+          </>
+        )}
+
+        {/* Interested Profiles */}
+        {interestedProfiles.length > 0 && (
+          <>
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>Interested Profiles</Text>
+                <Text style={styles.sectionSub}>Profiles matching your preferences</Text>
+              </View>
+              <TouchableOpacity>
+                <Text style={styles.viewAll}>View All</Text>
+              </TouchableOpacity>
+            </View>
+
+            {interestedProfiles.map((p) => (
+              <ProfileCard
+                key={p.profileId}
+                profile={p}
+                actionLabel={p._requestSent ? 'Request Sent' : 'Send Request'}
+                actionDisabled={p._requestSent}
+                onAction={() => sendRequestFromInterest(p.profileId)}
+                onView={() => {}}
+                showInterested={false}
+                onRemove={() => removeInterest(p.profileId)}
+                removeLabel="Remove from Interested"
+              />
+            ))}
+          </>
+        )}
+
         {/* Other sections will go here */}
       </ScrollView>
     </SafeAreaView>
@@ -224,7 +412,12 @@ setMatches(res.data?.data?.profiles || []);
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { paddingHorizontal: 20, paddingBottom: 30 },
-  header: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 12, marginBottom: 20 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 12,
+    marginBottom: 20,
+  },
   welcome: { fontSize: 24, fontWeight: '700', color: '#000' },
   name: { color: '#D20236' },
   subtitle: { fontSize: 13, color: '#666', marginTop: 4 },
@@ -245,7 +438,12 @@ const styles = StyleSheet.create({
   planCard: { borderRadius: 16, padding: 18, marginBottom: 24 },
   planRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   planTitle: { color: '#fff', fontSize: 17, fontWeight: '700', marginLeft: 8 },
-  planSubtitle: { color: '#ffe0e6', fontSize: 13, marginBottom: 16, lineHeight: 18 },
+  planSubtitle: {
+    color: '#ffe0e6',
+    fontSize: 13,
+    marginBottom: 16,
+    lineHeight: 18,
+  },
   upgradeBtn: {
     backgroundColor: '#fff',
     borderRadius: 8,
@@ -256,13 +454,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignSelf: 'flex-start',
   },
-  upgradeText: { color: '#D20236', fontSize: 14, fontWeight: '700', marginRight: 6 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 },
+  upgradeText: {
+    color: '#D20236',
+    fontSize: 14,
+    fontWeight: '700',
+    marginRight: 6,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 14,
+  },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
   sectionSub: { fontSize: 13, color: '#666', marginTop: 2 },
   viewAll: { fontSize: 14, color: '#D20236', fontWeight: '600' },
   empty: { textAlign: 'center', color: '#999', marginVertical: 20 },
-  filterBar: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 16 },
+  filterBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 16,
+  },
   filterBtn: {
     flexDirection: 'row',
     alignItems: 'center',
