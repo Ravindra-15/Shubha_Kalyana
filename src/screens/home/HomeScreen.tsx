@@ -372,7 +372,7 @@ export default function HomeScreen({ navigation }: any) {
               }
               actionDisabled={p._requestSent || !!p.requestStatus}
               onAction={() => sendRequest(p.profileId)}
-              onView={() => {}}
+              onView={() => navigation.navigate('ProfileDetail', { profileId: p.profileId })}
               onInterested={() => addInterest(p.profileId)}
             />
           ))
@@ -399,7 +399,7 @@ export default function HomeScreen({ navigation }: any) {
                 profile={r}
                 onAccept={() => acceptRequest(r.requestId)}
                 onReject={() => rejectRequest(r.requestId)}
-                onView={() => {}}
+                onView={() => navigation.navigate('ProfileDetail', { profileId: r.profileId })}
               />
             ))}
           </>
@@ -427,7 +427,7 @@ export default function HomeScreen({ navigation }: any) {
                 actionLabel={p._requestSent ? 'Request Sent' : 'Send Request'}
                 actionDisabled={p._requestSent}
                 onAction={() => sendRequestFromInterest(p.profileId)}
-                onView={() => {}}
+                onView={() => navigation.navigate('ProfileDetail', { profileId: p.profileId })}
                 showInterested={false}
                 onRemove={() => removeInterest(p.profileId)}
                 removeLabel="Remove from Interested"

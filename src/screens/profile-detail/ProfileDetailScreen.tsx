@@ -1,0 +1,342 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  ArrowLeft, BadgeCheck, ChevronUp, ChevronDown, Lock,
+  Briefcase, GraduationCap, MapPin, Phone, Mail, MessageCircle,
+} from 'lucide-react-native';
+import { getPartnerProfile } from '../../api/profile';
+import { resolveImageUrl } from '../../utils/imageUrl';
+import apiClient from '../../api/client';
+import { LayoutAnimation, Platform, UIManager } from 'react-native';
+
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+const isBlur = (v: any) => v === 'blur' || v === undefined || v === null || v === '';
+
+const getAge = (dob?: string) => {
+  if (!dob) return null;
+  const b = new Date(dob);
+  if (isNaN(b.getTime())) return null;
+  const t = new Date();
+  let a = t.getFullYear() - b.getFullYear();
+  const m = t.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && t.getDate() < b.getDate())) a--;
+  return a;
+};
+
+// A row that shows value OR a lock if blurred
+function Row({ label, value }: { label: string; value: any }) {
+  const locked = isBlur(value);
+  return (
+    <View style={styles.row}>
+      <Text style={styles.rowLabel}>{label}</Text>
+      {locked ? (
+        <View style={styles.lockedVal}>
+          <Lock color="#D20236" size={12} />
+          <View style={styles.blurBar} />
+        </View>
+      ) : (
+        <Text style={styles.rowValue}>{value}</Text>
+      )}
+    </View>
+  );
+}
+
+// Collapsible section
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(true);
+  const toggle = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.create(
+      220,
+      LayoutAnimation.Types.easeInEaseOut,
+      LayoutAnimation.Properties.opacity
+    ));
+    setOpen(!open);
+  };
+  return (
+    <View style={styles.section}>
+      <TouchableOpacity style={styles.sectionHead} onPress={toggle} activeOpacity={0.7}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {open ? <ChevronUp color="#000" size={20} /> : <ChevronDown color="#000" size={20} />}
+      </TouchableOpacity>
+      {open && <View style={styles.sectionBody}>{children}</View>}
+    </View>
+  );
+}
+
+export default function ProfileDetailScreen({ route, navigation }: any) {
+  const { profileId } = route.params || {};
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await getPartnerProfile(profileId);
+        setData(res);
+      } catch (err: any) {
+        Alert.alert('Error', err?.response?.data?.message || 'Could not load profile');
+        navigation.goBack();
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [profileId]);
+
+  const sendRequest = async () => {
+    try {
+      await apiClient.post(`/relationship/requests/${profileId}`, {});
+      Alert.alert('Sent', 'Connection request sent');
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator color="#D20236" style={{ marginTop: 60 }} />
+      </SafeAreaView>
+    );
+  }
+  if (!data) return null;
+
+  const user = data.user || {};
+  const profile = data.profile || {};
+  const basic = profile.basicInfo || {};
+  const emp = profile.employment || {};
+  const edu = profile.education || {};
+  const fam = profile.family || {};
+  const horo = profile.horoscopeDetail || {};
+  const life = profile.lifestyle || {};
+  const addr = profile.address || {};
+  const pref = data.partnerPreference || {};
+  const hobbies = profile.hobbiesAndInterests || [];
+
+  const name = [basic.firstName || user.firstName, basic.lastName || user.lastName].filter(Boolean).join(' ');
+  const age = getAge(basic.dob);
+  const photo = profile.photos?.find((p: any) => p.isProfilePhoto)?.url || profile.photos?.[0]?.url || '';
+  const verified = profile.documents?.verificationStatus === 'VERIFIED';
+  const caste = basic.caste?.casteName || basic.caste?.name || '';
+  const location = [addr.current?.city, addr.current?.state].filter((x) => x && !isBlur(x)).join(', ');
+
+  const heightStr = basic.height ? `${basic.height.feet}'${basic.height.inches}"` : '';
+  const weightStr = basic.weight ? `${basic.weight.value} ${basic.weight.units?.toLowerCase() || 'kg'}` : '';
+
+  const fmtAddr = (a: any) => {
+    if (!a || isBlur(a)) return 'blur';
+    const parts = [a.addressLine1, a.taluka, a.district || a.city, a.state || a.stateOrProvince, a.pincode || a.postalCode]
+      .filter((x) => x && !isBlur(x));
+    return parts.length ? parts.join(', ') : 'blur';
+  };
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <ArrowLeft color="#000" size={24} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Profile Details</Text>
+        <View style={{ width: 24 }} />
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
+        {/* Cover photo */}
+        <View style={styles.coverWrap}>
+          {photo ? (
+            <Image source={{ uri: resolveImageUrl(photo) }} style={styles.cover} />
+          ) : (
+            <View style={[styles.cover, styles.coverPlaceholder]} />
+          )}
+          {verified && (
+            <View style={styles.verifiedBadge}>
+              <BadgeCheck color="#fff" size={16} fill="#1a7f37" />
+              <Text style={styles.verifiedText}>Verified Profile</Text>
+            </View>
+          )}
+          <View style={styles.coverInfo}>
+            <Text style={styles.coverName}>{name}{age ? `, ${age}` : ''}</Text>
+            <Text style={styles.coverMeta}>
+              {[basic.religion, caste, basic.maritalStatus?.replace(/_/g, ' ')].filter(Boolean).join('  •  ')}
+            </Text>
+            <View style={styles.coverIconRow}>
+              <Briefcase color="#fff" size={13} />
+              <Text style={styles.coverIconText}>{emp.designation || 'Not specified'}</Text>
+              <GraduationCap color="#fff" size={13} style={{ marginLeft: 12 }} />
+              <Text style={styles.coverIconText}>
+                {[edu.highestQualification, edu.college].filter(Boolean).join(', ')}
+              </Text>
+            </View>
+            {!!location && (
+              <View style={styles.coverIconRow}>
+                <MapPin color="#fff" size={13} />
+                <Text style={styles.coverIconText}>{location}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Action buttons */}
+        <View style={styles.actionWrap}>
+          <TouchableOpacity style={styles.sendBtn} onPress={sendRequest}>
+            <Text style={styles.sendText}>Send Request</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.saveBtn}>
+            <Text style={styles.saveText}>Save Profile</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Contact Details */}
+        <Section title="Contact Details">
+          <View style={styles.contactRow}>
+            <MessageCircle color="#1a7f37" size={16} />
+            <Text style={styles.contactLabel}>Whatsapp</Text>
+            <Lock color="#D20236" size={12} />
+            <View style={styles.blurBar} />
+          </View>
+          <View style={styles.contactRow}>
+            <Phone color="#333" size={16} />
+            <Text style={styles.contactLabel}>Phone Number</Text>
+            <Lock color="#D20236" size={12} />
+            <View style={styles.blurBar} />
+          </View>
+          <View style={styles.contactRow}>
+            <Mail color="#333" size={16} />
+            <Text style={styles.contactLabel}>Email ID</Text>
+            <Lock color="#D20236" size={12} />
+            <View style={styles.blurBar} />
+          </View>
+        </Section>
+
+        {/* Personal Details */}
+        <Section title="Personal Details">
+          <Row label="Date of Birth" value={basic.dob ? new Date(basic.dob).toLocaleDateString('en-GB') : ''} />
+          <Row label="Height" value={heightStr} />
+          <Row label="Weight" value={weightStr} />
+          <Row label="Diet" value={life.diet || basic.diet} />
+          <Row label="Rashi" value={horo.rashi} />
+          <Row label="Nakshatra" value={horo.nakshatra} />
+        </Section>
+
+        {/* Hobbies */}
+        {hobbies.length > 0 && (
+          <Section title="Hobbies & Interests">
+            <View style={styles.hobbyWrap}>
+              {hobbies.map((h: string, i: number) => (
+                <View key={i} style={styles.hobbyChip}>
+                  <Text style={styles.hobbyText}>{h}</Text>
+                </View>
+              ))}
+            </View>
+          </Section>
+        )}
+
+        {/* Location */}
+        <Section title="Location">
+          <Row label="Present Address" value={fmtAddr(addr.current)} />
+          <Row label="Permanent Address" value={fmtAddr(addr.permanent)} />
+        </Section>
+
+        {/* Employment */}
+        <Section title="Employment Details">
+          <Row label="Profession" value={emp.designation} />
+          <Row label="Company Name" value={emp.companyName} />
+          <Row label="Company Type" value={emp.employedType?.replace(/_/g, ' ')} />
+          <Row label="Annual Income" value={emp.annualIncome ? `₹${emp.annualIncome.toLocaleString('en-IN')}` : ''} />
+          <Row label="Experience" value={emp.totalExperience ? `${emp.totalExperience} Years` : ''} />
+          <Row label="Work Location" value={emp.companyLocation} />
+          <Row label="LinkedIn Link" value={emp.linkedInProfile} />
+        </Section>
+
+        {/* Education */}
+        <Section title="Education Details">
+          <Row label="Highest Qualification" value={edu.highestQualification} />
+          <Row label="College / University" value={edu.college} />
+        </Section>
+
+        {/* Family */}
+        <Section title="Family Details">
+          <Row label="Father" value={fam.fatherName ? `${fam.fatherName}${fam.fatherOccupation ? ` - ${fam.fatherOccupation}` : ''}` : ''} />
+          <Row label="Mother" value={fam.motherName ? `${fam.motherName}${fam.motherOccupation ? ` - ${fam.motherOccupation}` : ''}` : ''} />
+          <Row label="Siblings" value={
+            (fam.brothers || fam.sisters)
+              ? [fam.brothers ? `${fam.brothers} Brother(s)` : '', fam.sisters ? `${fam.sisters} Sister(s)` : ''].filter(Boolean).join(', ')
+              : ''
+          } />
+        </Section>
+
+        {/* Partner Preferences */}
+        <Section title="Partner Preferences">
+          <Row label="Preferred Age Range" value={pref.ageRange ? `${pref.ageRange.min}-${pref.ageRange.max} years` : ''} />
+          <Row label="Preferred Education" value={pref.education?.join?.(', ')} />
+          <Row label="Preferred Profession" value={pref.profession?.join?.(', ')} />
+          <Row label="Preferred Resident" value={pref.ressident?.join?.(', ')} />
+        </Section>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f7f7f7' },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff',
+  },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: '#000' },
+  coverWrap: { height: 320, position: 'relative' },
+  cover: { width: '100%', height: '100%' },
+  coverPlaceholder: { backgroundColor: '#ccc' },
+  verifiedBadge: {
+    position: 'absolute', top: 16, left: 16, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#1a7f37', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5, gap: 5,
+  },
+  verifiedText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  coverInfo: {
+    position: 'absolute', bottom: 0, left: 0, right: 0, padding: 18,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  coverName: { color: '#fff', fontSize: 24, fontWeight: '700' },
+  coverMeta: { color: '#fff', fontSize: 13, marginTop: 4 },
+  coverIconRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 5 },
+  coverIconText: { color: '#fff', fontSize: 12 },
+  actionWrap: { backgroundColor: '#fff', padding: 16 },
+  sendBtn: { backgroundColor: '#D20236', borderRadius: 8, paddingVertical: 15, alignItems: 'center' },
+  sendText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  saveBtn: { borderRadius: 8, paddingVertical: 15, alignItems: 'center', backgroundColor: '#f0f0f0', marginTop: 10 },
+  saveText: { color: '#333', fontSize: 15, fontWeight: '600' },
+  section: { backgroundColor: '#fff', marginTop: 10, paddingHorizontal: 16 },
+  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#000' },
+  sectionBody: { paddingBottom: 12 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 9 },
+  rowLabel: { fontSize: 14, color: '#888', flex: 1 },
+  rowValue: { fontSize: 14, color: '#000', fontWeight: '500', flex: 1, textAlign: 'right' },
+  lockedVal: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', flex: 1, gap: 6 },
+  blurBar: { width: 90, height: 12, borderRadius: 6, backgroundColor: '#e8e8e8' },
+  contactRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 10 },
+  contactLabel: { fontSize: 14, color: '#333', flex: 1 },
+  hobbyWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 4 },
+  hobbyChip: {
+    borderWidth: 1,
+    borderColor: '#f0d0d8',
+    backgroundColor: '#fdf2f5',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  hobbyText: { fontSize: 13, color: '#D20236', fontWeight: '500' },
+});

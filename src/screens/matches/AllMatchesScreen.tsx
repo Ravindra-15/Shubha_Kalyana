@@ -138,7 +138,7 @@ export default function AllMatchesScreen({ navigation }: any) {
               }
               actionDisabled={!!item.requestStatus}
               onAction={() => sendRequest(item.profileId)}
-              onView={() => {}}
+              onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}
               onInterested={() => toggleInterest(item.profileId, item.isInterested)}
             />
           )}
