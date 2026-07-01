@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -23,9 +23,13 @@ import RequestCard from '../../components/RequestCard';
 import { FlatList, Image, Dimensions } from 'react-native';
 import { getPublicVendors } from '../../api/vendor';
 import { resolveImageUrl } from '../../utils/imageUrl';
+import { useFocusEffect } from '@react-navigation/native';
+
+
+
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
-export default function HomeScreen() {
+export default function HomeScreen({ navigation }: any) {
   const [firstName, setFirstName] = useState('');
   const [showWelcome, setShowWelcome] = useState(false);
   const [planName, setPlanName] = useState('Free Plan');
@@ -37,15 +41,16 @@ export default function HomeScreen() {
   const [interestedProfiles, setInterestedProfiles] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
 
-  useEffect(() => {
-    loadUser();
-    loadPlan();
-    loadMatches();
-    loadReceivedRequests();
-    loadInterested();
-    loadVendors();
-  }, []);
-
+  useFocusEffect(
+    useCallback(() => {
+      loadUser();
+      loadPlan();
+      loadMatches();
+      loadReceivedRequests();
+      loadInterested();
+      loadVendors();
+    }, [])
+  );
   const loadMatches = async (filters?: Filters | null) => {
     try {
       setLoadingMatches(true);
@@ -97,7 +102,7 @@ export default function HomeScreen() {
         [req.user?.firstName, req.user?.lastName].filter(Boolean).join(' ') ||
         'Profile',
       age: getAgeFromDob(basic.dob),
-      caste: basic.caste?.casteName || basic.caste || '',
+      caste: basic.caste?.casteName || '',
       profession: req.profile?.employment?.designation || '',
       image: photo,
     };
@@ -344,7 +349,7 @@ export default function HomeScreen() {
               Profiles matching your preferences
             </Text>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('AllMatches')}>
             <Text style={styles.viewAll}>View All</Text>
           </TouchableOpacity>
         </View>

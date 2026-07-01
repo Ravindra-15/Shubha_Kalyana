@@ -23,7 +23,7 @@ export default function RequestCard({ profile, onAccept, onReject, onView }: Pro
             <Text style={styles.name}>
               {profile.name}{profile.age ? `, ${profile.age}` : ''}
             </Text>
-            <BadgeCheck color="#D20236" size={16} fill="#D20236" />
+            <BadgeCheck color="#FFFFFF" size={16} fill="#D20236" />
           </View>
           <Text style={styles.detail}>
             {[profile.caste, profile.profession].filter(Boolean).join('  |  ') || 'Not specified'}

@@ -26,6 +26,7 @@ import ProfilePhotoScreen from '../screens/auth/signup/ProfilePhotoScreen';
 import HobbiesScreen from '../screens/auth/signup/HobbiesScreen';
 import UploadAadhaarScreen from '../screens/auth/signup/UploadAadhaarScreen';
 import ReviewProfileScreen from '../screens/auth/signup/ReviewProfileScreen';
+import AllMatchesScreen from '../screens/matches/AllMatchesScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,7 +46,10 @@ export default function RootNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {token ? (
           // Logged in
-          <Stack.Screen name="MainTabs" component={MainTabs} />
+          <>
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen name="AllMatches" component={AllMatchesScreen} />
+          </>
         ) : (
           <>
             <Stack.Screen name="Splash" component={SplashScreen} />
