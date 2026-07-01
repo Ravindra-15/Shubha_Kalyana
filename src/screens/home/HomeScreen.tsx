@@ -20,7 +20,11 @@ import ProfileCard from '../../components/ProfileCard';
 import { Filter } from 'lucide-react-native';
 import FilterModal, { Filters } from '../../components/FilterModal';
 import RequestCard from '../../components/RequestCard';
-
+import { FlatList, Image, Dimensions } from 'react-native';
+import { getPublicVendors } from '../../api/vendor';
+import { resolveImageUrl } from '../../utils/imageUrl';
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
 export default function HomeScreen() {
   const [firstName, setFirstName] = useState('');
   const [showWelcome, setShowWelcome] = useState(false);
@@ -31,6 +35,7 @@ export default function HomeScreen() {
   const [activeFilters, setActiveFilters] = useState<Filters | null>(null);
   const [receivedRequests, setReceivedRequests] = useState<any[]>([]);
   const [interestedProfiles, setInterestedProfiles] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
 
   useEffect(() => {
     loadUser();
@@ -38,6 +43,7 @@ export default function HomeScreen() {
     loadMatches();
     loadReceivedRequests();
     loadInterested();
+    loadVendors();
   }, []);
 
   const loadMatches = async (filters?: Filters | null) => {
@@ -129,15 +135,21 @@ export default function HomeScreen() {
 
   const mapInterestToCard = (item: any) => {
     const basic = item.profile?.basicInfo || {};
-    const photo = item.profile?.photos?.find((p: any) => p.isProfilePhoto)?.url
-      || item.profile?.photos?.[0]?.url || '';
+    const photo =
+      item.profile?.photos?.find((p: any) => p.isProfilePhoto)?.url ||
+      item.profile?.photos?.[0]?.url ||
+      '';
     const addr = item.profile?.address?.current || {};
     return {
       profileId: item.profileId,
-      name: [item.user?.firstName, item.user?.lastName].filter(Boolean).join(' ') || 'Profile',
+      name:
+        [item.user?.firstName, item.user?.lastName].filter(Boolean).join(' ') ||
+        'Profile',
       age: getAgeFromDob(basic.dob),
       profession: item.profile?.employment?.designation || '',
-      location: [addr.city || addr.district, addr.state].filter(Boolean).join(', ') || 'Location not added',
+      location:
+        [addr.city || addr.district, addr.state].filter(Boolean).join(', ') ||
+        'Location not added',
       image: photo,
       verified: item.profile?.documents?.verificationStatus === 'VERIFIED',
     };
@@ -145,20 +157,29 @@ export default function HomeScreen() {
 
   const loadInterested = async () => {
     try {
-      const res = await apiClient.get('/relationship/interests/me', { params: { limit: 5 } });
+      const res = await apiClient.get('/relationship/interests/me', {
+        params: { limit: 5 },
+      });
       const items = res.data?.data?.interests || [];
-      console.log('INTERESTS:', JSON.stringify(items));   // <-- add this
+      console.log('INTERESTS:', JSON.stringify(items)); // <-- add this
       setInterestedProfiles(items.map(mapInterestToCard));
-    } catch(e){
-       console.log('INTERESTS ERR:', e);           
+    } catch (e) {
+      console.log('INTERESTS ERR:', e);
       setInterestedProfiles([]);
     }
+  };
+  const loadVendors = async () => {
+    const list = await getPublicVendors();
+    console.log('VENDORS:', JSON.stringify(list));
+    setVendors(list);
   };
 
   const removeInterest = async (profileId: string) => {
     try {
       await apiClient.delete(`/relationship/interests/${profileId}`);
-      setInterestedProfiles((prev) => prev.filter((p) => p.profileId !== profileId));
+      setInterestedProfiles(prev =>
+        prev.filter(p => p.profileId !== profileId),
+      );
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not remove');
     }
@@ -167,11 +188,16 @@ export default function HomeScreen() {
   const sendRequestFromInterest = async (profileId: string) => {
     try {
       await apiClient.post(`/relationship/requests/${profileId}`, {});
-      setInterestedProfiles((prev) =>
-        prev.map((p) => (p.profileId === profileId ? { ...p, _requestSent: true } : p))
+      setInterestedProfiles(prev =>
+        prev.map(p =>
+          p.profileId === profileId ? { ...p, _requestSent: true } : p,
+        ),
       );
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
+      Alert.alert(
+        'Error',
+        err?.response?.data?.message || 'Could not send request',
+      );
     }
   };
 
@@ -380,14 +406,16 @@ export default function HomeScreen() {
             <View style={styles.sectionHeader}>
               <View>
                 <Text style={styles.sectionTitle}>Interested Profiles</Text>
-                <Text style={styles.sectionSub}>Profiles matching your preferences</Text>
+                <Text style={styles.sectionSub}>
+                  Profiles matching your preferences
+                </Text>
               </View>
               <TouchableOpacity>
                 <Text style={styles.viewAll}>View All</Text>
               </TouchableOpacity>
             </View>
 
-            {interestedProfiles.map((p) => (
+            {interestedProfiles.map(p => (
               <ProfileCard
                 key={p.profileId}
                 profile={p}
@@ -401,6 +429,47 @@ export default function HomeScreen() {
               />
             ))}
           </>
+        )}
+
+        {/* Vendors */}
+        {vendors.length > 0 && (
+          <View style={styles.vendorSection}>
+            <Text style={styles.sectionTitle}>Vendors</Text>
+            <Text style={styles.sectionSub}>
+              Explore trusted wedding vendors
+            </Text>
+
+            <FlatList
+              data={vendors}
+              keyExtractor={item => item._id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={VENDOR_CARD_WIDTH + 14}
+              decelerationRate="fast"
+              contentContainerStyle={{ paddingRight: 20, paddingTop: 14 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.vendorCard} activeOpacity={0.9}>
+                  {item.image?.url ? (
+                    <Image
+                      source={{ uri: resolveImageUrl(item.image.url) }}
+                      style={styles.vendorImg}
+                      onError={(e) => console.log('IMG ERR:', resolveImageUrl(item.image.url), e.nativeEvent)}
+                      onLoad={() => console.log('IMG OK:', item.image.url)}
+                    />
+                  ) : (
+                    <View
+                      style={[styles.vendorImg, styles.vendorPlaceholder]}
+                    />
+                  )}
+                  <View style={styles.vendorOverlay}>
+                    <Text style={styles.vendorName}>
+                      {item.serviceCategory || item.vendorName}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
         )}
 
         {/* Other sections will go here */}
@@ -486,4 +555,24 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   filterText: { fontSize: 14, color: '#333', fontWeight: '600' },
+  vendorSection: { marginTop: 10, marginBottom: 20 },
+  vendorCard: {
+    width: VENDOR_CARD_WIDTH,
+    height: 150,
+    borderRadius: 14,
+    marginRight: 14,
+    overflow: 'hidden',
+    backgroundColor: '#eee',
+  },
+  vendorImg: { width: '100%', height: '100%' },
+  vendorPlaceholder: { backgroundColor: '#ddd' },
+  vendorOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: 14,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  vendorName: { color: '#fff', fontSize: 18, fontWeight: '700' },
 });
