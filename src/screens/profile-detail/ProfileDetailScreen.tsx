@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ArrowLeft, BadgeCheck, ChevronUp, ChevronDown, Lock,
-  Briefcase, GraduationCap, MapPin, Phone, Mail, MessageCircle,
+  Briefcase, GraduationCap, MapPin, Phone, Mail, MessageCircle, Bookmark,
 } from 'lucide-react-native';
 import { getPartnerProfile } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
@@ -80,6 +80,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const { profileId } = route.params || {};
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -150,7 +151,14 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           <ArrowLeft color="#000" size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile Details</Text>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity
+          onPress={() => {
+            setSaved((s) => !s);
+            Alert.alert(saved ? 'Removed' : 'Saved', saved ? 'Profile removed from saved' : 'Profile saved');
+          }}
+        >
+          <Bookmark color="#D20236" size={24} fill={saved ? '#D20236' : 'transparent'} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
