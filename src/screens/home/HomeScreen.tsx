@@ -166,16 +166,16 @@ export default function HomeScreen({ navigation }: any) {
         params: { limit: 5 },
       });
       const items = res.data?.data?.interests || [];
-      console.log('INTERESTS:', JSON.stringify(items)); // <-- add this
+     
       setInterestedProfiles(items.map(mapInterestToCard));
     } catch (e) {
-      console.log('INTERESTS ERR:', e);
+      
       setInterestedProfiles([]);
     }
   };
   const loadVendors = async () => {
     const list = await getPublicVendors();
-    console.log('VENDORS:', JSON.stringify(list));
+    // console.log('VENDORS:', JSON.stringify(list));
     setVendors(list);
   };
 

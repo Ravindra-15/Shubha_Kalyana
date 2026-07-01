@@ -18,6 +18,7 @@ import { getPartnerProfile } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import apiClient from '../../api/client';
 import { LayoutAnimation, Platform, UIManager } from 'react-native';
+import RequestSentModal from '../../components/RequestSentModal';
 
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -81,12 +82,26 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
-
+  const [showSentModal, setShowSentModal] = useState(false);
+  const [requestStatus, setRequestStatus] = useState<string | null>(null);
   useEffect(() => {
     (async () => {
       try {
         const res = await getPartnerProfile(profileId);
         setData(res);
+        // check if a request was already sent to this profile
+        try {
+          const chk = await apiClient.get('/relationship/requests/sent', { params: { limit: 50 } });
+          
+          const sent = chk.data?.data?.requests || [];
+          
+          const match = sent.find((r: any) =>
+            String(r.profile?._id) === String(profileId) ||
+            String(r.toProfileId) === String(profileId)
+          );
+          if (match) setRequestStatus(match.status);
+        } catch (e: any) {
+        }
       } catch (err: any) {
         Alert.alert('Error', err?.response?.data?.message || 'Could not load profile');
         navigation.goBack();
@@ -99,7 +114,8 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const sendRequest = async () => {
     try {
       await apiClient.post(`/relationship/requests/${profileId}`, {});
-      Alert.alert('Sent', 'Connection request sent');
+      setShowSentModal(true);
+      setRequestStatus('PENDING');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
     }
@@ -145,6 +161,19 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <RequestSentModal
+        visible={showSentModal}
+        name={name}
+        onClose={() => setShowSentModal(false)}
+        onContinueBrowsing={() => {
+          setShowSentModal(false);
+          navigation.navigate('MainTabs');
+        }}
+        onViewSentRequests={() => {
+          setShowSentModal(false);
+          navigation.navigate('SentRequests');
+        }}
+      />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -199,8 +228,14 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
         {/* Action buttons */}
         <View style={styles.actionWrap}>
-          <TouchableOpacity style={styles.sendBtn} onPress={sendRequest}>
-            <Text style={styles.sendText}>Send Request</Text>
+          <TouchableOpacity
+            style={[styles.sendBtn, requestStatus && styles.sendBtnDisabled]}
+            onPress={sendRequest}
+            disabled={!!requestStatus}
+          >
+            <Text style={styles.sendText}>
+              {requestStatus === 'PENDING' ? 'Request Sent' : requestStatus === 'ACCEPTED' ? 'Connected' : 'Send Request'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.saveBtn}>
             <Text style={styles.saveText}>Save Profile</Text>
@@ -347,4 +382,5 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   hobbyText: { fontSize: 13, color: '#D20236', fontWeight: '500' },
+  sendBtnDisabled: { backgroundColor: '#e69aab' },
 });
