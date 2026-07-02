@@ -28,6 +28,7 @@ import UploadAadhaarScreen from '../screens/auth/signup/UploadAadhaarScreen';
 import ReviewProfileScreen from '../screens/auth/signup/ReviewProfileScreen';
 import AllMatchesScreen from '../screens/matches/AllMatchesScreen';
 import ProfileDetailScreen from '../screens/profile-detail/ProfileDetailScreen';
+import RequestsScreen from '../screens/requests/RequestsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -50,7 +51,12 @@ export default function RootNavigator() {
           <>
             <Stack.Screen name="MainTabs" component={MainTabs} />
             <Stack.Screen name="AllMatches" component={AllMatchesScreen} />
-            <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
+            <Stack.Screen
+              name="ProfileDetail"
+              component={ProfileDetailScreen}
+            />
+            <Stack.Screen name="SentRequests" component={RequestsScreen} />
+            <Stack.Screen name="Requests" component={RequestsScreen} />
           </>
         ) : (
           <>
@@ -58,24 +64,51 @@ export default function RootNavigator() {
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="LoginOtp" component={LoginOtpScreen} />
-            <Stack.Screen name="SignupProfileFor" component={SignupProfileForScreen} />
+            <Stack.Screen
+              name="SignupProfileFor"
+              component={SignupProfileForScreen}
+            />
             <Stack.Screen name="SignupAbout" component={SignupAboutScreen} />
             <Stack.Screen name="SignupCaste" component={SignupCasteScreen} />
-            <Stack.Screen name="SignupContact" component={SignupContactScreen} />
-            <Stack.Screen name="Qualification" component={QualificationScreen} />
+            <Stack.Screen
+              name="SignupContact"
+              component={SignupContactScreen}
+            />
+            <Stack.Screen
+              name="Qualification"
+              component={QualificationScreen}
+            />
             <Stack.Screen name="Employment" component={EmploymentScreen} />
-            <Stack.Screen name="FamilyDetails" component={FamilyDetailsScreen} />
-            <Stack.Screen name="BasicLifestyle" component={BasicLifestyleScreen} />
+            <Stack.Screen
+              name="FamilyDetails"
+              component={FamilyDetailsScreen}
+            />
+            <Stack.Screen
+              name="BasicLifestyle"
+              component={BasicLifestyleScreen}
+            />
             <Stack.Screen name="Horoscope" component={HoroscopeScreen} />
-            <Stack.Screen name="AddressDetails" component={AddressDetailsScreen} />
+            <Stack.Screen
+              name="AddressDetails"
+              component={AddressDetailsScreen}
+            />
             <Stack.Screen name="AboutYou" component={AboutYouScreen} />
-            <Stack.Screen name="PartnerPreference" component={PartnerPreferenceScreen} />
+            <Stack.Screen
+              name="PartnerPreference"
+              component={PartnerPreferenceScreen}
+            />
             <Stack.Screen name="VerifyMobile" component={VerifyMobileScreen} />
             <Stack.Screen name="SetupMpin" component={SetupMpinScreen} />
             <Stack.Screen name="ProfilePhoto" component={ProfilePhotoScreen} />
             <Stack.Screen name="Hobbies" component={HobbiesScreen} />
-            <Stack.Screen name="UploadAadhaar" component={UploadAadhaarScreen} />
-            <Stack.Screen name="ReviewProfile" component={ReviewProfileScreen} />
+            <Stack.Screen
+              name="UploadAadhaar"
+              component={UploadAadhaarScreen}
+            />
+            <Stack.Screen
+              name="ReviewProfile"
+              component={ReviewProfileScreen}
+            />
           </>
         )}
       </Stack.Navigator>
