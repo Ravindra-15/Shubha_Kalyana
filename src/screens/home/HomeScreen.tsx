@@ -27,6 +27,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 
 
+
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
 export default function HomeScreen({ navigation }: any) {
@@ -162,14 +163,24 @@ export default function HomeScreen({ navigation }: any) {
 
   const loadInterested = async () => {
     try {
-      const res = await apiClient.get('/relationship/interests/me', {
-        params: { limit: 5 },
+      const [intRes, sentRes] = await Promise.all([
+        apiClient.get('/relationship/interests/me', { params: { limit: 5 } }),
+        apiClient.get('/relationship/requests/sent', { params: { limit: 50 } }),
+      ]);
+      const items = intRes.data?.data?.interests || [];
+      const sent = sentRes.data?.data?.requests || [];
+      // map profileId → request status
+      const statusMap = new Map(
+        sent
+          .filter((r: any) => r.status === 'PENDING' || r.status === 'ACCEPTED')
+          .map((r: any) => [String(r.toProfileId || r.profile?._id), r.status])
+      );
+      const mapped = items.map((item: any) => {
+        const card = mapInterestToCard(item);
+        return { ...card, requestStatus: statusMap.get(String(card.profileId)) || null };
       });
-      const items = res.data?.data?.interests || [];
-     
-      setInterestedProfiles(items.map(mapInterestToCard));
-    } catch (e) {
-      
+      setInterestedProfiles(mapped);
+    } catch {
       setInterestedProfiles([]);
     }
   };
@@ -424,8 +435,14 @@ export default function HomeScreen({ navigation }: any) {
               <ProfileCard
                 key={p.profileId}
                 profile={p}
-                actionLabel={p._requestSent ? 'Request Sent' : 'Send Request'}
-                actionDisabled={p._requestSent}
+                actionLabel={
+                  p._requestSent || p.requestStatus === 'PENDING'
+                    ? 'Request Sent'
+                    : p.requestStatus === 'ACCEPTED'
+                    ? 'Connected'
+                    : 'Send Request'
+                }
+                actionDisabled={p._requestSent || !!p.requestStatus}
                 onAction={() => sendRequestFromInterest(p.profileId)}
                 onView={() => navigation.navigate('ProfileDetail', { profileId: p.profileId })}
                 showInterested={false}

@@ -96,10 +96,10 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           const sent = chk.data?.data?.requests || [];
           
           const match = sent.find((r: any) =>
-            String(r.profile?._id) === String(profileId) ||
-            String(r.toProfileId) === String(profileId)
+            (String(r.profile?._id) === String(profileId) || String(r.toProfileId) === String(profileId)) &&
+            (r.status === 'PENDING' || r.status === 'ACCEPTED')
           );
-          if (match) setRequestStatus(match.status);
+          setRequestStatus(match ? match.status : null);
         } catch (e: any) {
         }
       } catch (err: any) {
