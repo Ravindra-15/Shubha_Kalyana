@@ -25,6 +25,7 @@ import { getPublicVendors } from '../../api/vendor';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { useFocusEffect } from '@react-navigation/native';
 import RequestSentModal from '../../components/RequestSentModal';
+import { getUnreadCount } from '../../api/notification';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
@@ -42,6 +43,8 @@ export default function HomeScreen({ navigation }: any) {
   const [sentModal, setSentModal] = useState<{ show: boolean; name?: string }>({
     show: false,
   });
+const [unreadCount, setUnreadCount] = useState(0);
+
 
   useFocusEffect(
     useCallback(() => {
@@ -51,8 +54,14 @@ export default function HomeScreen({ navigation }: any) {
       loadReceivedRequests();
       loadInterested();
       loadVendors();
-    }, []),
+      loadUnread();
+    }, [])
   );
+
+  const loadUnread = async () => {
+    const count = await getUnreadCount();
+    setUnreadCount(count);
+  };
   const loadMatches = async (filters?: Filters | null) => {
     try {
       setLoadingMatches(true);
@@ -336,11 +345,13 @@ export default function HomeScreen({ navigation }: any) {
               New verified matches are waiting for you
             </Text>
           </View>
-          <TouchableOpacity style={styles.bellWrap}>
+          <TouchableOpacity style={styles.bellWrap} onPress={() => navigation.navigate('Notifications')}>
             <Bell color="#333" size={24} />
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>3</Text>
-            </View>
+            {unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
 
