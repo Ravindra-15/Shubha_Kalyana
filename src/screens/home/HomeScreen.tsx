@@ -24,9 +24,7 @@ import { FlatList, Image, Dimensions } from 'react-native';
 import { getPublicVendors } from '../../api/vendor';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { useFocusEffect } from '@react-navigation/native';
-
-
-
+import RequestSentModal from '../../components/RequestSentModal';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
@@ -41,6 +39,9 @@ export default function HomeScreen({ navigation }: any) {
   const [receivedRequests, setReceivedRequests] = useState<any[]>([]);
   const [interestedProfiles, setInterestedProfiles] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
+  const [sentModal, setSentModal] = useState<{ show: boolean; name?: string }>({
+    show: false,
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -50,7 +51,7 @@ export default function HomeScreen({ navigation }: any) {
       loadReceivedRequests();
       loadInterested();
       loadVendors();
-    }, [])
+    }, []),
   );
   const loadMatches = async (filters?: Filters | null) => {
     try {
@@ -173,11 +174,14 @@ export default function HomeScreen({ navigation }: any) {
       const statusMap = new Map(
         sent
           .filter((r: any) => r.status === 'PENDING' || r.status === 'ACCEPTED')
-          .map((r: any) => [String(r.toProfileId || r.profile?._id), r.status])
+          .map((r: any) => [String(r.toProfileId || r.profile?._id), r.status]),
       );
       const mapped = items.map((item: any) => {
         const card = mapInterestToCard(item);
-        return { ...card, requestStatus: statusMap.get(String(card.profileId)) || null };
+        return {
+          ...card,
+          requestStatus: statusMap.get(String(card.profileId)) || null,
+        };
       });
       setInterestedProfiles(mapped);
     } catch {
@@ -225,11 +229,13 @@ export default function HomeScreen({ navigation }: any) {
   const sendRequest = async (profileId: string) => {
     try {
       await apiClient.post(`/relationship/requests/${profileId}`, {});
+      const prof = matches.find(p => p.profileId === profileId);
       setMatches(prev =>
         prev.map(p =>
           p.profileId === profileId ? { ...p, _requestSent: true } : p,
         ),
       );
+      setSentModal({ show: true, name: prof?.name });
     } catch (err: any) {
       Alert.alert(
         'Error',
@@ -290,6 +296,16 @@ export default function HomeScreen({ navigation }: any) {
         visible={showWelcome}
         onClose={() => setShowWelcome(false)}
         userName={firstName}
+      />
+      <RequestSentModal
+        visible={sentModal.show}
+        name={sentModal.name}
+        onClose={() => setSentModal({ show: false })}
+        onContinueBrowsing={() => setSentModal({ show: false })}
+        onViewSentRequests={() => {
+          setSentModal({ show: false });
+          navigation.navigate('SentRequests');
+        }}
       />
 
       <FilterModal
@@ -383,7 +399,9 @@ export default function HomeScreen({ navigation }: any) {
               }
               actionDisabled={p._requestSent || !!p.requestStatus}
               onAction={() => sendRequest(p.profileId)}
-              onView={() => navigation.navigate('ProfileDetail', { profileId: p.profileId })}
+              onView={() =>
+                navigation.navigate('ProfileDetail', { profileId: p.profileId })
+              }
               onInterested={() => addInterest(p.profileId)}
             />
           ))
@@ -410,7 +428,11 @@ export default function HomeScreen({ navigation }: any) {
                 profile={r}
                 onAccept={() => acceptRequest(r.requestId)}
                 onReject={() => rejectRequest(r.requestId)}
-                onView={() => navigation.navigate('ProfileDetail', { profileId: r.profileId })}
+                onView={() =>
+                  navigation.navigate('ProfileDetail', {
+                    profileId: r.profileId,
+                  })
+                }
               />
             ))}
           </>
@@ -444,7 +466,11 @@ export default function HomeScreen({ navigation }: any) {
                 }
                 actionDisabled={p._requestSent || !!p.requestStatus}
                 onAction={() => sendRequestFromInterest(p.profileId)}
-                onView={() => navigation.navigate('ProfileDetail', { profileId: p.profileId })}
+                onView={() =>
+                  navigation.navigate('ProfileDetail', {
+                    profileId: p.profileId,
+                  })
+                }
                 showInterested={false}
                 onRemove={() => removeInterest(p.profileId)}
                 removeLabel="Remove from Interested"
@@ -475,7 +501,13 @@ export default function HomeScreen({ navigation }: any) {
                     <Image
                       source={{ uri: resolveImageUrl(item.image.url) }}
                       style={styles.vendorImg}
-                      onError={(e) => console.log('IMG ERR:', resolveImageUrl(item.image.url), e.nativeEvent)}
+                      onError={e =>
+                        console.log(
+                          'IMG ERR:',
+                          resolveImageUrl(item.image.url),
+                          e.nativeEvent,
+                        )
+                      }
                       onLoad={() => console.log('IMG OK:', item.image.url)}
                     />
                   ) : (
