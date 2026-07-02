@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, Search, Heart, MessageCircle, User } from 'lucide-react-native';
 import HomeScreen from '../screens/home/HomeScreen';
 import SearchScreen from '../screens/search/SearchScreen';
-import InterestsScreen from '../screens/interests/InterestsScreen';
+import AllInterestedScreen from '../screens/interested/AllInterestedScreen';
 import ChatScreen from '../screens/chat/ChatScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 
@@ -44,7 +44,7 @@ export default function MainTabs() {
       />
       <Tab.Screen
         name="InterestsTab"
-        component={InterestsScreen}
+        component={AllInterestedScreen}
         options={{
           title: 'Interests',
           tabBarIcon: ({ color, size }) => <Heart color={color} size={size} />,

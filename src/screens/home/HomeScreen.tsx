@@ -455,7 +455,7 @@ export default function HomeScreen({ navigation }: any) {
                   Profiles matching your preferences
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => navigation.navigate('AllInterested')}>
+              <TouchableOpacity onPress={() => navigation.navigate('AllInterested', { pushed: true })}>
                 <Text style={styles.viewAll}>View All</Text>
               </TouchableOpacity>
             </View>

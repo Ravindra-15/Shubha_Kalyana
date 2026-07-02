@@ -43,7 +43,8 @@ const mapInterest = (item: any) => {
   };
 };
 
-export default function AllInterestedScreen({ navigation }: any) {
+export default function AllInterestedScreen({ navigation, route }: any) {
+  const pushed = route?.params?.pushed === true;
   const [items, setItems] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [hasNext, setHasNext] = useState(true);
@@ -129,9 +130,13 @@ export default function AllInterestedScreen({ navigation }: any) {
       />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
-        </TouchableOpacity>
+        {pushed ? (
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <ArrowLeft color="#000" size={24} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
         <Text style={styles.headerTitle}>Interested Profiles</Text>
         <View style={{ width: 24 }} />
       </View>
@@ -175,7 +180,7 @@ export default function AllInterestedScreen({ navigation }: any) {
         )}
       </View>
 
-      <BottomNav active="InterestsTab" />
+      {pushed && <BottomNav active="InterestsTab" />}
     </SafeAreaView>
   );
 }
