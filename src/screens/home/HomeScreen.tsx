@@ -244,21 +244,28 @@ export default function HomeScreen({ navigation }: any) {
     }
   };
 
-  const addInterest = async (profileId: string) => {
+  const toggleInterest = async (profileId: string, currentlyInterested: boolean) => {
     try {
-      await apiClient.post(`/relationship/interests/${profileId}`, {});
-      setMatches(prev =>
-        prev.map(p =>
-          p.profileId === profileId ? { ...p, _interested: true } : p,
-        ),
-      );
-      loadInterested(); // refresh interested section
-      Alert.alert('Added', 'Profile added to your interests');
+      if (currentlyInterested) {
+        await apiClient.delete(`/relationship/interests/${profileId}`);
+        setMatches(prev =>
+          prev.map(p =>
+            p.profileId === profileId ? { ...p, _interested: false, isInterested: false } : p,
+          ),
+        );
+        loadInterested();
+      } else {
+        await apiClient.post(`/relationship/interests/${profileId}`, {});
+        setMatches(prev =>
+          prev.map(p =>
+            p.profileId === profileId ? { ...p, _interested: true, isInterested: true } : p,
+          ),
+        );
+        loadInterested();
+        Alert.alert('Added', 'Profile added to your interests');
+      }
     } catch (err: any) {
-      Alert.alert(
-        'Error',
-        err?.response?.data?.message || 'Could not add interest',
-      );
+      Alert.alert('Error', err?.response?.data?.message || 'Could not update interest');
     }
   };
 
@@ -402,7 +409,7 @@ export default function HomeScreen({ navigation }: any) {
               onView={() =>
                 navigation.navigate('ProfileDetail', { profileId: p.profileId })
               }
-              onInterested={() => addInterest(p.profileId)}
+              onInterested={() => toggleInterest(p.profileId, p._interested || p.isInterested)}
             />
           ))
         )}
@@ -448,12 +455,12 @@ export default function HomeScreen({ navigation }: any) {
                   Profiles matching your preferences
                 </Text>
               </View>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate('AllInterested')}>
                 <Text style={styles.viewAll}>View All</Text>
               </TouchableOpacity>
             </View>
 
-            {interestedProfiles.map(p => (
+            {interestedProfiles.map((p) => (
               <ProfileCard
                 key={p.profileId}
                 profile={p}

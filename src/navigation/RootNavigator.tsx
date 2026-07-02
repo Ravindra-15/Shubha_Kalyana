@@ -29,6 +29,7 @@ import ReviewProfileScreen from '../screens/auth/signup/ReviewProfileScreen';
 import AllMatchesScreen from '../screens/matches/AllMatchesScreen';
 import ProfileDetailScreen from '../screens/profile-detail/ProfileDetailScreen';
 import RequestsScreen from '../screens/requests/RequestsScreen';
+import AllInterestedScreen from '../screens/interested/AllInterestedScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -57,6 +58,7 @@ export default function RootNavigator() {
             />
             <Stack.Screen name="SentRequests" component={RequestsScreen} />
             <Stack.Screen name="Requests" component={RequestsScreen} />
+            <Stack.Screen name="AllInterested" component={AllInterestedScreen} />
           </>
         ) : (
           <>
