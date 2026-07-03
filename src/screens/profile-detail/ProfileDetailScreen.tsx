@@ -91,17 +91,23 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         setData(res);
         // check if a request was already sent to this profile
         try {
-          const chk = await apiClient.get('/relationship/requests/sent', { params: { limit: 50 } });
-          
+          const [chk, connChk] = await Promise.all([
+            apiClient.get('/relationship/requests/sent', { params: { limit: 50 } }),
+            apiClient.get('/relationship/connections/me', { params: { limit: 50 } }),
+          ]);
           const sent = chk.data?.data?.requests || [];
-          
-          const match = sent.find((r: any) =>
-            (String(r.profile?._id) === String(profileId) || String(r.toProfileId) === String(profileId)) &&
-            (r.status === 'PENDING' || r.status === 'ACCEPTED')
-          );
-          setRequestStatus(match ? match.status : null);
-        } catch (e: any) {
-        }
+          const conns = connChk.data?.data?.connections || connChk.data?.data?.items || [];
+          const connected = conns.some((c: any) => String(c.profile?._id || c.profileId) === String(profileId));
+          if (connected) {
+            setRequestStatus('ACCEPTED');
+          } else {
+            const match = sent.find((r: any) =>
+              (String(r.profile?._id) === String(profileId) || String(r.toProfileId) === String(profileId)) &&
+              (r.status === 'PENDING' || r.status === 'ACCEPTED')
+            );
+            setRequestStatus(match ? match.status : null);
+          }
+        } catch {}
       } catch (err: any) {
         Alert.alert('Error', err?.response?.data?.message || 'Could not load profile');
         navigation.goBack();

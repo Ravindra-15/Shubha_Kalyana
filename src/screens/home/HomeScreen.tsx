@@ -173,18 +173,23 @@ const [unreadCount, setUnreadCount] = useState(0);
 
   const loadInterested = async () => {
     try {
-      const [intRes, sentRes] = await Promise.all([
+      const [intRes, sentRes, connRes] = await Promise.all([
         apiClient.get('/relationship/interests/me', { params: { limit: 5 } }),
         apiClient.get('/relationship/requests/sent', { params: { limit: 50 } }),
+        apiClient.get('/relationship/connections/me', { params: { limit: 50 } }),
       ]);
       const items = intRes.data?.data?.interests || [];
       const sent = sentRes.data?.data?.requests || [];
-      // map profileId → request status
-      const statusMap = new Map(
-        sent
-          .filter((r: any) => r.status === 'PENDING' || r.status === 'ACCEPTED')
-          .map((r: any) => [String(r.toProfileId || r.profile?._id), r.status]),
-      );
+      const conns = connRes.data?.data?.connections || connRes.data?.data?.items || [];
+      // profileId → status (connection wins as ACCEPTED)
+      const statusMap = new Map();
+      sent
+        .filter((r: any) => r.status === 'PENDING' || r.status === 'ACCEPTED')
+        .forEach((r: any) => statusMap.set(String(r.toProfileId || r.profile?._id), r.status));
+      conns.forEach((c: any) => {
+        const pid = c.profile?._id || c.profileId;
+        if (pid) statusMap.set(String(pid), 'ACCEPTED');
+      });
       const mapped = items.map((item: any) => {
         const card = mapInterestToCard(item);
         return {
