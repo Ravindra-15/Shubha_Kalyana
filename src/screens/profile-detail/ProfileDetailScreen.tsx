@@ -11,20 +11,39 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ArrowLeft, BadgeCheck, ChevronUp, ChevronDown, Lock,
-  Briefcase, GraduationCap, MapPin, Phone, Mail, MessageCircle, Bookmark,
+  ArrowLeft,
+  BadgeCheck,
+  ChevronUp,
+  ChevronDown,
+  Lock,
+  Briefcase,
+  GraduationCap,
+  MapPin,
+  Phone,
+  Mail,
+  MessageCircle,
+  Bookmark,
 } from 'lucide-react-native';
 import { getPartnerProfile } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import apiClient from '../../api/client';
 import { LayoutAnimation, Platform, UIManager } from 'react-native';
 import RequestSentModal from '../../components/RequestSentModal';
+import UnlockAccessModal from '../../components/UnlockAccessModal';
+import { payToUnlockProfile } from '../../utils/razorpayCheckout';
+import { getUnlockPrice, getProfileAccess } from '../../api/membershipPayment';
+import { revealContact } from '../../api/membershipPayment';
 
-
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
-const isBlur = (v: any) => v === 'blur' || v === undefined || v === null || v === '';
+const isBlur = (v: any) =>
+  v === 'blur' || v === undefined || v === null || v === '';
+const isLocked = (v: any) => v === 'blur';
+const isEmpty = (v: any) => v === undefined || v === null || v === '';
 
 const getAge = (dob?: string) => {
   if (!dob) return null;
@@ -38,16 +57,31 @@ const getAge = (dob?: string) => {
 };
 
 // A row that shows value OR a lock if blurred
-function Row({ label, value }: { label: string; value: any }) {
-  const locked = isBlur(value);
+function Row({
+  label,
+  value,
+  onLockedPress,
+}: {
+  label: string;
+  value: any;
+  onLockedPress?: () => void;
+}) {
+  const locked = isLocked(value);
+  const empty = isEmpty(value);
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
       {locked ? (
-        <View style={styles.lockedVal}>
+        <TouchableOpacity
+          style={styles.lockedVal}
+          onPress={onLockedPress}
+          activeOpacity={0.6}
+        >
           <Lock color="#D20236" size={12} />
           <View style={styles.blurBar} />
-        </View>
+        </TouchableOpacity>
+      ) : empty ? (
+        <Text style={styles.notProvided}>Not provided</Text>
       ) : (
         <Text style={styles.rowValue}>{value}</Text>
       )}
@@ -55,22 +89,76 @@ function Row({ label, value }: { label: string; value: any }) {
   );
 }
 
+function ContactRow({
+  Icon,
+  iconColor,
+  label,
+  value,
+  isPremiumLocked,
+  onLockedPress,
+}: {
+  Icon: any;
+  iconColor: string;
+  label: string;
+  value: any;
+  isPremiumLocked?: boolean;
+  onLockedPress?: () => void;
+}) {
+  const locked = isPremiumLocked || isLocked(value);
+  const empty = !locked && isEmpty(value);
+  return (
+    <View style={styles.contactRow}>
+      <Icon color={iconColor} size={16} />
+      <Text style={styles.contactLabel}>{label}</Text>
+      {locked ? (
+        <TouchableOpacity
+          onPress={onLockedPress}
+          style={styles.lockedInline}
+          activeOpacity={0.6}>
+          <Lock color="#D20236" size={12} />
+          <View style={styles.blurBar} />
+        </TouchableOpacity>
+      ) : empty ? (
+        <Text style={styles.notProvided}>Not provided</Text>
+      ) : (
+        <Text style={styles.contactValue}>{value}</Text>
+      )}
+    </View>
+  );
+}
+
 // Collapsible section
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   const [open, setOpen] = useState(true);
   const toggle = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.create(
-      220,
-      LayoutAnimation.Types.easeInEaseOut,
-      LayoutAnimation.Properties.opacity
-    ));
+    LayoutAnimation.configureNext(
+      LayoutAnimation.create(
+        220,
+        LayoutAnimation.Types.easeInEaseOut,
+        LayoutAnimation.Properties.opacity,
+      ),
+    );
     setOpen(!open);
   };
   return (
     <View style={styles.section}>
-      <TouchableOpacity style={styles.sectionHead} onPress={toggle} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.sectionHead}
+        onPress={toggle}
+        activeOpacity={0.7}
+      >
         <Text style={styles.sectionTitle}>{title}</Text>
-        {open ? <ChevronUp color="#000" size={20} /> : <ChevronDown color="#000" size={20} />}
+        {open ? (
+          <ChevronUp color="#000" size={20} />
+        ) : (
+          <ChevronDown color="#000" size={20} />
+        )}
       </TouchableOpacity>
       {open && <View style={styles.sectionBody}>{children}</View>}
     </View>
@@ -84,32 +172,71 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const [saved, setSaved] = useState(false);
   const [showSentModal, setShowSentModal] = useState(false);
   const [requestStatus, setRequestStatus] = useState<string | null>(null);
+  const [showUnlock, setShowUnlock] = useState(false);
+  const [unlockPrice, setUnlockPrice] = useState(99);
+  const [paying, setPaying] = useState(false);
+  const [access, setAccess] = useState<any>(null);
+  const [contact, setContact] = useState<any>(null);
+
   useEffect(() => {
     (async () => {
       try {
         const res = await getPartnerProfile(profileId);
         setData(res);
+        console.log('PROFILE ACCESS:', JSON.stringify(res?.access));
+        console.log(
+          'SAMPLE ADDR:',
+          JSON.stringify(res?.profile?.address?.current),
+        );
+
+        // load unlock price + access status
+        try {
+          const [price, acc] = await Promise.all([
+            getUnlockPrice(),
+            getProfileAccess(profileId),
+          ]);
+          setUnlockPrice(price.amount || 99);
+          setAccess(acc);
+          if (acc && acc.shouldBlurSensitiveFields === false) {
+            const c = await revealContact(profileId);
+            setContact(c);
+          }
+        } catch {}
+
         // check if a request was already sent to this profile
         try {
           const [chk, connChk] = await Promise.all([
-            apiClient.get('/relationship/requests/sent', { params: { limit: 50 } }),
-            apiClient.get('/relationship/connections/me', { params: { limit: 50 } }),
+            apiClient.get('/relationship/requests/sent', {
+              params: { limit: 50 },
+            }),
+            apiClient.get('/relationship/connections/me', {
+              params: { limit: 50 },
+            }),
           ]);
           const sent = chk.data?.data?.requests || [];
-          const conns = connChk.data?.data?.connections || connChk.data?.data?.items || [];
-          const connected = conns.some((c: any) => String(c.profile?._id || c.profileId) === String(profileId));
+          const conns =
+            connChk.data?.data?.connections || connChk.data?.data?.items || [];
+          const connected = conns.some(
+            (c: any) =>
+              String(c.profile?._id || c.profileId) === String(profileId),
+          );
           if (connected) {
             setRequestStatus('ACCEPTED');
           } else {
-            const match = sent.find((r: any) =>
-              (String(r.profile?._id) === String(profileId) || String(r.toProfileId) === String(profileId)) &&
-              (r.status === 'PENDING' || r.status === 'ACCEPTED')
+            const match = sent.find(
+              (r: any) =>
+                (String(r.profile?._id) === String(profileId) ||
+                  String(r.toProfileId) === String(profileId)) &&
+                (r.status === 'PENDING' || r.status === 'ACCEPTED'),
             );
             setRequestStatus(match ? match.status : null);
           }
         } catch {}
       } catch (err: any) {
-        Alert.alert('Error', err?.response?.data?.message || 'Could not load profile');
+        Alert.alert(
+          'Error',
+          err?.response?.data?.message || 'Could not load profile',
+        );
         navigation.goBack();
       } finally {
         setLoading(false);
@@ -123,7 +250,32 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       setShowSentModal(true);
       setRequestStatus('PENDING');
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
+      Alert.alert(
+        'Error',
+        err?.response?.data?.message || 'Could not send request',
+      );
+    }
+  };
+  const handleUnlock = async () => {
+    setPaying(true);
+    const result = await payToUnlockProfile(profileId, { name });
+    setPaying(false);
+    if (result.success) {
+      setShowUnlock(false);
+      // refetch everything in parallel so all sections update together
+      try {
+        const [fresh, acc, c] = await Promise.all([
+          getPartnerProfile(profileId),
+          getProfileAccess(profileId),
+          revealContact(profileId),
+        ]);
+        setData(fresh);
+        setAccess(acc);
+        setContact(c);
+      } catch {}
+      Alert.alert('Unlocked', 'Profile access unlocked successfully');
+    } else {
+      Alert.alert('Payment', result.message || 'Payment failed');
     }
   };
 
@@ -148,20 +300,39 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const pref = data.partnerPreference || {};
   const hobbies = profile.hobbiesAndInterests || [];
 
-  const name = [basic.firstName || user.firstName, basic.lastName || user.lastName].filter(Boolean).join(' ');
+  const name = [
+    basic.firstName || user.firstName,
+    basic.lastName || user.lastName,
+  ]
+    .filter(Boolean)
+    .join(' ');
   const age = getAge(basic.dob);
-  const photo = profile.photos?.find((p: any) => p.isProfilePhoto)?.url || profile.photos?.[0]?.url || '';
+  const photo =
+    profile.photos?.find((p: any) => p.isProfilePhoto)?.url ||
+    profile.photos?.[0]?.url ||
+    '';
   const verified = profile.documents?.verificationStatus === 'VERIFIED';
   const caste = basic.caste?.casteName || basic.caste?.name || '';
-  const location = [addr.current?.city, addr.current?.state].filter((x) => x && !isBlur(x)).join(', ');
+  const location = [addr.current?.city, addr.current?.state]
+    .filter(x => x && !isBlur(x))
+    .join(', ');
 
-  const heightStr = basic.height ? `${basic.height.feet}'${basic.height.inches}"` : '';
-  const weightStr = basic.weight ? `${basic.weight.value} ${basic.weight.units?.toLowerCase() || 'kg'}` : '';
+  const heightStr = basic.height
+    ? `${basic.height.feet}'${basic.height.inches}"`
+    : '';
+  const weightStr = basic.weight
+    ? `${basic.weight.value} ${basic.weight.units?.toLowerCase() || 'kg'}`
+    : '';
 
   const fmtAddr = (a: any) => {
     if (!a || isBlur(a)) return 'blur';
-    const parts = [a.addressLine1, a.taluka, a.district || a.city, a.state || a.stateOrProvince, a.pincode || a.postalCode]
-      .filter((x) => x && !isBlur(x));
+    const parts = [
+      a.addressLine1,
+      a.taluka,
+      a.district || a.city,
+      a.state || a.stateOrProvince,
+      a.pincode || a.postalCode,
+    ].filter(x => x && !isBlur(x));
     return parts.length ? parts.join(', ') : 'blur';
   };
 
@@ -180,6 +351,18 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           navigation.navigate('SentRequests');
         }}
       />
+      <UnlockAccessModal
+        visible={showUnlock}
+        name={name}
+        price={unlockPrice}
+        loading={paying}
+        onClose={() => setShowUnlock(false)}
+        onUnlock={handleUnlock}
+        onUpgrade={() => {
+          setShowUnlock(false);
+          navigation.navigate('Plans');
+        }}
+      />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -188,19 +371,32 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         <Text style={styles.headerTitle}>Profile Details</Text>
         <TouchableOpacity
           onPress={() => {
-            setSaved((s) => !s);
-            Alert.alert(saved ? 'Removed' : 'Saved', saved ? 'Profile removed from saved' : 'Profile saved');
+            setSaved(s => !s);
+            Alert.alert(
+              saved ? 'Removed' : 'Saved',
+              saved ? 'Profile removed from saved' : 'Profile saved',
+            );
           }}
         >
-          <Bookmark color="#D20236" size={24} fill={saved ? '#D20236' : 'transparent'} />
+          <Bookmark
+            color="#D20236"
+            size={24}
+            fill={saved ? '#D20236' : 'transparent'}
+          />
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 30 }}
+      >
         {/* Cover photo */}
         <View style={styles.coverWrap}>
           {photo ? (
-            <Image source={{ uri: resolveImageUrl(photo) }} style={styles.cover} />
+            <Image
+              source={{ uri: resolveImageUrl(photo) }}
+              style={styles.cover}
+            />
           ) : (
             <View style={[styles.cover, styles.coverPlaceholder]} />
           )}
@@ -211,16 +407,29 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             </View>
           )}
           <View style={styles.coverInfo}>
-            <Text style={styles.coverName}>{name}{age ? `, ${age}` : ''}</Text>
+            <Text style={styles.coverName}>
+              {name}
+              {age ? `, ${age}` : ''}
+            </Text>
             <Text style={styles.coverMeta}>
-              {[basic.religion, caste, basic.maritalStatus?.replace(/_/g, ' ')].filter(Boolean).join('  •  ')}
+              {[basic.religion, caste, basic.maritalStatus?.replace(/_/g, ' ')]
+                .filter(Boolean)
+                .join('  •  ')}
             </Text>
             <View style={styles.coverIconRow}>
               <Briefcase color="#fff" size={13} />
-              <Text style={styles.coverIconText}>{emp.designation || 'Not specified'}</Text>
-              <GraduationCap color="#fff" size={13} style={{ marginLeft: 12 }} />
               <Text style={styles.coverIconText}>
-                {[edu.highestQualification, edu.college].filter(Boolean).join(', ')}
+                {emp.designation || 'Not specified'}
+              </Text>
+              <GraduationCap
+                color="#fff"
+                size={13}
+                style={{ marginLeft: 12 }}
+              />
+              <Text style={styles.coverIconText}>
+                {[edu.highestQualification, edu.college]
+                  .filter(Boolean)
+                  .join(', ')}
               </Text>
             </View>
             {!!location && (
@@ -240,7 +449,11 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             disabled={!!requestStatus}
           >
             <Text style={styles.sendText}>
-              {requestStatus === 'PENDING' ? 'Request Sent' : requestStatus === 'ACCEPTED' ? 'Connected' : 'Send Request'}
+              {requestStatus === 'PENDING'
+                ? 'Request Sent'
+                : requestStatus === 'ACCEPTED'
+                ? 'Connected'
+                : 'Send Request'}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.saveBtn}>
@@ -250,29 +463,40 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
         {/* Contact Details */}
         <Section title="Contact Details">
-          <View style={styles.contactRow}>
-            <MessageCircle color="#1a7f37" size={16} />
-            <Text style={styles.contactLabel}>Whatsapp</Text>
-            <Lock color="#D20236" size={12} />
-            <View style={styles.blurBar} />
-          </View>
-          <View style={styles.contactRow}>
-            <Phone color="#333" size={16} />
-            <Text style={styles.contactLabel}>Phone Number</Text>
-            <Lock color="#D20236" size={12} />
-            <View style={styles.blurBar} />
-          </View>
-          <View style={styles.contactRow}>
-            <Mail color="#333" size={16} />
-            <Text style={styles.contactLabel}>Email ID</Text>
-            <Lock color="#D20236" size={12} />
-            <View style={styles.blurBar} />
-          </View>
+          <ContactRow
+            Icon={MessageCircle}
+            iconColor="#1a7f37"
+            label="Whatsapp"
+            value={contact?.mobile}
+            isPremiumLocked={access?.shouldBlurSensitiveFields !== false}
+            onLockedPress={() => setShowUnlock(true)}
+          />
+          <ContactRow
+            Icon={Phone}
+            iconColor="#333"
+            label="Phone Number"
+            value={contact?.mobile}
+            isPremiumLocked={access?.shouldBlurSensitiveFields !== false}
+            onLockedPress={() => setShowUnlock(true)}
+          />
+          <ContactRow
+            Icon={Mail}
+            iconColor="#333"
+            label="Email ID"
+            value={contact?.email}
+            isPremiumLocked={access?.shouldBlurSensitiveFields !== false}
+            onLockedPress={() => setShowUnlock(true)}
+          />
         </Section>
 
         {/* Personal Details */}
         <Section title="Personal Details">
-          <Row label="Date of Birth" value={basic.dob ? new Date(basic.dob).toLocaleDateString('en-GB') : ''} />
+          <Row
+            label="Date of Birth"
+            value={
+              basic.dob ? new Date(basic.dob).toLocaleDateString('en-GB') : ''
+            }
+          />
           <Row label="Height" value={heightStr} />
           <Row label="Weight" value={weightStr} />
           <Row label="Diet" value={life.diet || basic.diet} />
@@ -295,19 +519,27 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
         {/* Location */}
         <Section title="Location">
-          <Row label="Present Address" value={fmtAddr(addr.current)} />
-          <Row label="Permanent Address" value={fmtAddr(addr.permanent)} />
+          <Row
+            label="Present Address"
+            value={fmtAddr(addr.current)}
+            onLockedPress={() => setShowUnlock(true)}
+          />
+          <Row
+            label="Permanent Address"
+            value={fmtAddr(addr.permanent)}
+            onLockedPress={() => setShowUnlock(true)}
+          />
         </Section>
 
         {/* Employment */}
         <Section title="Employment Details">
           <Row label="Profession" value={emp.designation} />
-          <Row label="Company Name" value={emp.companyName} />
+          <Row label="Company Name" value={emp.companyName} onLockedPress={() => setShowUnlock(true)} />
           <Row label="Company Type" value={emp.employedType?.replace(/_/g, ' ')} />
           <Row label="Annual Income" value={emp.annualIncome ? `₹${emp.annualIncome.toLocaleString('en-IN')}` : ''} />
           <Row label="Experience" value={emp.totalExperience ? `${emp.totalExperience} Years` : ''} />
-          <Row label="Work Location" value={emp.companyLocation} />
-          <Row label="LinkedIn Link" value={emp.linkedInProfile} />
+          <Row label="Work Location" value={emp.companyLocation} onLockedPress={() => setShowUnlock(true)} />
+          <Row label="LinkedIn Link" value={emp.linkedInProfile} onLockedPress={() => setShowUnlock(true)} />
         </Section>
 
         {/* Education */}
@@ -318,21 +550,63 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
         {/* Family */}
         <Section title="Family Details">
-          <Row label="Father" value={fam.fatherName ? `${fam.fatherName}${fam.fatherOccupation ? ` - ${fam.fatherOccupation}` : ''}` : ''} />
-          <Row label="Mother" value={fam.motherName ? `${fam.motherName}${fam.motherOccupation ? ` - ${fam.motherOccupation}` : ''}` : ''} />
-          <Row label="Siblings" value={
-            (fam.brothers || fam.sisters)
-              ? [fam.brothers ? `${fam.brothers} Brother(s)` : '', fam.sisters ? `${fam.sisters} Sister(s)` : ''].filter(Boolean).join(', ')
-              : ''
-          } />
+          <Row
+            label="Father"
+            value={
+              fam.fatherName
+                ? `${fam.fatherName}${
+                    fam.fatherOccupation ? ` - ${fam.fatherOccupation}` : ''
+                  }`
+                : ''
+            }
+          />
+          <Row
+            label="Mother"
+            value={
+              fam.motherName
+                ? `${fam.motherName}${
+                    fam.motherOccupation ? ` - ${fam.motherOccupation}` : ''
+                  }`
+                : ''
+            }
+          />
+          <Row
+            label="Siblings"
+            value={
+              fam.brothers || fam.sisters
+                ? [
+                    fam.brothers ? `${fam.brothers} Brother(s)` : '',
+                    fam.sisters ? `${fam.sisters} Sister(s)` : '',
+                  ]
+                    .filter(Boolean)
+                    .join(', ')
+                : ''
+            }
+          />
         </Section>
 
         {/* Partner Preferences */}
         <Section title="Partner Preferences">
-          <Row label="Preferred Age Range" value={pref.ageRange ? `${pref.ageRange.min}-${pref.ageRange.max} years` : ''} />
-          <Row label="Preferred Education" value={pref.education?.join?.(', ')} />
-          <Row label="Preferred Profession" value={pref.profession?.join?.(', ')} />
-          <Row label="Preferred Resident" value={pref.ressident?.join?.(', ')} />
+          <Row
+            label="Preferred Age Range"
+            value={
+              pref.ageRange
+                ? `${pref.ageRange.min}-${pref.ageRange.max} years`
+                : ''
+            }
+          />
+          <Row
+            label="Preferred Education"
+            value={pref.education?.join?.(', ')}
+          />
+          <Row
+            label="Preferred Profession"
+            value={pref.profession?.join?.(', ')}
+          />
+          <Row
+            label="Preferred Resident"
+            value={pref.ressident?.join?.(', ')}
+          />
         </Section>
       </ScrollView>
     </SafeAreaView>
@@ -342,43 +616,112 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f7f7f7' },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
   },
   headerTitle: { fontSize: 17, fontWeight: '700', color: '#000' },
   coverWrap: { height: 320, position: 'relative' },
   cover: { width: '100%', height: '100%' },
   coverPlaceholder: { backgroundColor: '#ccc' },
   verifiedBadge: {
-    position: 'absolute', top: 16, left: 16, flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#1a7f37', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5, gap: 5,
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a7f37',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    gap: 5,
   },
   verifiedText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   coverInfo: {
-    position: 'absolute', bottom: 0, left: 0, right: 0, padding: 18,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 18,
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
   coverName: { color: '#fff', fontSize: 24, fontWeight: '700' },
   coverMeta: { color: '#fff', fontSize: 13, marginTop: 4 },
-  coverIconRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 5 },
+  coverIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 5,
+  },
   coverIconText: { color: '#fff', fontSize: 12 },
   actionWrap: { backgroundColor: '#fff', padding: 16 },
-  sendBtn: { backgroundColor: '#D20236', borderRadius: 8, paddingVertical: 15, alignItems: 'center' },
+  sendBtn: {
+    backgroundColor: '#D20236',
+    borderRadius: 8,
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
   sendText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  saveBtn: { borderRadius: 8, paddingVertical: 15, alignItems: 'center', backgroundColor: '#f0f0f0', marginTop: 10 },
+  saveBtn: {
+    borderRadius: 8,
+    paddingVertical: 15,
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    marginTop: 10,
+  },
   saveText: { color: '#333', fontSize: 15, fontWeight: '600' },
   section: { backgroundColor: '#fff', marginTop: 10, paddingHorizontal: 16 },
-  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16 },
+  sectionHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#000' },
   sectionBody: { paddingBottom: 12 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 9 },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 9,
+  },
   rowLabel: { fontSize: 14, color: '#888', flex: 1 },
-  rowValue: { fontSize: 14, color: '#000', fontWeight: '500', flex: 1, textAlign: 'right' },
-  lockedVal: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', flex: 1, gap: 6 },
-  blurBar: { width: 90, height: 12, borderRadius: 6, backgroundColor: '#e8e8e8' },
-  contactRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 10 },
+  rowValue: {
+    fontSize: 14,
+    color: '#000',
+    fontWeight: '500',
+    flex: 1,
+    textAlign: 'right',
+  },
+  lockedVal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flex: 1,
+    gap: 6,
+  },
+  blurBar: {
+    width: 90,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#e8e8e8',
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    gap: 10,
+  },
   contactLabel: { fontSize: 14, color: '#333', flex: 1 },
-  hobbyWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 4 },
+  hobbyWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingVertical: 4,
+  },
   hobbyChip: {
     borderWidth: 1,
     borderColor: '#f0d0d8',
@@ -389,4 +732,7 @@ const styles = StyleSheet.create({
   },
   hobbyText: { fontSize: 13, color: '#D20236', fontWeight: '500' },
   sendBtnDisabled: { backgroundColor: '#e69aab' },
+  lockedInline: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  contactValue: { fontSize: 14, color: '#000', fontWeight: '500' },
+  notProvided: { fontSize: 14, color: '#bbb', fontStyle: 'italic', flex: 1, textAlign: 'right' },
 });
