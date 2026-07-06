@@ -31,6 +31,7 @@ import ProfileDetailScreen from '../screens/profile-detail/ProfileDetailScreen';
 import RequestsScreen from '../screens/requests/RequestsScreen';
 import AllInterestedScreen from '../screens/interested/AllInterestedScreen';
 import NotificationScreen from '../screens/notifications/NotificationScreen';
+import PlansScreen from '../screens/plans/PlansScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -61,6 +62,7 @@ export default function RootNavigator() {
             <Stack.Screen name="Requests" component={RequestsScreen} />
             <Stack.Screen name="AllInterested" component={AllInterestedScreen} />
             <Stack.Screen name="Notifications" component={NotificationScreen} />
+            <Stack.Screen name="Plans" component={PlansScreen} />
           </>
         ) : (
           <>

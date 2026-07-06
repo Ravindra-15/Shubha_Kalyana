@@ -374,7 +374,7 @@ const [unreadCount, setUnreadCount] = useState(0);
           <Text style={styles.planSubtitle}>
             Unlock full profile access and premium features
           </Text>
-          <TouchableOpacity style={styles.upgradeBtn} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.upgradeBtn} activeOpacity={0.85} onPress={() => navigation.navigate('Plans')}>
             <Text style={styles.upgradeText}>Upgrade Now</Text>
             <ArrowRight color="#D20236" size={16} />
           </TouchableOpacity>
