@@ -32,6 +32,12 @@ import {
   emitMarkRead,
 } from '../../services/socket';
 import { resolveImageUrl } from '../../utils/imageUrl';
+import ChatOptionsModal from '../../components/ChatOptionsModal';
+import ConfirmDialog from '../../components/ConfirmDialog';
+import ReportUserModal from '../../components/ReportUserModal';
+import ReportSubmittedModal from '../../components/ReportSubmittedModal';
+import { blockChatUser } from '../../api/chat';
+import { Alert } from 'react-native'; // add Alert if not already imported
 
 const genClientId = () =>
   `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -45,7 +51,7 @@ const fmtTime = (d?: string) => {
 };
 
 export default function ConversationScreen({ route, navigation }: any) {
-  const { chatId, name, photo, receiverId } = route.params || {};
+  const { chatId, name, photo, receiverId, profileId } = route.params || {};
   const { user } = useAuth();
   const myId = String(user?._id || user?.id || '');
   console.log('MY ID:', myId, '| USER:', JSON.stringify(user));
@@ -57,12 +63,18 @@ export default function ConversationScreen({ route, navigation }: any) {
   const [otherTyping, setOtherTyping] = useState(false);
   const listRef = useRef<FlatList>(null);
   const typingTimeout = useRef<any>(null);
+  const [showOptions, setShowOptions] = useState(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showReportSubmitted, setShowReportSubmitted] = useState(false);
+  const [blocking, setBlocking] = useState(false);
 
   // load history + set up socket
   useEffect(() => {
     let mounted = true;
     (async () => {
-        console.log('OPENING CHAT ID:', chatId);
+      console.log('OPENING CHAT ID:', chatId);
       // history
       try {
         const data = await getMessages(chatId, 1);
@@ -100,19 +112,21 @@ export default function ConversationScreen({ route, navigation }: any) {
     const onNew = (payload: any) => {
       const msg = payload?.message || payload;
       if (String(msg.chatId) !== String(chatId)) return;
-      setMessages((prev) => {
+      setMessages(prev => {
         // already exists (by clientMessageId or _id) → merge, don't duplicate
         const exists = prev.some(
-          (m) =>
-            (msg.clientMessageId && m.clientMessageId === msg.clientMessageId) ||
-            (msg._id && m._id === msg._id)
+          m =>
+            (msg.clientMessageId &&
+              m.clientMessageId === msg.clientMessageId) ||
+            (msg._id && m._id === msg._id),
         );
         if (exists) {
-          return prev.map((m) =>
-            (msg.clientMessageId && m.clientMessageId === msg.clientMessageId) ||
+          return prev.map(m =>
+            (msg.clientMessageId &&
+              m.clientMessageId === msg.clientMessageId) ||
             (msg._id && m._id === msg._id)
               ? { ...m, ...msg }
-              : m
+              : m,
           );
         }
         return [...prev, msg];
@@ -221,18 +235,24 @@ export default function ConversationScreen({ route, navigation }: any) {
       console.log('SEND RESP:', JSON.stringify(resp));
       const saved = resp?.message || resp;
       if (saved) {
-        setMessages((prev) =>
-          prev.map((m) =>
+        setMessages(prev =>
+          prev.map(m =>
             m.clientMessageId === clientMessageId
               ? { ...saved, clientMessageId, _pending: false }
-              : m
-          )
+              : m,
+          ),
         );
       }
     } catch (err: any) {
-      console.log('SEND FAILED:', err?.response?.status, err?.response?.data?.message || err?.message);
-      setMessages((prev) =>
-        prev.map((m) => (m.clientMessageId === clientMessageId ? { ...m, _failed: true } : m))
+      console.log(
+        'SEND FAILED:',
+        err?.response?.status,
+        err?.response?.data?.message || err?.message,
+      );
+      setMessages(prev =>
+        prev.map(m =>
+          m.clientMessageId === clientMessageId ? { ...m, _failed: true } : m,
+        ),
       );
     }
   };
@@ -270,8 +290,93 @@ export default function ConversationScreen({ route, navigation }: any) {
     );
   };
 
+  const handleViewProfile = () => {
+  setShowOptions(false);
+  if (!profileId) {
+    Alert.alert('Unavailable', 'This profile is no longer available.');
+    return;
+  }
+  navigation.navigate('ProfileDetail', { profileId });
+};
+
+  const handleDeleteChat = () => {
+    setShowOptions(false);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteChat = () => {
+    // TODO: no backend endpoint exists yet for deleting a whole conversation.
+    setShowDeleteConfirm(false);
+    Alert.alert('Coming soon', 'Delete conversation will be available soon.');
+  };
+
+  const handleBlockAndReport = () => {
+    setShowOptions(false);
+    setShowBlockConfirm(true);
+  };
+
+  const confirmBlock = async () => {
+    try {
+      setBlocking(true);
+      await blockChatUser(chatId);
+      setShowBlockConfirm(false);
+      setShowReportModal(true);
+    } catch (err: any) {
+      Alert.alert(
+        'Error',
+        err?.response?.data?.message || 'Could not block user',
+      );
+    } finally {
+      setBlocking(false);
+    }
+  };
+
+  const handleReportSubmitted = () => {
+    setShowReportModal(false);
+    setShowReportSubmitted(true);
+  };
+
+  const handleBackToChat = () => {
+    setShowReportSubmitted(false);
+    navigation.goBack();
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <ChatOptionsModal
+        visible={showOptions}
+        onClose={() => setShowOptions(false)}
+        onViewProfile={handleViewProfile}
+        onDeleteChat={handleDeleteChat}
+        onBlockAndReport={handleBlockAndReport}
+      />
+      <ConfirmDialog
+        visible={showBlockConfirm}
+        title="Block This User?"
+        message="You will no longer receive messages or interactions from this profile."
+        confirmLabel="Block User"
+        loading={blocking}
+        onClose={() => setShowBlockConfirm(false)}
+        onConfirm={confirmBlock}
+      />
+      <ConfirmDialog
+        visible={showDeleteConfirm}
+        title="Delete Conversation?"
+        message="This action will remove the chat history from your account."
+        confirmLabel="Delete"
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDeleteChat}
+      />
+      <ReportUserModal
+        visible={showReportModal}
+        chatId={chatId}
+        onClose={() => setShowReportModal(false)}
+        onSubmitted={handleReportSubmitted}
+      />
+      <ReportSubmittedModal
+        visible={showReportSubmitted}
+        onBackToChat={handleBackToChat}
+      />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -291,11 +396,7 @@ export default function ConversationScreen({ route, navigation }: any) {
             {otherTyping ? 'typing...' : online ? 'Online' : 'Offline'}
           </Text>
         </View>
-        <TouchableOpacity
-          onPress={() => {
-            /* options menu next */
-          }}
-        >
+        <TouchableOpacity onPress={() => setShowOptions(true)}>
           <MoreVertical color="#fff" size={22} />
         </TouchableOpacity>
       </View>
@@ -311,7 +412,9 @@ export default function ConversationScreen({ route, navigation }: any) {
           <FlatList
             ref={listRef}
             data={messages}
-            keyExtractor={(item, index) => String(item._id || item.clientMessageId || index) + '_' + index}
+            keyExtractor={(item, index) =>
+              String(item._id || item.clientMessageId || index) + '_' + index
+            }
             renderItem={renderMessage}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}

@@ -273,13 +273,14 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       return;
     }
     try {
-      const chat = await startChat(otherUserId);
+      const { chat, profileId: otherProfileId } = await startChat(otherUserId);
       console.log('STARTED CHAT ID:', chat._id, 'for user:', otherUserId);
       navigation.navigate('Conversation', {
         chatId: chat._id,
         name,
         photo,
         receiverId: otherUserId,
+        profileId: otherProfileId,
       });
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not start chat');

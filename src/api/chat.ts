@@ -3,7 +3,7 @@ import apiClient from './client';
 // start (or get existing) direct chat with a user
 export const startChat = async (receiverId: string) => {
   const res = await apiClient.post('/chat/start', { receiverId });
-  return res.data?.data?.chat;
+  return res.data?.data; // { chat, profileId }
 };
 
 // conversation list

@@ -4,7 +4,7 @@ import { Home, Search, Heart, MessageCircle, User } from 'lucide-react-native';
 import HomeScreen from '../screens/home/HomeScreen';
 import SearchScreen from '../screens/search/SearchScreen';
 import AllInterestedScreen from '../screens/interested/AllInterestedScreen';
-import ChatScreen from '../screens/chat/ChatScreen';
+import ChatListScreen from '../screens/chat/ChatListScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
@@ -52,7 +52,7 @@ export default function MainTabs() {
       />
       <Tab.Screen
         name="ChatTab"
-        component={ChatScreen}
+        component={ChatListScreen}
         options={{
           title: 'Chat',
           tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} />,
