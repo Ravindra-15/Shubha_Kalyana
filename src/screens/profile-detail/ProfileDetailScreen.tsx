@@ -33,6 +33,8 @@ import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { payToUnlockProfile } from '../../utils/razorpayCheckout';
 import { getUnlockPrice, getProfileAccess } from '../../api/membershipPayment';
 import { revealContact } from '../../api/membershipPayment';
+import { startChat } from '../../api/chat';
+import { getAccessSummary } from '../../api/membershipPayment';
 
 if (
   Platform.OS === 'android' &&
@@ -177,6 +179,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const [paying, setPaying] = useState(false);
   const [access, setAccess] = useState<any>(null);
   const [contact, setContact] = useState<any>(null);
+  const [canChat, setCanChat] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -197,6 +200,8 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           ]);
           setUnlockPrice(price.amount || 99);
           setAccess(acc);
+          const summary = await getAccessSummary();
+          setCanChat(summary?.canUseChat === true);
           if (acc && acc.shouldBlurSensitiveFields === false) {
             const c = await revealContact(profileId);
             setContact(c);
@@ -254,6 +259,30 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         'Error',
         err?.response?.data?.message || 'Could not send request',
       );
+    }
+  };
+
+ const openChat = async () => {
+    if (!canChat) {
+      navigation.navigate('Plans', { profileId });
+      return;
+    }
+    const otherUserId = data?.profile?.userId;
+    if (!otherUserId) {
+      Alert.alert('Error', 'Could not identify user');
+      return;
+    }
+    try {
+      const chat = await startChat(otherUserId);
+      console.log('STARTED CHAT ID:', chat._id, 'for user:', otherUserId);
+      navigation.navigate('Conversation', {
+        chatId: chat._id,
+        name,
+        photo,
+        receiverId: otherUserId,
+      });
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not start chat');
     }
   };
   const handleUnlock = async () => {
@@ -443,19 +472,24 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
         {/* Action buttons */}
         <View style={styles.actionWrap}>
-          <TouchableOpacity
-            style={[styles.sendBtn, requestStatus && styles.sendBtnDisabled]}
-            onPress={sendRequest}
-            disabled={!!requestStatus}
-          >
-            <Text style={styles.sendText}>
-              {requestStatus === 'PENDING'
-                ? 'Request Sent'
-                : requestStatus === 'ACCEPTED'
-                ? 'Connected'
-                : 'Send Request'}
-            </Text>
-          </TouchableOpacity>
+          {requestStatus === 'ACCEPTED' ? (
+            <TouchableOpacity
+              style={[styles.sendBtn, !canChat && styles.sendBtnDisabled]}
+              onPress={openChat}
+            >
+              <Text style={styles.sendText}>Chat Now</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[styles.sendBtn, requestStatus && styles.sendBtnDisabled]}
+              onPress={sendRequest}
+              disabled={!!requestStatus}
+            >
+              <Text style={styles.sendText}>
+                {requestStatus === 'PENDING' ? 'Request Sent' : 'Send Request'}
+              </Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.saveBtn}>
             <Text style={styles.saveText}>Save Profile</Text>
           </TouchableOpacity>

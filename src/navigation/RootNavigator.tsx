@@ -32,6 +32,7 @@ import RequestsScreen from '../screens/requests/RequestsScreen';
 import AllInterestedScreen from '../screens/interested/AllInterestedScreen';
 import NotificationScreen from '../screens/notifications/NotificationScreen';
 import PlansScreen from '../screens/plans/PlansScreen';
+import ConversationScreen from '../screens/chat/ConversationScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -63,6 +64,7 @@ export default function RootNavigator() {
             <Stack.Screen name="AllInterested" component={AllInterestedScreen} />
             <Stack.Screen name="Notifications" component={NotificationScreen} />
             <Stack.Screen name="Plans" component={PlansScreen} />
+            <Stack.Screen name="Conversation" component={ConversationScreen} />
           </>
         ) : (
           <>
