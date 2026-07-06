@@ -36,7 +36,7 @@ import ChatOptionsModal from '../../components/ChatOptionsModal';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import ReportUserModal from '../../components/ReportUserModal';
 import ReportSubmittedModal from '../../components/ReportSubmittedModal';
-import { blockChatUser } from '../../api/chat';
+import { blockChatUser, unblockChatUser } from '../../api/chat';
 import { Alert } from 'react-native'; // add Alert if not already imported
 
 const genClientId = () =>
@@ -69,6 +69,8 @@ export default function ConversationScreen({ route, navigation }: any) {
   const [showReportModal, setShowReportModal] = useState(false);
   const [showReportSubmitted, setShowReportSubmitted] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [chatBlocked, setChatBlocked] = useState(false);
+  const [blockedByMe, setBlockedByMe] = useState(false);
 
   // load history + set up socket
   useEffect(() => {
@@ -80,10 +82,11 @@ export default function ConversationScreen({ route, navigation }: any) {
         const data = await getMessages(chatId, 1);
         console.log('HISTORY:', JSON.stringify(data));
         if (mounted) {
-          // newest last for inverted=false; we'll display normal order
           const msgs = data.messages || [];
           console.log('PARSED COUNT:', msgs.length);
           setMessages(msgs);
+          setChatBlocked(Boolean(data.chat?.isRestricted));
+          setBlockedByMe(Boolean(data.chat?.blockedByMe));
         }
       } catch {
       } finally {
@@ -291,13 +294,13 @@ export default function ConversationScreen({ route, navigation }: any) {
   };
 
   const handleViewProfile = () => {
-  setShowOptions(false);
-  if (!profileId) {
-    Alert.alert('Unavailable', 'This profile is no longer available.');
-    return;
-  }
-  navigation.navigate('ProfileDetail', { profileId });
-};
+    setShowOptions(false);
+    if (!profileId) {
+      Alert.alert('Unavailable', 'This profile is no longer available.');
+      return;
+    }
+    navigation.navigate('ProfileDetail', { profileId });
+  };
 
   const handleDeleteChat = () => {
     setShowOptions(false);
@@ -341,14 +344,33 @@ export default function ConversationScreen({ route, navigation }: any) {
     navigation.goBack();
   };
 
+  const handleUnblock = async () => {
+    try {
+      setBlocking(true);
+      await unblockChatUser(chatId);
+      setChatBlocked(false);
+      setBlockedByMe(false);
+      setShowOptions(false);
+    } catch (err: any) {
+      Alert.alert(
+        'Error',
+        err?.response?.data?.message || 'Could not unblock user',
+      );
+    } finally {
+      setBlocking(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ChatOptionsModal
         visible={showOptions}
+        isBlockedByMe={blockedByMe}
         onClose={() => setShowOptions(false)}
         onViewProfile={handleViewProfile}
         onDeleteChat={handleDeleteChat}
         onBlockAndReport={handleBlockAndReport}
+        onUnblock={handleUnblock}
       />
       <ConfirmDialog
         visible={showBlockConfirm}
@@ -429,19 +451,20 @@ export default function ConversationScreen({ route, navigation }: any) {
           </TouchableOpacity>
           <TextInput
             style={styles.input}
-            placeholder="Type your message..."
+            placeholder={chatBlocked ? 'You cannot message this user' : 'Type your message...'}
             placeholderTextColor="#999"
             value={input}
             onChangeText={handleInput}
             multiline
+            editable={!chatBlocked}
           />
           <TouchableOpacity
             style={[
               styles.sendBtn,
-              input.trim() ? styles.sendBtnActive : styles.sendBtnInactive,
+              input.trim() && !chatBlocked ? styles.sendBtnActive : styles.sendBtnInactive,
             ]}
             onPress={send}
-            disabled={!input.trim()}
+            disabled={!input.trim() || chatBlocked}
           >
             <Send color="#fff" size={18} />
           </TouchableOpacity>

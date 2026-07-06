@@ -1,17 +1,19 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
-import { Eye, Trash2, Ban, X } from 'lucide-react-native';
+import { Eye, Trash2, Ban, ShieldCheck, X } from 'lucide-react-native';
 
 type Props = {
   visible: boolean;
+  isBlockedByMe: boolean;
   onClose: () => void;
   onViewProfile: () => void;
   onDeleteChat: () => void;
   onBlockAndReport: () => void;
+  onUnblock: () => void;
 };
 
 export default function ChatOptionsModal({
-  visible, onClose, onViewProfile, onDeleteChat, onBlockAndReport,
+  visible, isBlockedByMe, onClose, onViewProfile, onDeleteChat, onBlockAndReport, onUnblock,
 }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -34,10 +36,17 @@ export default function ChatOptionsModal({
             <Text style={styles.rowText}>Delete Chat</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.row} onPress={onBlockAndReport}>
-            <Ban color="#D20236" size={18} />
-            <Text style={[styles.rowText, { color: '#D20236' }]}>Block and Report User</Text>
-          </TouchableOpacity>
+          {isBlockedByMe ? (
+            <TouchableOpacity style={styles.row} onPress={onUnblock}>
+              <ShieldCheck color="#1a7f37" size={18} />
+              <Text style={[styles.rowText, { color: '#1a7f37' }]}>Unblock User</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.row} onPress={onBlockAndReport}>
+              <Ban color="#D20236" size={18} />
+              <Text style={[styles.rowText, { color: '#D20236' }]}>Block and Report User</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
             <Text style={styles.cancelText}>Cancel</Text>

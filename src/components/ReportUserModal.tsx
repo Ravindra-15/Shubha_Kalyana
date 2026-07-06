@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, ActivityIndicator, Alert } from 'react-native';
+import {
+  View, Text, TouchableOpacity, StyleSheet, Modal, TextInput,
+  ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView,
+} from 'react-native';
 import { X } from 'lucide-react-native';
 import { reportChatUser, CHAT_REPORT_REASONS, ChatReportReason } from '../api/complaint';
 
@@ -41,7 +44,10 @@ export default function ReportUserModal({ visible, chatId, onClose, onSubmitted 
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View style={styles.card}>
           <View style={styles.headRow}>
             <Text style={styles.headTitle}>Report User</Text>
@@ -51,44 +57,52 @@ export default function ReportUserModal({ visible, chatId, onClose, onSubmitted 
           </View>
           <Text style={styles.subtitle}>Help us maintain a safe and respectful platform.</Text>
 
-          {CHAT_REPORT_REASONS.map((r) => (
-            <TouchableOpacity key={r} style={styles.reasonRow} onPress={() => setReason(r)}>
-              <View style={[styles.radio, reason === r && styles.radioActive]}>
-                {reason === r && <View style={styles.radioDot} />}
-              </View>
-              <Text style={styles.reasonText}>{r}</Text>
-            </TouchableOpacity>
-          ))}
+          <ScrollView
+            style={styles.scrollArea}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+          >
+            {CHAT_REPORT_REASONS.map((r) => (
+              <TouchableOpacity key={r} style={styles.reasonRow} onPress={() => setReason(r)}>
+                <View style={[styles.radio, reason === r && styles.radioActive]}>
+                  {reason === r && <View style={styles.radioDot} />}
+                </View>
+                <Text style={styles.reasonText}>{r}</Text>
+              </TouchableOpacity>
+            ))}
 
-          <Text style={styles.label}>Describe the issue (optional)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Tell us more about the issue..."
-            placeholderTextColor="#aaa"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={3}
-          />
+            <Text style={styles.label}>Describe the issue (optional)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Tell us more about the issue..."
+              placeholderTextColor="#aaa"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={3}
+            />
 
-          <View style={styles.btnRow}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={handleClose} disabled={loading}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.submitBtn, !reason && styles.submitBtnDisabled]}
-              onPress={submit}
-              disabled={!reason || loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.submitText}>Submit Report</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+            <View style={styles.btnRow}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={handleClose} disabled={loading}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.submitBtn, !reason && styles.submitBtnDisabled]}
+                onPress={submit}
+                disabled={!reason || loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.submitText}>Submit Report</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -99,6 +113,8 @@ const styles = StyleSheet.create({
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headTitle: { fontSize: 17, fontWeight: '700', color: '#D20236' },
   subtitle: { fontSize: 12, color: '#888', marginTop: 4, marginBottom: 14 },
+  scrollArea: { flexGrow: 0, flexShrink: 1 },
+  scrollContent: { paddingBottom: 4 },
   reasonRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9 },
   radio: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: '#ccc', alignItems: 'center', justifyContent: 'center' },
   radioActive: { borderColor: '#D20236' },
