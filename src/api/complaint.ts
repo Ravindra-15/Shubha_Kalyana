@@ -11,7 +11,6 @@ export const CHAT_REPORT_REASONS = [
 ] as const;
 
 export type ChatReportReason = typeof CHAT_REPORT_REASONS[number];
-
 const genIdempotencyKey = () =>
   `${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
 
