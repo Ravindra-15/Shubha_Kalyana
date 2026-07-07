@@ -22,6 +22,7 @@ import {
 } from 'lucide-react-native';
 import { useAuth } from '../../context/AuthContext';
 import { getMessages, sendMessageApi, markChatRead } from '../../api/chat';
+import { useChat } from '../../context/ChatContext';
 import {
   connectSocket,
   getSocket,
@@ -53,6 +54,7 @@ const fmtTime = (d?: string) => {
 export default function ConversationScreen({ route, navigation }: any) {
   const { chatId, name, photo, receiverId, profileId } = route.params || {};
   const { user } = useAuth();
+  const { refreshUnreadCount } = useChat();
   const myId = String(user?._id || user?.id || '');
   console.log('MY ID:', myId, '| USER:', JSON.stringify(user));
 
@@ -99,7 +101,8 @@ export default function ConversationScreen({ route, navigation }: any) {
         joinChat(chatId);
         emitMarkRead(chatId);
       }
-      markChatRead(chatId);
+      await markChatRead(chatId);
+      refreshUnreadCount();
     })();
 
     return () => {

@@ -5,11 +5,14 @@ import HomeScreen from '../screens/home/HomeScreen';
 import SearchScreen from '../screens/search/SearchScreen';
 import AllInterestedScreen from '../screens/interested/AllInterestedScreen';
 import ChatListScreen from '../screens/chat/ChatListScreen';
+import { useChat } from '../context/ChatContext';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
 export default function MainTabs() {
+  const { unreadCount } = useChat();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -56,6 +59,7 @@ export default function MainTabs() {
         options={{
           title: 'Chat',
           tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} />,
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
         }}
       />
       <Tab.Screen
