@@ -44,7 +44,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       // ignore — keep previous count on failure
     }
   }, []);
-
   useEffect(() => {
     if (!user) {
       setUnreadCount(0);
