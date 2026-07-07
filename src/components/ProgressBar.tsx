@@ -9,7 +9,6 @@ export default function ProgressBar({ step, total }: { step: number; total: numb
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   track: {
     height: 6,
