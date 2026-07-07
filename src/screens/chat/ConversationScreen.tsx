@@ -428,21 +428,22 @@ export default function ConversationScreen({ route, navigation }: any) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {loading ? (
-          <ActivityIndicator color="#D20236" style={{ marginTop: 40 }} />
-        ) : (
-          <FlatList
-            ref={listRef}
-            data={messages}
-            keyExtractor={(item, index) =>
-              String(item._id || item.clientMessageId || index) + '_' + index
-            }
-            renderItem={renderMessage}
-            contentContainerStyle={styles.list}
-            showsVerticalScrollIndicator={false}
-            ListHeaderComponent={<Text style={styles.todayDivider}>Today</Text>}
-          />
-        )}
+        <View style={styles.messagesArea}>
+          {loading ? (
+            <ActivityIndicator color="#D20236" style={{ marginTop: 40 }} />
+          ) : (
+            <FlatList
+              ref={listRef}
+              data={messages}
+              keyExtractor={(item, index) => String(item._id || item.clientMessageId || index) + '_' + index}
+              renderItem={renderMessage}
+              contentContainerStyle={styles.list}
+              showsVerticalScrollIndicator={false}
+              ListHeaderComponent={<Text style={styles.todayDivider}>Today</Text>}
+              style={{ flex: 1 }}
+            />
+          )}
+        </View>
 
         {/* Input bar */}
         <View style={styles.inputBar}>
@@ -539,4 +540,5 @@ const styles = StyleSheet.create({
   },
   sendBtnActive: { backgroundColor: '#D20236' },
   sendBtnInactive: { backgroundColor: '#ccc' },
+  messagesArea: { flex: 1 },
 });
