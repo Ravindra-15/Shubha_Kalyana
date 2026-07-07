@@ -13,7 +13,6 @@ type Props = {
   onRemove?: () => void;        // "Remove from Interested"
   removeLabel?: string;
 };
-
 export default function ProfileCard({
   profile,
   actionLabel = 'Send Request',
