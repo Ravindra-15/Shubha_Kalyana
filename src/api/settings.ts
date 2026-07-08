@@ -30,9 +30,8 @@ export const verifyChangeMobileOtp = async (code: string) => {
   return res.data?.data; // { mobile, accessToken }
 };
 
-// TODO: backend logic pending — endpoint responds but doesn't verify/update real password yet
-export const changePassword = async (currentPassword: string, newPassword: string) => {
-  const res = await apiClient.post('/settings/change-password', { currentPassword, newPassword });
+export const changeMpin = async (currentMpin: string, newMpin: string, confirmMpin: string) => {
+  const res = await apiClient.post('/settings/change-mpin', { currentMpin, newMpin, confirmMpin });
   return res.data?.data;
 };
 

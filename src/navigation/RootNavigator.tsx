@@ -36,6 +36,7 @@ import ConversationScreen from '../screens/chat/ConversationScreen';
 import SettingsScreen from '../screens/profile/SettingsScreen';
 import AccountSettingsScreen from '../screens/profile/AccountSettingsScreen';
 import ChangeMobileNumberScreen from '../screens/profile/ChangeMobileNumberScreen';
+import ChangeMpinScreen from '../screens/profile/ChangeMpinScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
@@ -70,6 +71,7 @@ export default function RootNavigator() {
             <Stack.Screen name="Settings" component={SettingsScreen} />
             <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
             <Stack.Screen name="ChangeMobileNumber" component={ChangeMobileNumberScreen} />
+            <Stack.Screen name="ChangeMpin" component={ChangeMpinScreen} />
           </>
         ) : (
           <>
