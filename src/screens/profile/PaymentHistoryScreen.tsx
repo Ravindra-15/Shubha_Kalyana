@@ -72,7 +72,9 @@ export default function PaymentHistoryScreen({ navigation }: any) {
       </View>
 
       {loading ? (
-        <ActivityIndicator color="#D20236" style={{ marginTop: 40 }} />
+        <View style={{ flex: 1 }}>
+          <ActivityIndicator color="#D20236" style={{ marginTop: 40 }} />
+        </View>
       ) : (
         <FlatList
           data={items}
