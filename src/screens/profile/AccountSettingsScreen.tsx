@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ArrowLeft, Edit3, Phone, Mail, Lock, CreditCard, Trash2, LogOut, ChevronRight,
 } from 'lucide-react-native';
+import BottomNav from '../../components/BottomNav';
 import { useAuth } from '../../context/AuthContext';
 
 export default function AccountSettingsScreen({ navigation }: any) {
@@ -88,6 +89,8 @@ export default function AccountSettingsScreen({ navigation }: any) {
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <BottomNav active="ProfileTab" />
     </SafeAreaView>
   );
 }

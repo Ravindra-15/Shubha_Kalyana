@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, User, Globe, CreditCard, HelpCircle, ChevronRight } from 'lucide-react-native';
+import BottomNav from '../../components/BottomNav';
 
 export default function SettingsScreen({ navigation }: any) {
   const sections = [
@@ -56,6 +57,8 @@ export default function SettingsScreen({ navigation }: any) {
         <Text style={styles.footer}>App Version 1.0.0</Text>
         <Text style={styles.footer}>© 2026 shubhakalyana. All rights reserved.</Text>
       </ScrollView>
+
+      <BottomNav active="ProfileTab" />
     </SafeAreaView>
   );
 }

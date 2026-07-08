@@ -5,6 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { ArrowLeft, Download } from 'lucide-react-native';
+import BottomNav from '../../components/BottomNav';
 import { getMyPaymentOrders, PaymentOrder } from '../../api/payment';
 
 const PURPOSE_LABELS: Record<string, string> = {
@@ -102,6 +103,8 @@ export default function PaymentHistoryScreen({ navigation }: any) {
           ListEmptyComponent={<Text style={styles.empty}>No payment history yet</Text>}
         />
       )}
+
+      <BottomNav active="ProfileTab" />
     </SafeAreaView>
   );
 }
