@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
-  Alert, BackHandler, KeyboardAvoidingView, Platform,
+  BackHandler, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeft, Check } from 'lucide-react-native';
 import { getAccountSettings, sendChangeMobileOtp, verifyChangeMobileOtp } from '../../api/settings';
+
 
 type Step = 'ENTER' | 'OTP' | 'SUCCESS';
 
@@ -18,6 +19,7 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [resendIn, setResendIn] = useState(0);
+  const [errorMsg, setErrorMsg] = useState('');
   const otpRefs = useRef<Array<TextInput | null>>([]);
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
   );
 
   const handleHeaderBack = () => {
+    setErrorMsg('');
     if (step === 'OTP') {
       setStep('ENTER');
     } else {
@@ -63,8 +66,9 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
   };
 
   const sendOtp = async () => {
+    setErrorMsg('');
     if (!/^\d{10}$/.test(newMobile)) {
-      Alert.alert('Invalid Number', 'Enter a valid 10-digit mobile number');
+      setErrorMsg('Enter a valid 10-digit mobile number');
       return;
     }
     try {
@@ -74,7 +78,7 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
       setResendIn(60);
       setOtp(['', '', '', '', '', '']);
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not send OTP');
+      setErrorMsg(err?.response?.data?.message || 'Could not send OTP');
     } finally {
       setLoading(false);
     }
@@ -82,13 +86,14 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
 
   const resendOtp = async () => {
     if (resendIn > 0) return;
+    setErrorMsg('');
     try {
       await sendChangeMobileOtp(newMobile);
       setResendIn(60);
       setOtp(['', '', '', '', '', '']);
       otpRefs.current[0]?.focus();
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not resend OTP');
+      setErrorMsg(err?.response?.data?.message || 'Could not resend OTP');
     }
   };
 
@@ -102,9 +107,10 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
   };
 
   const verifyAndUpdate = async () => {
+    setErrorMsg('');
     const code = otp.join('');
     if (code.length !== 6) {
-      Alert.alert('Invalid OTP', 'Enter the 6-digit code');
+      setErrorMsg('Enter the 6-digit code');
       return;
     }
     try {
@@ -121,7 +127,7 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
       }
       setStep('SUCCESS');
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not verify OTP');
+      setErrorMsg(err?.response?.data?.message || 'Could not verify OTP');
     } finally {
       setLoading(false);
     }
@@ -161,6 +167,8 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
                 keyboardType="number-pad"
                 maxLength={10}
               />
+
+              {!!errorMsg && step === 'ENTER' && <Text style={styles.errorText}>{errorMsg}</Text>}
 
               <TouchableOpacity
                 style={[styles.primaryBtn, (!newMobile || loading) && styles.primaryBtnDisabled]}
@@ -218,6 +226,8 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
                 </TouchableOpacity>
               </View>
 
+              {!!errorMsg && step === 'OTP' && <Text style={styles.errorText}>{errorMsg}</Text>}
+
               <TouchableOpacity
                 style={[styles.primaryBtn, loading && styles.primaryBtnDisabled]}
                 onPress={verifyAndUpdate}
@@ -273,6 +283,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnDisabled: { backgroundColor: '#e9a9b6' },
   primaryBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  errorText: { fontSize: 13, color: '#D20236', marginTop: 12, fontWeight: '500' },
   otpRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   otpBox: {
     width: 44, height: 50, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8,
