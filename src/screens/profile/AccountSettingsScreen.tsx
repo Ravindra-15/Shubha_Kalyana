@@ -26,7 +26,7 @@ export default function AccountSettingsScreen({ navigation }: any) {
     {
       title: 'SECURITY',
       items: [
-        { label: 'Verify Mobile Number', Icon: Phone, onPress: () => navigation.navigate('VerifyMobileNumber') },
+        { label: 'Change Mobile Number', Icon: Phone, onPress: () => navigation.navigate('ChangeMobileNumber') },
         { label: 'Change Email', Icon: Mail, onPress: () => navigation.navigate('ChangeEmail') },
         { label: 'Change MPIN', Icon: Lock, onPress: () => navigation.navigate('ChangeMpin') },
       ],
