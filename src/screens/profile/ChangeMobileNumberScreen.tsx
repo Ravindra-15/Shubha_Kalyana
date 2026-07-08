@@ -73,10 +73,15 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
     }
     try {
       setLoading(true);
-      await sendChangeMobileOtp(newMobile);
+      const result = await sendChangeMobileOtp(newMobile);
       setStep('OTP');
       setResendIn(60);
-      setOtp(['', '', '', '', '', '']);
+      const devOtp = result?.devOtp;
+      if (devOtp) {
+        setOtp(String(devOtp).split(''));
+      } else {
+        setOtp(['', '', '', '', '', '']);
+      }
     } catch (err: any) {
       setErrorMsg(err?.response?.data?.message || 'Could not send OTP');
     } finally {
@@ -88,10 +93,15 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
     if (resendIn > 0) return;
     setErrorMsg('');
     try {
-      await sendChangeMobileOtp(newMobile);
+      const result = await sendChangeMobileOtp(newMobile);
       setResendIn(60);
-      setOtp(['', '', '', '', '', '']);
-      otpRefs.current[0]?.focus();
+      const devOtp = result?.devOtp;
+      if (devOtp) {
+        setOtp(String(devOtp).split(''));
+      } else {
+        setOtp(['', '', '', '', '', '']);
+        otpRefs.current[0]?.focus();
+      }
     } catch (err: any) {
       setErrorMsg(err?.response?.data?.message || 'Could not resend OTP');
     }
