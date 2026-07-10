@@ -46,8 +46,7 @@ export async function payToUnlockProfile(
 
     return { success: true };
   } catch (err: any) {
-    // Razorpay cancel gives code 0 / description
-    console.log('RAZORPAY/VERIFY ERR:', JSON.stringify(err));
+    console.log('RAZORPAY/VERIFY ERR:', JSON.stringify(err), '| STATUS:', err?.response?.status, '| DATA:', JSON.stringify(err?.response?.data));
     const msg = err?.description || err?.response?.data?.message || 'Payment cancelled or failed';
     return { success: false, message: msg };
   }
@@ -91,6 +90,7 @@ export async function payForMembership(
 
     return { success: true };
   } catch (err: any) {
+    console.log('RAZORPAY/VERIFY ERR (MEMBERSHIP):', JSON.stringify(err), '| STATUS:', err?.response?.status, '| DATA:', JSON.stringify(err?.response?.data));
     const msg = err?.description || err?.response?.data?.message || 'Payment cancelled or failed';
     return { success: false, message: msg };
   }

@@ -5,13 +5,13 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ProgressBar from '../../../components/ProgressBar';
 import SearchableDropdown from '../../../components/SearchableDropdown';
+import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
 
@@ -76,7 +76,8 @@ export default function BasicLifestyleScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <KeyboardWrapper>
+        <View style={styles.scroll}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
@@ -158,7 +159,8 @@ export default function BasicLifestyleScreen({ navigation }: any) {
         <TouchableOpacity style={styles.skipBtn} onPress={() => submit(true)}>
           <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
-      </ScrollView>
+        </View>
+      </KeyboardWrapper>
     </SafeAreaView>
   );
 }

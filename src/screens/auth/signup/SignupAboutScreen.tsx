@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  ScrollView,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import { useSignup } from '../../../context/SignupContext';
 
 export default function SignupAboutScreen({ navigation }: any) {
@@ -93,10 +93,8 @@ const dd = parseInt(day, 10);
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <KeyboardWrapper>
+        <View style={styles.scroll}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
@@ -196,7 +194,8 @@ const dd = parseInt(day, 10);
         <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
           <Text style={styles.continueText}>Continue →</Text>
         </TouchableOpacity>
-      </ScrollView>
+        </View>
+      </KeyboardWrapper>
     </SafeAreaView>
   );
 }

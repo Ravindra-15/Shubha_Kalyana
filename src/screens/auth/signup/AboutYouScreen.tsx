@@ -60,8 +60,8 @@ export default function AboutYouScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardWrapper>
+    <View style={styles.container}>
+  <KeyboardWrapper>
         <View style={styles.inner}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.back}>←</Text>
@@ -96,7 +96,7 @@ export default function AboutYouScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
       </KeyboardWrapper>
-    </SafeAreaView>
+    </View>
   );
 }
 

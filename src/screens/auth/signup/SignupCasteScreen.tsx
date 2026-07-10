@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  ScrollView,
   Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
+import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import { useSignup } from '../../../context/SignupContext';
 import { getCastes, Caste } from '../../../api/caste';
 import SearchableDropdown from '../../../components/SearchableDropdown';
@@ -97,10 +97,8 @@ export default function SignupCasteScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <KeyboardWrapper>
+        <View style={styles.scroll}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
@@ -165,7 +163,8 @@ export default function SignupCasteScreen({ navigation }: any) {
         <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
           <Text style={styles.continueText}>Continue →</Text>
         </TouchableOpacity>
-      </ScrollView>
+        </View>
+      </KeyboardWrapper>
     </SafeAreaView>
   );
 }

@@ -15,6 +15,7 @@ import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { getCastes, Caste } from '../../../api/caste';
 import { useSignup } from '../../../context/SignupContext';
+import { getResumeScreen } from '../../../utils/resumeOnboarding';
 
 const MARITAL = [
   { label: 'Never Married', value: 'NEVER_MARRIED' },
@@ -87,9 +88,14 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
     setArr(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
   };
 
+  const goToNextStep = async () => {
+    const resumeScreen = await getResumeScreen();
+    navigation.navigate((resumeScreen as never) || 'VerifyMobile');
+  };
+
   const submit = async (skip = false) => {
     if (skip) {
-      navigation.navigate('VerifyMobile');
+      await goToNextStep();
       return;
     }
 
@@ -117,11 +123,11 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
       const ppNow = { ageMin, ageMax, maritalStatus, religion, casteIds, education, profession, resident };
       // skip API if unchanged (prevents backend step rewind)
       if (JSON.stringify(data.partnerPreference || {}) === JSON.stringify(ppNow)) {
-        return navigation.navigate('VerifyMobile');
+        return await goToNextStep();
       }
       await apiClient.put('/onboarding/partner-preference', payload);
       setField('partnerPreference', ppNow);
-      navigation.navigate('VerifyMobile');
+      await goToNextStep();
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');
     } finally {

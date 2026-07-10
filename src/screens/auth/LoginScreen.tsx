@@ -9,10 +9,9 @@ import {
   Image,
   Alert,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import KeyboardWrapper from '../../components/KeyboardWrapper';
 import apiClient from '../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getResumeScreen } from '../../utils/resumeOnboarding';
@@ -93,10 +92,7 @@ export default function LoginScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}
-      >
+      <KeyboardWrapper>
         <View style={styles.content}>
           <Image
             source={require('../../assets/images/logo-red.png')}
@@ -111,7 +107,8 @@ export default function LoginScreen({ navigation }: any) {
             placeholderTextColor="#999"
             value={mobile}
             onChangeText={setMobile}
-            keyboardType="phone-pad"
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
 
           <Text style={styles.label}>Enter your MPIN</Text>
@@ -165,7 +162,7 @@ export default function LoginScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardWrapper>
     </SafeAreaView>
   );
 }
@@ -173,7 +170,7 @@ export default function LoginScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   flex: { flex: 1 },
-  content: { flex: 1, paddingHorizontal: 24, justifyContent: 'center' },
+  content: { paddingHorizontal: 24, paddingVertical: 40, flexGrow: 1, justifyContent: 'center' },
   logo: { width: 180, height: 130, alignSelf: 'center', marginBottom: 40 },
   label: { fontSize: 14, color: '#333', marginBottom: 8, fontWeight: '500' },
   input: {

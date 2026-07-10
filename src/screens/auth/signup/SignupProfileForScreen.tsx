@@ -6,10 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  ScrollView,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import { useSignup } from '../../../context/SignupContext';
 
 const PROFILE_OPTIONS = [
@@ -51,10 +51,8 @@ export default function SignupProfileForScreen({ navigation }: any) {
   };
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <KeyboardWrapper>
+        <View style={styles.scroll}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
@@ -181,7 +179,8 @@ export default function SignupProfileForScreen({ navigation }: any) {
           commercial use or marriage bureaus are strictly prohibited & may
           reported to law enforcement
         </Text>
-      </ScrollView>
+        </View>
+      </KeyboardWrapper>
     </SafeAreaView>
   );
 }
