@@ -35,10 +35,10 @@ import PlansScreen from '../screens/plans/PlansScreen';
 import ConversationScreen from '../screens/chat/ConversationScreen';
 import SettingsScreen from '../screens/profile/SettingsScreen';
 import AccountSettingsScreen from '../screens/profile/AccountSettingsScreen';
-// import ChangeMobileNumberScreen from '../screens/profile/ChangeMobileNumberScreen';
-// import ChangeMpinScreen from '../screens/profile/ChangeMpinScreen';
-// import PaymentHistoryScreen from '../screens/profile/PaymentHistoryScreen';
-// import DeleteAccountScreen from '../screens/profile/DeleteAccountScreen';
+import ChangeMobileNumberScreen from '../screens/profile/ChangeMobileNumberScreen';
+import ChangeMpinScreen from '../screens/profile/ChangeMpinScreen';
+import PaymentHistoryScreen from '../screens/profile/PaymentHistoryScreen';
+import DeleteAccountScreen from '../screens/profile/DeleteAccountScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
@@ -72,10 +72,10 @@ export default function RootNavigator() {
             <Stack.Screen name="Conversation" component={ConversationScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
             <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
-            {/* <Stack.Screen name="ChangeMobileNumber" component={ChangeMobileNumberScreen} />
+            <Stack.Screen name="ChangeMobileNumber" component={ChangeMobileNumberScreen} />
             <Stack.Screen name="ChangeMpin" component={ChangeMpinScreen} />
             <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
-            <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} /> */}
+            <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
           </>
         ) : (
           <>
