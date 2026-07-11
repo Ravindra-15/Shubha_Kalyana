@@ -39,6 +39,7 @@ import ChangeMobileNumberScreen from '../screens/profile/ChangeMobileNumberScree
 import ChangeMpinScreen from '../screens/profile/ChangeMpinScreen';
 import PaymentHistoryScreen from '../screens/profile/PaymentHistoryScreen';
 import DeleteAccountScreen from '../screens/profile/DeleteAccountScreen';
+import ChangeEmailScreen from '../screens/profile/ChangeEmailScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
@@ -76,6 +77,7 @@ export default function RootNavigator() {
             <Stack.Screen name="ChangeMpin" component={ChangeMpinScreen} />
             <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
             <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
+            <Stack.Screen name="ChangeEmail" component={ChangeEmailScreen} />
           </>
         ) : (
           <>
