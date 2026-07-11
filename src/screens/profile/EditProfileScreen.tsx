@@ -128,6 +128,7 @@ export default function EditProfileScreen({ navigation }: any) {
 
   const [castes, setCastes] = useState<Caste[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     try {
@@ -308,48 +309,52 @@ export default function EditProfileScreen({ navigation }: any) {
     }
   };
 
-  const validate = (): string | null => {
+  const validate = (): boolean => {
+    const errors: Record<string, string> = {};
+
     if (heightFeet.trim() && (Number(heightFeet) < 1 || Number(heightFeet) > 8)) {
-      return 'Height (feet) must be between 1 and 8';
+      errors.heightFeet = 'Must be 1-8';
     }
     if (heightInches.trim() && (Number(heightInches) < 0 || Number(heightInches) > 11)) {
-      return 'Height (inches) must be between 0 and 11';
+      errors.heightInches = 'Must be 0-11';
     }
     if (weight.trim() && (Number(weight) < 20 || Number(weight) > 300)) {
-      return 'Weight must be between 20 and 300 kg';
+      errors.weight = 'Weight must be between 20-300 kg';
     }
     if (addrPincode.trim() && !isValidPincode(addrPincode.trim())) {
-      return 'Pincode must be 6 digits';
+      errors.addrPincode = 'Pincode must be 6 digits';
     }
     if (annualIncome.trim() && Number(annualIncome) < 0) {
-      return 'Annual income must be a valid amount';
+      errors.annualIncome = 'Enter a valid amount';
     }
     if (totalExperience.trim() && (Number(totalExperience) < 0 || Number(totalExperience) > 50)) {
-      return 'Experience must be between 0 and 50 years';
+      errors.totalExperience = 'Must be between 0-50 years';
     }
     if (linkedIn.trim() && !isValidLinkedIn(linkedIn.trim())) {
-      return 'Please enter a valid LinkedIn URL';
+      errors.linkedIn = 'Enter a valid LinkedIn URL';
     }
     if (brothers.trim() && (Number(brothers) < 0 || Number(brothers) > 14)) {
-      return 'Brothers must be between 0 and 14';
+      errors.brothers = 'Must be between 0-14';
     }
     if (sisters.trim() && (Number(sisters) < 0 || Number(sisters) > 14)) {
-      return 'Sisters must be between 0 and 14';
+      errors.sisters = 'Must be between 0-14';
     }
     if (prefAgeMin.trim() && prefAgeMax.trim()) {
       const mn = Number(prefAgeMin), mx = Number(prefAgeMax);
       if (mn < 18 || mx > 100 || mn > mx) {
-        return 'Enter a valid preferred age range (18-100, min ≤ max)';
+        errors.prefAgeMin = 'Invalid range (18-100, min ≤ max)';
+        errors.prefAgeMax = 'Invalid range (18-100, min ≤ max)';
       }
     }
-    return null;
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSave = async () => {
     setErrorMsg('');
-    const validationError = validate();
-    if (validationError) {
-      setErrorMsg(validationError);
+    if (!validate()) {
+      setErrorMsg('Please fix the highlighted fields before saving');
       return;
     }
 
@@ -491,35 +496,42 @@ export default function EditProfileScreen({ navigation }: any) {
 
           <Text style={styles.label}>Height</Text>
           <View style={styles.row}>
-            <TextInput
-              style={[styles.input, styles.half]}
-              placeholder="Feet"
-              placeholderTextColor="#999"
-              value={heightFeet}
-              onChangeText={(t) => { setHeightFeet(t); markChanged(); }}
-              keyboardType="number-pad"
-              maxLength={1}
-            />
-            <TextInput
-              style={[styles.input, styles.half]}
-              placeholder="Inches"
-              placeholderTextColor="#999"
-              value={heightInches}
-              onChangeText={(t) => { setHeightInches(t); markChanged(); }}
-              keyboardType="number-pad"
-              maxLength={2}
-            />
+            <View style={styles.half}>
+              <TextInput
+                style={[styles.input, fieldErrors.heightFeet && styles.inputError]}
+                placeholder="Feet"
+                placeholderTextColor="#999"
+                value={heightFeet}
+                onChangeText={(t) => { setHeightFeet(t); markChanged(); setFieldErrors((e) => ({ ...e, heightFeet: '' })); }}
+                keyboardType="number-pad"
+                maxLength={1}
+              />
+              {!!fieldErrors.heightFeet && <Text style={styles.fieldErrorText}>{fieldErrors.heightFeet}</Text>}
+            </View>
+            <View style={styles.half}>
+              <TextInput
+                style={[styles.input, fieldErrors.heightInches && styles.inputError]}
+                placeholder="Inches"
+                placeholderTextColor="#999"
+                value={heightInches}
+                onChangeText={(t) => { setHeightInches(t); markChanged(); setFieldErrors((e) => ({ ...e, heightInches: '' })); }}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+              {!!fieldErrors.heightInches && <Text style={styles.fieldErrorText}>{fieldErrors.heightInches}</Text>}
+            </View>
           </View>
 
           <Text style={styles.label}>Weight (KG)</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, fieldErrors.weight && styles.inputError]}
             placeholder="Enter weight"
             placeholderTextColor="#999"
             value={weight}
-            onChangeText={(t) => { setWeight(t); markChanged(); }}
+            onChangeText={(t) => { setWeight(t); markChanged(); setFieldErrors((e) => ({ ...e, weight: '' })); }}
             keyboardType="number-pad"
           />
+          {!!fieldErrors.weight && <Text style={styles.fieldErrorText}>{fieldErrors.weight}</Text>}
 
           <Text style={styles.label}>Marital Status</Text>
           <SearchableDropdown
@@ -586,7 +598,8 @@ export default function EditProfileScreen({ navigation }: any) {
               <Text style={styles.label}>Taluka</Text>
               <TextInput style={styles.input} placeholder="Taluka" placeholderTextColor="#999" value={addrTaluka} onChangeText={(t) => { setAddrTaluka(t); markChanged(); }} />
               <Text style={styles.label}>Pincode</Text>
-              <TextInput style={styles.input} placeholder="6-digit pincode" placeholderTextColor="#999" value={addrPincode} onChangeText={(t) => { setAddrPincode(t); markChanged(); }} keyboardType="number-pad" maxLength={6} />
+              <TextInput style={[styles.input, fieldErrors.addrPincode && styles.inputError]} placeholder="6-digit pincode" placeholderTextColor="#999" value={addrPincode} onChangeText={(t) => { setAddrPincode(t); markChanged(); setFieldErrors((e) => ({ ...e, addrPincode: '' })); }} keyboardType="number-pad" maxLength={6} />
+              {!!fieldErrors.addrPincode && <Text style={styles.fieldErrorText}>{fieldErrors.addrPincode}</Text>}
             </>
           ) : (
             <>
@@ -622,13 +635,16 @@ export default function EditProfileScreen({ navigation }: any) {
           <Text style={styles.label}>Company Name</Text>
           <TextInput style={styles.input} placeholder="Enter company name" placeholderTextColor="#999" value={companyName} onChangeText={(t) => { setCompanyName(t); markChanged(); }} />
           <Text style={styles.label}>Annual Income</Text>
-          <TextInput style={styles.input} placeholder="Annual income" placeholderTextColor="#999" value={annualIncome} onChangeText={(t) => { setAnnualIncome(t); markChanged(); }} keyboardType="number-pad" />
+          <TextInput style={[styles.input, fieldErrors.annualIncome && styles.inputError]} placeholder="Annual income" placeholderTextColor="#999" value={annualIncome} onChangeText={(t) => { setAnnualIncome(t); markChanged(); setFieldErrors((e) => ({ ...e, annualIncome: '' })); }} keyboardType="number-pad" />
+          {!!fieldErrors.annualIncome && <Text style={styles.fieldErrorText}>{fieldErrors.annualIncome}</Text>}
           <Text style={styles.label}>Work Location</Text>
           <TextInput style={styles.input} placeholder="Enter location" placeholderTextColor="#999" value={companyLocation} onChangeText={(t) => { setCompanyLocation(t); markChanged(); }} />
           <Text style={styles.label}>Experience (Years)</Text>
-          <TextInput style={styles.input} placeholder="Years of experience" placeholderTextColor="#999" value={totalExperience} onChangeText={(t) => { setTotalExperience(t); markChanged(); }} keyboardType="number-pad" />
+          <TextInput style={[styles.input, fieldErrors.totalExperience && styles.inputError]} placeholder="Years of experience" placeholderTextColor="#999" value={totalExperience} onChangeText={(t) => { setTotalExperience(t); markChanged(); setFieldErrors((e) => ({ ...e, totalExperience: '' })); }} keyboardType="number-pad" />
+          {!!fieldErrors.totalExperience && <Text style={styles.fieldErrorText}>{fieldErrors.totalExperience}</Text>}
           <Text style={styles.label}>LinkedIn URL</Text>
-          <TextInput style={styles.input} placeholder="https://" placeholderTextColor="#999" value={linkedIn} onChangeText={(t) => { setLinkedIn(t); markChanged(); }} autoCapitalize="none" />
+          <TextInput style={[styles.input, fieldErrors.linkedIn && styles.inputError]} placeholder="https://" placeholderTextColor="#999" value={linkedIn} onChangeText={(t) => { setLinkedIn(t); markChanged(); setFieldErrors((e) => ({ ...e, linkedIn: '' })); }} autoCapitalize="none" />
+          {!!fieldErrors.linkedIn && <Text style={styles.fieldErrorText}>{fieldErrors.linkedIn}</Text>}
 
           {/* Family */}
           <Text style={styles.sectionTitle}>FAMILY DETAILS</Text>
@@ -639,11 +655,13 @@ export default function EditProfileScreen({ navigation }: any) {
           <View style={styles.row}>
             <View style={styles.half}>
               <Text style={styles.label}>Brothers</Text>
-              <TextInput style={styles.input} placeholder="0" placeholderTextColor="#999" value={brothers} onChangeText={(t) => { setBrothers(t); markChanged(); }} keyboardType="number-pad" maxLength={2} />
+              <TextInput style={[styles.input, fieldErrors.brothers && styles.inputError]} placeholder="0" placeholderTextColor="#999" value={brothers} onChangeText={(t) => { setBrothers(t); markChanged(); setFieldErrors((e) => ({ ...e, brothers: '' })); }} keyboardType="number-pad" maxLength={2} />
+              {!!fieldErrors.brothers && <Text style={styles.fieldErrorText}>{fieldErrors.brothers}</Text>}
             </View>
             <View style={styles.half}>
               <Text style={styles.label}>Sisters</Text>
-              <TextInput style={styles.input} placeholder="0" placeholderTextColor="#999" value={sisters} onChangeText={(t) => { setSisters(t); markChanged(); }} keyboardType="number-pad" maxLength={2} />
+              <TextInput style={[styles.input, fieldErrors.sisters && styles.inputError]} placeholder="0" placeholderTextColor="#999" value={sisters} onChangeText={(t) => { setSisters(t); markChanged(); setFieldErrors((e) => ({ ...e, sisters: '' })); }} keyboardType="number-pad" maxLength={2} />
+              {!!fieldErrors.sisters && <Text style={styles.fieldErrorText}>{fieldErrors.sisters}</Text>}
             </View>
           </View>
           <Text style={styles.label}>Father Occupation</Text>
@@ -677,9 +695,14 @@ export default function EditProfileScreen({ navigation }: any) {
           <Text style={styles.sectionTitle}>PARTNER PREFERENCES</Text>
           <Text style={styles.label}>Preferred Age Range</Text>
           <View style={styles.row}>
-            <TextInput style={[styles.input, styles.half]} placeholder="Min" placeholderTextColor="#999" value={prefAgeMin} onChangeText={(t) => { setPrefAgeMin(t); markChanged(); }} keyboardType="number-pad" maxLength={2} />
-            <TextInput style={[styles.input, styles.half]} placeholder="Max" placeholderTextColor="#999" value={prefAgeMax} onChangeText={(t) => { setPrefAgeMax(t); markChanged(); }} keyboardType="number-pad" maxLength={2} />
+            <View style={styles.half}>
+              <TextInput style={[styles.input, fieldErrors.prefAgeMin && styles.inputError]} placeholder="Min" placeholderTextColor="#999" value={prefAgeMin} onChangeText={(t) => { setPrefAgeMin(t); markChanged(); setFieldErrors((e) => ({ ...e, prefAgeMin: '', prefAgeMax: '' })); }} keyboardType="number-pad" maxLength={2} />
+            </View>
+            <View style={styles.half}>
+              <TextInput style={[styles.input, fieldErrors.prefAgeMax && styles.inputError]} placeholder="Max" placeholderTextColor="#999" value={prefAgeMax} onChangeText={(t) => { setPrefAgeMax(t); markChanged(); setFieldErrors((e) => ({ ...e, prefAgeMin: '', prefAgeMax: '' })); }} keyboardType="number-pad" maxLength={2} />
+            </View>
           </View>
+          {!!fieldErrors.prefAgeMin && <Text style={styles.fieldErrorText}>{fieldErrors.prefAgeMin}</Text>}
 
           <Text style={styles.label}>Preferred Education</Text>
           <TextInput style={styles.input} placeholder="e.g. Graduate or above" placeholderTextColor="#999" value={prefEducation} onChangeText={(t) => { setPrefEducation(t); markChanged(); }} />
@@ -756,6 +779,8 @@ const styles = StyleSheet.create({
   toggleText: { fontSize: 14, color: '#333' },
   toggleTextActive: { color: '#D20236', fontWeight: '700' },
   errorBanner: { fontSize: 13, color: '#D20236', fontWeight: '500', marginVertical: 10 },
+  inputError: { borderColor: '#D20236', borderWidth: 1.5 },
+  fieldErrorText: { fontSize: 11, color: '#D20236', marginTop: -8, marginBottom: 10, fontWeight: '500' },
   saveChangesBtn: { backgroundColor: '#D20236', borderRadius: 10, paddingVertical: 15, alignItems: 'center', marginTop: 20 },
   saveChangesText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 });
