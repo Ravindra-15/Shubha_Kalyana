@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator,
+  View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -96,92 +96,98 @@ export default function ProfileScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
-        <View style={styles.identityRow}>
-          <View style={styles.avatarRing}>
-            {photo ? (
-              <Image source={{ uri: resolveImageUrl(photo) }} style={styles.avatar} />
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+        bounces={true}
+      >
+        <View style={styles.content}>
+          <View style={styles.identityRow}>
+            <View style={styles.avatarRing}>
+              {photo ? (
+                <Image source={{ uri: resolveImageUrl(photo) }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, styles.avatarPlaceholder]} />
+              )}
+            </View>
+            <View style={{ flex: 1, marginLeft: 14 }}>
+              <View style={styles.nameRow}>
+                <Text style={styles.name}>{name}{age ? `, ${age}` : ''}</Text>
+                {verified && <BadgeCheck color="#ffffff" size={16} fill="#D20236" style={{ marginLeft: 4 }} />}
+              </View>
+              <Text style={styles.meta}>{profile?.employment?.designation || 'Profession not added'}</Text>
+              {!!location && <Text style={styles.meta}>{location}</Text>}
+              {!!user?.mobile && <Text style={styles.meta}>+91 {user.mobile}</Text>}
+            </View>
+          </View>
+
+          {completion < 100 ? (
+            <View style={styles.completionBox}>
+              <View style={styles.completionRow}>
+                <Text style={styles.completionLabel}>Profile Completion</Text>
+                <Text style={styles.completionPercent}>{completion}%</Text>
+              </View>
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${completion}%` }]} />
+              </View>
+              <Text style={styles.completionHint}>Complete your profile to improve match visibility</Text>
+              <TouchableOpacity style={styles.completeBtn} onPress={() => navigation.navigate('EditProfile')}>
+                <Text style={styles.completeBtnText}>Complete Now</Text>
+                <ChevronRight color="#D20236" size={16} />
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
+          <View style={styles.planBox}>
+            <View style={styles.planRow}>
+              <Crown color="#D20236" size={18} />
+              <Text style={styles.planName}>{planName}</Text>
+            </View>
+            {hasActivePlan ? (
+              <>
+                {membership?.endDate && (
+                  <Text style={styles.planHint}>
+                    Valid until {new Date(membership.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </Text>
+                )}
+                {accessLimit > 0 && (
+                  <>
+                    <View style={styles.progressTrack}>
+                      <View style={[styles.progressFill, { width: `${Math.min((used / accessLimit) * 100, 100)}%` }]} />
+                    </View>
+                    <Text style={styles.planHint}>{remaining} profiles Remaining</Text>
+                  </>
+                )}
+              </>
             ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]} />
+              <>
+                <Text style={styles.planHint}>Upgrade to unlock premium access</Text>
+                <TouchableOpacity style={styles.upgradeBtn} onPress={() => navigation.navigate('Plans')}>
+                  <Text style={styles.upgradeBtnText}>Upgrade Now</Text>
+                  <ChevronRight color="#fff" size={16} />
+                </TouchableOpacity>
+              </>
             )}
           </View>
-          <View style={{ flex: 1, marginLeft: 14 }}>
-            <View style={styles.nameRow}>
-              <Text style={styles.name}>{name}{age ? `, ${age}` : ''}</Text>
-              {verified && <BadgeCheck color="#ffffff" size={16} fill="#D20236" style={{ marginLeft: 4 }} />}
-            </View>
-            <Text style={styles.meta}>{profile?.employment?.designation || 'Profession not added'}</Text>
-            {!!location && <Text style={styles.meta}>{location}</Text>}
-            {!!user?.mobile && <Text style={styles.meta}>+91 {user.mobile}</Text>}
-          </View>
-        </View>
 
-        {completion < 100 ? (
-          <View style={styles.completionBox}>
-            <View style={styles.completionRow}>
-              <Text style={styles.completionLabel}>Profile Completion</Text>
-              <Text style={styles.completionPercent}>{completion}%</Text>
-            </View>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${completion}%` }]} />
-            </View>
-            <Text style={styles.completionHint}>Complete your profile to improve match visibility</Text>
-            <TouchableOpacity style={styles.completeBtn} onPress={() => navigation.navigate('EditProfile')}>
-              <Text style={styles.completeBtnText}>Complete Now</Text>
-              <ChevronRight color="#D20236" size={16} />
-            </TouchableOpacity>
-          </View>
-        ) : null}
-
-        <View style={styles.planBox}>
-          <View style={styles.planRow}>
-            <Crown color="#D20236" size={18} />
-            <Text style={styles.planName}>{planName}</Text>
-          </View>
-          {hasActivePlan ? (
-            <>
-              {membership?.endDate && (
-                <Text style={styles.planHint}>
-                  Valid until {new Date(membership.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </Text>
-              )}
-              {accessLimit > 0 && (
-                <>
-                  <View style={styles.progressTrack}>
-                    <View style={[styles.progressFill, { width: `${Math.min((used / accessLimit) * 100, 100)}%` }]} />
-                  </View>
-                  <Text style={styles.planHint}>{remaining} profiles Remaining</Text>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              <Text style={styles.planHint}>Upgrade to unlock premium access</Text>
-              <TouchableOpacity style={styles.upgradeBtn} onPress={() => navigation.navigate('Plans')}>
-                <Text style={styles.upgradeBtnText}>Upgrade Now</Text>
-                <ChevronRight color="#fff" size={16} />
+          <Text style={styles.quickTitle}>Quick Actions</Text>
+          <View style={styles.actionsBox}>
+            {quickActions.map(({ label, Icon, onPress }, i) => (
+              <TouchableOpacity
+                key={label}
+                style={[styles.actionRow, i === quickActions.length - 1 && { borderBottomWidth: 0 }]}
+                onPress={onPress}
+              >
+                <Icon color="#333" size={18} />
+                <Text style={styles.actionLabel}>{label}</Text>
+                <ChevronRight color="#ccc" size={18} />
               </TouchableOpacity>
-            </>
-          )}
+            ))}
+          </View>
         </View>
-
-        <Text style={styles.quickTitle}>Quick Actions</Text>
-        <View style={styles.actionsBox}>
-          {quickActions.map(({ label, Icon, onPress }, i) => (
-            <TouchableOpacity
-              key={label}
-              style={[styles.actionRow, i === quickActions.length - 1 && { borderBottomWidth: 0 }]}
-              onPress={onPress}
-            >
-              <Icon color="#333" size={18} />
-              <Text style={styles.actionLabel}>{label}</Text>
-              <ChevronRight color="#ccc" size={18} />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      </SafeAreaView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -190,8 +196,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingBottom: 40 },
   content: { flex: 1, paddingHorizontal: 16 },
   identityRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16, marginBottom: 18 },
   avatarRing: {
