@@ -10,6 +10,16 @@ export const updateEmail = async (email: string) => {
   return res.data?.data;
 };
 
+export const sendEmailOtp = async (email: string) => {
+  const res = await apiClient.post('/settings/send-email-otp', { email });
+  return res.data?.data;
+};
+
+export const verifyEmailOtp = async (code: string) => {
+  const res = await apiClient.post('/settings/verify-email-otp', { code });
+  return res.data?.data; // { email, isEmailVerified }
+};
+
 export const sendMobileOtp = async () => {
   const res = await apiClient.post('/settings/send-mobile-otp');
   return res.data?.data;
