@@ -358,75 +358,65 @@ export default function EditProfileScreen({ navigation }: any) {
       return;
     }
 
-    const profilePayload: any = {};
-    if (heightFeet.trim() || heightInches.trim()) {
-      profilePayload.height = { feet: Number(heightFeet) || 0, inches: Number(heightInches) || 0 };
-    }
-    if (weight.trim()) {
-      profilePayload.weight = { value: Number(weight), units: 'KG' };
-    }
-    if (maritalStatus) profilePayload.maritalStatus = maritalStatus;
-    if (rashi || nakshatra) {
-      profilePayload.horoscopeDetail = { rashi: rashi || undefined, nakshatra: nakshatra || undefined };
-    }
-    profilePayload.address = {
-      current: {
-        residenceType: addrResidenceType,
-        addressLine1: addrLine1.trim(),
-        taluka: addrTaluka.trim(),
-        district: addrDistrict.trim(),
-        state: addrState.trim(),
-        pincode: addrPincode.trim(),
-        country: addrCountry.trim() || 'India',
-        stateOrProvince: addrStateOrProvince.trim(),
-        city: addrCity.trim(),
-        postalCode: addrPostalCode.trim(),
+    const profilePayload: any = {
+      height: { feet: Number(heightFeet) || 0, inches: Number(heightInches) || 0 },
+      weight: { value: Number(weight) || 0, units: 'KG' },
+      maritalStatus: maritalStatus || '',
+      horoscopeDetail: { rashi: rashi || '', nakshatra: nakshatra || '' },
+      address: {
+        current: {
+          residenceType: addrResidenceType,
+          addressLine1: addrLine1.trim(),
+          taluka: addrTaluka.trim(),
+          district: addrDistrict.trim(),
+          state: addrState.trim(),
+          pincode: addrPincode.trim(),
+          country: addrCountry.trim() || 'India',
+          stateOrProvince: addrStateOrProvince.trim(),
+          city: addrCity.trim(),
+          postalCode: addrPostalCode.trim(),
+        },
       },
+      education: {
+        highestQualification: qualification.trim(),
+        college: college.trim(),
+      },
+      employment: {
+        employedType: employedType || '',
+        companyName: companyName.trim(),
+        designation: designation.trim(),
+        annualIncome: Number(annualIncome) || 0,
+        companyLocation: companyLocation.trim(),
+        totalExperience: Number(totalExperience) || 0,
+        linkedInProfile: linkedIn.trim(),
+      },
+      family: {
+        fatherName: fatherName.trim(),
+        motherName: motherName.trim(),
+        fatherOccupation: fatherOccupation.trim(),
+        motherOccupation: motherOccupation.trim(),
+        brothers: brothers.trim() ? Number(brothers) : 0,
+        sisters: sisters.trim() ? Number(sisters) : 0,
+      },
+      lifestyle: {
+        diet: diet || '',
+        smoking: smoking || '',
+        drinking: drinking || '',
+      },
+      about: { aboutMe: aboutMe.trim() },
     };
-    profilePayload.education = {
-      highestQualification: qualification.trim(),
-      college: college.trim(),
-    };
-    profilePayload.employment = {
-      employedType: employedType || undefined,
-      companyName: companyName.trim(),
-      designation: designation.trim(),
-      annualIncome: annualIncome.trim() ? Number(annualIncome) : undefined,
-      companyLocation: companyLocation.trim(),
-      totalExperience: totalExperience.trim() ? Number(totalExperience) : undefined,
-      linkedInProfile: linkedIn.trim(),
-    };
-    profilePayload.family = {
-      fatherName: fatherName.trim(),
-      motherName: motherName.trim(),
-      fatherOccupation: fatherOccupation.trim(),
-      motherOccupation: motherOccupation.trim(),
-      brothers: brothers.trim() ? Number(brothers) : 0,
-      sisters: sisters.trim() ? Number(sisters) : 0,
-    };
-    profilePayload.lifestyle = {
-      diet: diet || undefined,
-      smoking: smoking || undefined,
-      drinking: drinking || undefined,
-    };
-    if (aboutMe.trim()) {
-      profilePayload.about = { aboutMe: aboutMe.trim() };
-    }
 
-    const preferencePayload: any = {};
-    if (prefAgeMin.trim() && prefAgeMax.trim()) {
-      preferencePayload.ageRange = { min: Number(prefAgeMin), max: Number(prefAgeMax) };
-    }
-    if (prefCasteIds.length) preferencePayload.caste = prefCasteIds;
-    if (prefEducation.trim()) preferencePayload.education = prefEducation.split(',').map((s) => s.trim()).filter(Boolean);
-    if (prefProfession.trim()) preferencePayload.profession = prefProfession.split(',').map((s) => s.trim()).filter(Boolean);
+    const preferencePayload: any = {
+      ageRange: prefAgeMin.trim() && prefAgeMax.trim() ? { min: Number(prefAgeMin), max: Number(prefAgeMax) } : undefined,
+      caste: prefCasteIds,
+      education: prefEducation.trim() ? prefEducation.split(',').map((s) => s.trim()).filter(Boolean) : [],
+      profession: prefProfession.trim() ? prefProfession.split(',').map((s) => s.trim()).filter(Boolean) : [],
+    };
 
     try {
       setSaving(true);
       await updateMyProfile(profilePayload);
-      if (Object.keys(preferencePayload).length > 0) {
-        await updateMyPartnerPreference(preferencePayload);
-      }
+      await updateMyPartnerPreference(preferencePayload);
       setHasChanges(false);
       Alert.alert('Success', 'Profile updated successfully', [
         { text: 'OK', onPress: () => navigation.goBack() },
