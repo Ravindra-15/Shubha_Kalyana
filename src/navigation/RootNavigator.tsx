@@ -40,6 +40,12 @@ import ChangeMpinScreen from '../screens/profile/ChangeMpinScreen';
 import PaymentHistoryScreen from '../screens/profile/PaymentHistoryScreen';
 import DeleteAccountScreen from '../screens/profile/DeleteAccountScreen';
 import ChangeEmailScreen from '../screens/profile/ChangeEmailScreen';
+import HelpSupportScreen from '../screens/profile/HelpSupportScreen';
+import FaqsScreen from '../screens/profile/FaqsScreen';
+import ContactSupportScreen from '../screens/profile/ContactSupportScreen';
+import ReportUserScreen from '../screens/profile/ReportUserScreen';
+import TermsAndConditionsScreen from '../screens/profile/TermsAndConditionsScreen';
+import PrivacyPolicyScreen from '../screens/profile/PrivacyPolicyScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
@@ -78,6 +84,12 @@ export default function RootNavigator() {
             <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
             <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
             <Stack.Screen name="ChangeEmail" component={ChangeEmailScreen} />
+            <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
+            <Stack.Screen name="Faqs" component={FaqsScreen} />
+            <Stack.Screen name="ContactSupport" component={ContactSupportScreen} />
+            <Stack.Screen name="ReportUser" component={ReportUserScreen} />
+            <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
+            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
           </>
         ) : (
           <>
