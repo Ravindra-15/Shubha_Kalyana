@@ -45,7 +45,7 @@ import FaqsScreen from '../screens/profile/FaqsScreen';
 import ContactSupportScreen from '../screens/profile/ContactSupportScreen';
 import ReportUserScreen from '../screens/profile/ReportUserScreen';
 import TermsAndConditionsScreen from '../screens/profile/TermsAndConditionsScreen';
-// import PrivacyPolicyScreen from '../screens/profile/PrivacyPolicyScreen';
+import PrivacyPolicyScreen from '../screens/profile/PrivacyPolicyScreen';
 // import EditProfileScreen from '../screens/profile/EditProfileScreen';
 // import ChooseLanguageScreen from '../screens/profile/ChooseLanguageScreen';
 import PrivacySettingsScreen from '../screens/profile/PrivacySettingsScreen';
@@ -92,7 +92,7 @@ export default function RootNavigator() {
             <Stack.Screen name="ContactSupport" component={ContactSupportScreen} />
             <Stack.Screen name="ReportUser" component={ReportUserScreen} />
             <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
-            {/* <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} /> */}
+            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
             {/* <Stack.Screen name="EditProfile" component={EditProfileScreen} /> */}
             {/* <Stack.Screen name="ChooseLanguage" component={ChooseLanguageScreen} /> */}
             <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
