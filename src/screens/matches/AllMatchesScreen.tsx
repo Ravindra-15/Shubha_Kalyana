@@ -157,13 +157,16 @@ export default function AllMatchesScreen({ navigation, route }: any) {
 
       {/* Header */}
       <View style={styles.header}>
-        {pushed ? (
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <ArrowLeft color="#000" size={24} />
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 24 }} />
-        )}
+        <TouchableOpacity
+          onPress={() =>
+            pushed
+              ? navigation.goBack()
+              : navigation.navigate('MainTabs', { screen: 'HomeTab' })
+          }
+          style={styles.backBtn}
+        >
+          <ArrowLeft color="#000" size={24} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Find Matches</Text>
         <View style={{ width: 24 }} />
       </View>
