@@ -14,6 +14,7 @@ import { getCastes, Caste } from '../api/caste';
 export type Filters = {
   minAge: number;
   maxAge: number;
+  religion: string;
   caste: string;
   subCaste: string;
   education: string;
@@ -21,23 +22,25 @@ export type Filters = {
   district: string;
 };
 
+const RELIGIONS = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jain', 'Buddhist', 'Parsi', 'Other'];
 const EDUCATION = ['B.Tech', 'B.E', 'B.Sc', 'B.Com', 'B.A', 'BBA', 'BCA', 'MBBS', 'M.Tech', 'M.Sc', 'MBA', 'MCA', 'PhD', 'Diploma'];
 const PROFESSION = ['Engineer', 'Doctor', 'Teacher', 'Business', 'Government Job', 'Lawyer', 'CA', 'Software', 'Banker'];
 
 const DEFAULT: Filters = {
-  minAge: 24, maxAge: 30, caste: '', subCaste: '', education: '', profession: '', district: '',
+  minAge: 24, maxAge: 30, religion: '', caste: '', subCaste: '', education: '', profession: '', district: '',
 };
 
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onApply: (filters: Filters) => void;
+  onApply: (filters: Filters | null) => void;
   initial?: Filters;
 };
 
 export default function FilterModal({ visible, onClose, onApply, initial }: Props) {
   const [minAge, setMinAge] = useState(initial?.minAge ?? 24);
   const [maxAge, setMaxAge] = useState(initial?.maxAge ?? 30);
+  const [religion, setReligion] = useState(initial?.religion || '');
   const [casteId, setCasteId] = useState(initial?.caste || '');
   const [subCaste, setSubCaste] = useState(initial?.subCaste || '');
   const [education, setEducation] = useState(initial?.education || '');
@@ -51,17 +54,31 @@ export default function FilterModal({ visible, onClose, onApply, initial }: Prop
     })();
   }, []);
 
+  // re-sync local state whenever modal opens with fresh "initial" values (e.g. after a reset)
+  useEffect(() => {
+    if (visible) {
+      setMinAge(initial?.minAge ?? 24);
+      setMaxAge(initial?.maxAge ?? 30);
+      setReligion(initial?.religion || '');
+      setCasteId(initial?.caste || '');
+      setSubCaste(initial?.subCaste || '');
+      setEducation(initial?.education || '');
+      setProfession(initial?.profession || '');
+      setDistrict(initial?.district || '');
+    }
+  }, [visible, initial]);
+
   const subCasteOptions = castes.find((c) => c._id === casteId)?.subCastes || [];
 
   const reset = () => {
     setMinAge(DEFAULT.minAge); setMaxAge(DEFAULT.maxAge);
-    setCasteId(''); setSubCaste(''); setEducation(''); setProfession(''); setDistrict('');
-    onApply(null as any); // clear all filters → reload full list
+    setReligion(''); setCasteId(''); setSubCaste(''); setEducation(''); setProfession(''); setDistrict('');
+    onApply(null); // clear all filters → reload full list
     onClose();
   };
 
   const apply = () => {
-    onApply({ minAge, maxAge, caste: casteId, subCaste, education, profession, district });
+    onApply({ minAge, maxAge, religion, caste: casteId, subCaste, education, profession, district });
     onClose();
   };
 
@@ -102,6 +119,14 @@ export default function FilterModal({ visible, onClose, onApply, initial }: Prop
               thumbTintColor="#D20236"
             />
 
+            <Text style={styles.label}>Religion</Text>
+            <SearchableDropdown
+              placeholder="Select Religion"
+              value={religion}
+              options={RELIGIONS.map((r) => ({ label: r, value: r }))}
+              onSelect={setReligion}
+            />
+
             <Text style={styles.label}>Caste</Text>
             <SearchableDropdown
               placeholder="Select Caste"
@@ -138,9 +163,9 @@ export default function FilterModal({ visible, onClose, onApply, initial }: Prop
               allowCustom
             />
 
-            <Text style={styles.label}>Home Town District</Text>
+            <Text style={styles.label}>Location</Text>
             <SearchableDropdown
-              placeholder="Select District"
+              placeholder="Search by location"
               value={district}
               options={[]}
               onSelect={setDistrict}
