@@ -505,10 +505,17 @@ const [unreadCount, setUnreadCount] = useState(0);
         {/* Vendors */}
         {vendors.length > 0 && (
           <View style={styles.vendorSection}>
-            <Text style={styles.sectionTitle}>Vendors</Text>
-            <Text style={styles.sectionSub}>
-              Explore trusted wedding vendors
-            </Text>
+            <View style={styles.vendorHeaderRow}>
+              <View>
+                <Text style={styles.sectionTitle}>Vendors</Text>
+                <Text style={styles.sectionSub}>
+                  Explore trusted wedding vendors
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('VendorList')}>
+                <ArrowRight color="#D20236" size={22} />
+              </TouchableOpacity>
+            </View>
 
             <FlatList
               data={vendors}
@@ -633,6 +640,7 @@ const styles = StyleSheet.create({
   },
   filterText: { fontSize: 14, color: '#333', fontWeight: '600' },
   vendorSection: { marginTop: 10, marginBottom: 20 },
+  vendorHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   vendorCard: {
     width: VENDOR_CARD_WIDTH,
     height: 150,
