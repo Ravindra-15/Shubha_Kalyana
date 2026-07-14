@@ -71,10 +71,16 @@ export default function EditProfileScreen({ navigation }: any) {
 
   // read-only display data (backend doesn't support editing these yet)
   const [readonly, setReadonly] = useState({
-    firstName: '', lastName: '', gender: '', dob: '',
     religion: '', casteName: '', subCaste: '', motherTongue: '',
     mobile: '', email: '', photoUrl: '',
   });
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [gender, setGender] = useState('');
+  const [dobDay, setDobDay] = useState('');
+  const [dobMonth, setDobMonth] = useState('');
+  const [dobYear, setDobYear] = useState('');
 
   // editable fields
   const [heightFeet, setHeightFeet] = useState('');
@@ -145,10 +151,6 @@ export default function EditProfileScreen({ navigation }: any) {
       const casteName = basic.caste?.casteName || '';
 
       setReadonly({
-        firstName: basic.firstName || user.firstName || '',
-        lastName: basic.lastName || user.lastName || '',
-        gender: basic.gender || '',
-        dob: basic.dob ? new Date(basic.dob).toLocaleDateString('en-GB') : '',
         religion: basic.religion || '',
         casteName,
         subCaste: basic.subCaste || '',
@@ -157,6 +159,16 @@ export default function EditProfileScreen({ navigation }: any) {
         email: user.email || '',
         photoUrl: photo,
       });
+
+      setFirstName(basic.firstName || user.firstName || '');
+      setLastName(basic.lastName || user.lastName || '');
+      setGender(basic.gender || '');
+      if (basic.dob) {
+        const d = new Date(basic.dob);
+        setDobDay(String(d.getDate()));
+        setDobMonth(String(d.getMonth() + 1));
+        setDobYear(String(d.getFullYear()));
+      }
 
       setHeightFeet(basic.height?.feet ? String(basic.height.feet) : '');
       setHeightInches(basic.height?.inches ? String(basic.height.inches) : '');
@@ -312,6 +324,57 @@ export default function EditProfileScreen({ navigation }: any) {
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
 
+    if (!firstName.trim()) {
+      errors.firstName = 'First name is required';
+    } else if (!/^[a-zA-Z\s'-]+$/.test(firstName.trim())) {
+      errors.firstName = 'Only letters allowed';
+    }
+
+    if (!lastName.trim()) {
+      errors.lastName = 'Last name is required';
+    } else if (!/^[a-zA-Z\s'-]+$/.test(lastName.trim())) {
+      errors.lastName = 'Only letters allowed';
+    }
+
+    if (!gender) {
+      errors.gender = 'Gender is required';
+    }
+
+    if (!dobDay.trim() || !dobMonth.trim() || !dobYear.trim()) {
+      errors.dob = 'Date of birth is required';
+    } else {
+      const dd = parseInt(dobDay, 10);
+      const mm = parseInt(dobMonth, 10);
+      const yy = parseInt(dobYear, 10);
+
+      if (mm < 1 || mm > 12) {
+        errors.dob = 'Month must be between 1 and 12';
+      } else {
+        const daysInMonth = new Date(yy, mm, 0).getDate();
+        if (dd < 1 || dd > daysInMonth) {
+          errors.dob = `Day must be between 1 and ${daysInMonth}`;
+        } else {
+          const currentYear = new Date().getFullYear();
+          if (yy < 1900 || yy > currentYear) {
+            errors.dob = 'Enter a valid year';
+          } else {
+            const dobDate = new Date(yy, mm - 1, dd);
+            const today = new Date();
+            if (dobDate > today) {
+              errors.dob = 'Date of birth cannot be in the future';
+            } else {
+              let age = today.getFullYear() - dobDate.getFullYear();
+              const mDiff = today.getMonth() - dobDate.getMonth();
+              if (mDiff < 0 || (mDiff === 0 && today.getDate() < dobDate.getDate())) age--;
+              if (age < 18) {
+                errors.dob = 'Must be at least 18 years old';
+              }
+            }
+          }
+        }
+      }
+    }
+
     if (heightFeet.trim() && (Number(heightFeet) < 1 || Number(heightFeet) > 8)) {
       errors.heightFeet = 'Must be 1-8';
     }
@@ -358,7 +421,13 @@ export default function EditProfileScreen({ navigation }: any) {
       return;
     }
 
+    const dobString = `${dobYear}-${String(dobMonth).padStart(2, '0')}-${String(dobDay).padStart(2, '0')}`;
+
     const profilePayload: any = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      gender: gender,
+      dob: dobString,
       height: { feet: Number(heightFeet) || 0, inches: Number(heightInches) || 0 },
       weight: { value: Number(weight) || 0, units: 'KG' },
       maritalStatus: maritalStatus || '',
@@ -477,12 +546,76 @@ export default function EditProfileScreen({ navigation }: any) {
 
           {!!errorMsg && <Text style={styles.errorBanner}>{errorMsg}</Text>}
 
-          {/* Basic Details (read-only) */}
+          {/* Basic Details */}
           <Text style={styles.sectionTitle}>BASIC DETAILS</Text>
-          <ReadonlyField label="First Name" value={readonly.firstName} />
-          <ReadonlyField label="Last Name" value={readonly.lastName} />
-          <ReadonlyField label="Gender" value={readonly.gender} />
-          <ReadonlyField label="Date of Birth" value={readonly.dob} />
+
+          <Text style={styles.label}>First Name</Text>
+          <TextInput
+            style={[styles.input, fieldErrors.firstName && styles.inputError]}
+            placeholder="First Name"
+            placeholderTextColor="#999"
+            value={firstName}
+            onChangeText={(t) => { setFirstName(t); markChanged(); setFieldErrors((e) => ({ ...e, firstName: '' })); }}
+          />
+          {!!fieldErrors.firstName && <Text style={styles.fieldErrorText}>{fieldErrors.firstName}</Text>}
+
+          <Text style={styles.label}>Last Name</Text>
+          <TextInput
+            style={[styles.input, fieldErrors.lastName && styles.inputError]}
+            placeholder="Last Name"
+            placeholderTextColor="#999"
+            value={lastName}
+            onChangeText={(t) => { setLastName(t); markChanged(); setFieldErrors((e) => ({ ...e, lastName: '' })); }}
+          />
+          {!!fieldErrors.lastName && <Text style={styles.fieldErrorText}>{fieldErrors.lastName}</Text>}
+
+          <Text style={styles.label}>Gender</Text>
+          <View style={[styles.toggleRow, fieldErrors.gender && styles.toggleRowError]}>
+            {['MALE', 'FEMALE', 'OTHER'].map((g) => (
+              <TouchableOpacity
+                key={g}
+                style={[styles.toggle, gender === g && styles.toggleActive]}
+                onPress={() => { setGender(g); markChanged(); setFieldErrors((e) => ({ ...e, gender: '' })); }}
+              >
+                <Text style={[styles.toggleText, gender === g && styles.toggleTextActive]}>
+                  {g.charAt(0) + g.slice(1).toLowerCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {!!fieldErrors.gender && <Text style={styles.fieldErrorText}>{fieldErrors.gender}</Text>}
+
+          <Text style={styles.label}>Date of Birth</Text>
+          <View style={styles.row}>
+            <TextInput
+              style={[styles.input, styles.dobInput, fieldErrors.dob && styles.inputError]}
+              placeholder="Day"
+              placeholderTextColor="#999"
+              value={dobDay}
+              onChangeText={(t) => { setDobDay(t); markChanged(); setFieldErrors((e) => ({ ...e, dob: '' })); }}
+              keyboardType="number-pad"
+              maxLength={2}
+            />
+            <TextInput
+              style={[styles.input, styles.dobInput, fieldErrors.dob && styles.inputError]}
+              placeholder="Month"
+              placeholderTextColor="#999"
+              value={dobMonth}
+              onChangeText={(t) => { setDobMonth(t); markChanged(); setFieldErrors((e) => ({ ...e, dob: '' })); }}
+              keyboardType="number-pad"
+              maxLength={2}
+            />
+            <TextInput
+              style={[styles.input, styles.dobInput, fieldErrors.dob && styles.inputError]}
+              placeholder="Year"
+              placeholderTextColor="#999"
+              value={dobYear}
+              onChangeText={(t) => { setDobYear(t); markChanged(); setFieldErrors((e) => ({ ...e, dob: '' })); }}
+              keyboardType="number-pad"
+              maxLength={4}
+            />
+          </View>
+          {!!fieldErrors.dob && <Text style={styles.fieldErrorText}>{fieldErrors.dob}</Text>}
 
           <Text style={styles.label}>Height</Text>
           <View style={styles.row}>
@@ -768,6 +901,8 @@ const styles = StyleSheet.create({
   toggleActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
   toggleText: { fontSize: 14, color: '#333' },
   toggleTextActive: { color: '#D20236', fontWeight: '700' },
+  toggleRowError: { borderWidth: 1.5, borderColor: '#D20236', borderRadius: 10, padding: 4 },
+  dobInput: { flex: 1 },
   errorBanner: { fontSize: 13, color: '#D20236', fontWeight: '500', marginVertical: 10 },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
   fieldErrorText: { fontSize: 11, color: '#D20236', marginTop: -8, marginBottom: 10, fontWeight: '500' },
