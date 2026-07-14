@@ -399,7 +399,7 @@ const [unreadCount, setUnreadCount] = useState(0);
               Profiles matching your preferences
             </Text>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate('AllMatches')}>
+          <TouchableOpacity onPress={() => navigation.navigate('AllMatches', { pushed: true })}>
             <Text style={styles.viewAll}>View All</Text>
           </TouchableOpacity>
         </View>

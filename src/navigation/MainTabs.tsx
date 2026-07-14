@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, Search, Heart, MessageCircle, User } from 'lucide-react-native';
 import HomeScreen from '../screens/home/HomeScreen';
-import SearchScreen from '../screens/search/SearchScreen';
+import AllMatchesScreen from '../screens/matches/AllMatchesScreen';
 import AllInterestedScreen from '../screens/interested/AllInterestedScreen';
 import ChatListScreen from '../screens/chat/ChatListScreen';
 import { useChat } from '../context/ChatContext';
@@ -39,7 +39,7 @@ export default function MainTabs() {
       />
       <Tab.Screen
         name="SearchTab"
-        component={SearchScreen}
+        component={AllMatchesScreen}
         options={{
           title: 'Search',
           tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,

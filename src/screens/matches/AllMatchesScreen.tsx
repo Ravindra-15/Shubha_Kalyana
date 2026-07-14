@@ -15,6 +15,7 @@ import { ArrowLeft, Search, Filter } from 'lucide-react-native';
 import apiClient from '../../api/client';
 import ProfileCard from '../../components/ProfileCard';
 import FilterModal, { Filters } from '../../components/FilterModal';
+import BottomNav from '../../components/BottomNav';
 
 const GENDERS = [
   { label: 'All', value: '' },
@@ -243,6 +244,8 @@ export default function AllMatchesScreen({ navigation, route }: any) {
           }
         />
       )}
+
+      {pushed && <BottomNav active="SearchTab" />}
     </SafeAreaView>
   );
 }
