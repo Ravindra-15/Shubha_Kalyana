@@ -146,7 +146,9 @@ export default function VendorListScreen({ navigation }: any) {
               <View style={styles.cardBody}>
                 <View style={styles.nameRow}>
                   <Text style={styles.vendorName}>{item.vendorName}</Text>
-                  <BadgeCheck color="#1a7f37" size={16} fill="#1a7f37" />
+                  <View style={styles.verifiedBadge}>
+                    <BadgeCheck color="#fff" size={14} />
+                  </View>
                 </View>
 
                 <View style={styles.metaRow}>
@@ -215,14 +217,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 12,
   },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
-  searchRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 12 },
+  searchRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 12, height: 44 },
   searchBox: {
     flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#f5f5f5', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10,
+    backgroundColor: '#f5f5f5', borderRadius: 10, paddingHorizontal: 12,
   },
   searchInput: { flex: 1, fontSize: 14, color: '#000' },
   filterBtn: {
-    width: 42, height: 42, borderRadius: 10, borderWidth: 1, borderColor: '#e0e0e0',
+    width: 44, height: 44, borderRadius: 10, borderWidth: 1, borderColor: '#e0e0e0',
     alignItems: 'center', justifyContent: 'center',
   },
   chipsWrap: { marginBottom: 12 },
@@ -242,6 +244,10 @@ const styles = StyleSheet.create({
   cardImagePlaceholder: { backgroundColor: '#eee' },
   cardBody: { padding: 16 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+  verifiedBadge: {
+    width: 20, height: 20, borderRadius: 10, backgroundColor: '#D20236',
+    alignItems: 'center', justifyContent: 'center',
+  },
   vendorName: { fontSize: 16, fontWeight: '700', color: '#000' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
   metaText: { fontSize: 13, color: '#666' },
