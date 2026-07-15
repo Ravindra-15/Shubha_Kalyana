@@ -88,7 +88,6 @@ const [unreadCount, setUnreadCount] = useState(0);
       setLoadingMatches(false);
     }
   };
-
   const getAgeFromDob = (dob?: string) => {
     if (!dob) return null;
     const b = new Date(dob);

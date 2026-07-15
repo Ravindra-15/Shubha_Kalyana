@@ -37,6 +37,7 @@ export default function MainTabs() {
           tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
         }}
       />
+      
       <Tab.Screen
         name="SearchTab"
         component={AllMatchesScreen}
