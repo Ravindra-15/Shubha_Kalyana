@@ -29,19 +29,47 @@ const DIET = [
   { label: 'Vegan', value: 'VEGAN' },
 ];
 
+const HEALTH_CONDITION = [
+  { label: 'No', value: 'NO' },
+  { label: 'Yes', value: 'YES' },
+];
+
+const HEALTH_DETAILS_MAX = 500;
+
 export default function BasicLifestyleScreen({ navigation }: any) {
   const { data, setField } = useSignup();
   const bl = data.basicLifestyle || {};
+  const initialHealthCondition =
+    bl.healthCondition ||
+    (bl.healthDisclosure?.hasCondition === true
+      ? 'YES'
+      : bl.healthDisclosure?.hasCondition === false
+        ? 'NO'
+        : '');
   const [maritalStatus, setMaritalStatus] = useState(bl.maritalStatus || '');
   const [feet, setFeet] = useState(bl.feet || '');
   const [inches, setInches] = useState(bl.inches || '');
   const [weight, setWeight] = useState(bl.weight || '');
   const [diet, setDiet] = useState(bl.diet || '');
+  const [healthCondition, setHealthCondition] = useState(initialHealthCondition);
+  const [healthConditionDetails, setHealthConditionDetails] = useState(
+    bl.healthConditionDetails || bl.healthDisclosure?.details || ''
+  );
+  const [healthConditionDetailsError, setHealthConditionDetailsError] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const submit = async (skip = false) => {
     if (skip) {
       navigation.navigate('Horoscope');
+      return;
+    }
+
+    const cleanedHealthDetails =
+      healthCondition === 'YES' ? healthConditionDetails.trim() : '';
+
+    if (healthCondition === 'YES' && !cleanedHealthDetails) {
+      setHealthConditionDetailsError(true);
+      Alert.alert('Brief note required', 'Please add a brief note about the health condition.');
       return;
     }
 
@@ -56,11 +84,25 @@ export default function BasicLifestyleScreen({ navigation }: any) {
     if (diet) {
       payload.lifestyle = { diet };
     }
+    if (healthCondition) {
+      payload.healthDisclosure = {
+        hasCondition: healthCondition === 'YES',
+        details: healthCondition === 'YES' ? cleanedHealthDetails : undefined,
+      };
+    }
 
     try {
       setLoading(true);
       // skip API if unchanged (prevents backend step rewind)
-      const blNow = { maritalStatus, feet, inches, weight, diet };
+      const blNow = {
+        maritalStatus,
+        feet,
+        inches,
+        weight,
+        diet,
+        healthCondition,
+        healthConditionDetails: cleanedHealthDetails,
+      };
       if (JSON.stringify(data.basicLifestyle || {}) === JSON.stringify(blNow)) {
         return navigation.navigate('Horoscope');
       }
@@ -150,6 +192,63 @@ export default function BasicLifestyleScreen({ navigation }: any) {
           ))}
         </View>
 
+        <Text style={styles.label}>
+          Is there any ongoing health condition you'd like us to be aware of?
+        </Text>
+        <View style={styles.healthRow}>
+          {HEALTH_CONDITION.map((option, index) => (
+            <TouchableOpacity
+              key={option.value}
+              style={[
+                styles.healthPill,
+                index === 0 && styles.healthPillFirst,
+                healthCondition === option.value && styles.healthPillActive,
+              ]}
+              onPress={() => {
+                setHealthCondition(option.value);
+                if (option.value === 'NO') {
+                  setHealthConditionDetails('');
+                  setHealthConditionDetailsError(false);
+                }
+              }}
+            >
+              <Text
+                style={[
+                  styles.healthText,
+                  healthCondition === option.value && styles.healthTextActive,
+                ]}
+              >
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {healthCondition === 'YES' ? (
+          <>
+            <Text style={styles.label}>Please share a brief note</Text>
+            <TextInput
+              style={[styles.textArea, healthConditionDetailsError && styles.inputError]}
+              placeholder="Briefly describe the condition or any relevant support needs"
+              placeholderTextColor="#999"
+              value={healthConditionDetails}
+              onChangeText={(text) => {
+                setHealthConditionDetails(text.slice(0, HEALTH_DETAILS_MAX));
+                setHealthConditionDetailsError(false);
+              }}
+              multiline
+              textAlignVertical="top"
+              maxLength={HEALTH_DETAILS_MAX}
+            />
+            {!!healthConditionDetailsError && (
+              <Text style={styles.fieldErrorText}>Please add a brief note</Text>
+            )}
+            <Text style={styles.counter}>
+              {healthConditionDetails.length}/{HEALTH_DETAILS_MAX}
+            </Text>
+          </>
+        ) : null}
+
         <View style={styles.spacer} />
 
         <TouchableOpacity style={styles.nextBtn} onPress={() => submit(false)} disabled={loading}>
@@ -200,6 +299,33 @@ const styles = StyleSheet.create({
   dietPillActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
   dietText: { fontSize: 15, color: '#333' },
   dietTextActive: { color: '#D20236', fontWeight: '600' },
+  healthRow: { flexDirection: 'row', marginBottom: 16 },
+  healthPill: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+  healthPillFirst: { marginRight: 12 },
+  healthPillActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
+  healthText: { fontSize: 15, color: '#333', fontWeight: '600' },
+  healthTextActive: { color: '#D20236', fontWeight: '700' },
+  textArea: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#000',
+    minHeight: 110,
+    marginBottom: 6,
+  },
+  inputError: { borderColor: '#D20236', borderWidth: 1.5 },
+  fieldErrorText: { color: '#D20236', fontSize: 12, fontWeight: '500', marginBottom: 6 },
+  counter: { alignSelf: 'flex-end', color: '#999', fontSize: 12, marginBottom: 12 },
   spacer: { flex: 1, minHeight: 20 },
   nextBtn: {
     backgroundColor: '#D20236',
