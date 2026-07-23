@@ -155,6 +155,11 @@ const [unreadCount, setUnreadCount] = useState(0);
       item.profile?.photos?.[0]?.url ||
       '';
     const addr = item.profile?.address?.current || {};
+    const matchPercentage =
+      item.matchPercentage ??
+      item.matchPercent ??
+      item.profile?.matchPercentage ??
+      item.profile?.matchPercent;
     return {
       profileId: item.profileId,
       name:
@@ -163,9 +168,17 @@ const [unreadCount, setUnreadCount] = useState(0);
       age: getAgeFromDob(basic.dob),
       profession: item.profile?.employment?.designation || '',
       location:
-        [addr.city || addr.district, addr.state].filter(Boolean).join(', ') ||
+        [
+          addr.city || addr.district || addr.taluka,
+          addr.state || addr.stateOrProvince,
+          addr.country && addr.country !== 'India' ? addr.country : '',
+        ]
+          .filter(Boolean)
+          .join(', ') ||
         'Location not added',
       image: photo,
+      matchPercentage,
+      matchPercent: matchPercentage,
       verified: item.profile?.documents?.verificationStatus === 'VERIFIED',
     };
   };

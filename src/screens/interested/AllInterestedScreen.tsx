@@ -32,13 +32,23 @@ const mapInterest = (item: any) => {
   const basic = p.basicInfo || {};
   const photo = p.photos?.find((x: any) => x.isProfilePhoto)?.url || p.photos?.[0]?.url || '';
   const addr = p.address?.current || {};
+  const matchPercentage = item.matchPercentage ?? item.matchPercent ?? p.matchPercentage ?? p.matchPercent;
   return {
     profileId: item.profileId || p._id,
     name: [item.user?.firstName, item.user?.lastName].filter(Boolean).join(' ') || 'Profile',
     age: getAge(basic.dob),
     profession: p.employment?.designation || '',
-    location: [addr.city || addr.district, addr.state].filter(Boolean).join(', ') || 'Location not added',
+    location:
+      [
+        addr.city || addr.district || addr.taluka,
+        addr.state || addr.stateOrProvince,
+        addr.country && addr.country !== 'India' ? addr.country : '',
+      ]
+        .filter(Boolean)
+        .join(', ') || 'Location not added',
     image: photo,
+    matchPercentage,
+    matchPercent: matchPercentage,
     verified: p.documents?.verificationStatus === 'VERIFIED',
   };
 };

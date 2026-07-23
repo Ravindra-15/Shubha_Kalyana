@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -35,6 +35,8 @@ import { getUnlockPrice, getProfileAccess } from '../../api/membershipPayment';
 import { revealContact } from '../../api/membershipPayment';
 import { startChat } from '../../api/chat';
 import { getAccessSummary } from '../../api/membershipPayment';
+import { isProfileSaved, removeSavedProfile, saveProfile } from '../../utils/savedProfiles';
+import { useFocusEffect } from '@react-navigation/native';
 
 if (
   Platform.OS === 'android' &&
@@ -180,6 +182,32 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const [access, setAccess] = useState<any>(null);
   const [contact, setContact] = useState<any>(null);
   const [canChat, setCanChat] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      const loadSavedStatus = async () => {
+        if (!profileId) {
+          setSaved(false);
+          return;
+        }
+        try {
+          const nextSaved = await isProfileSaved(profileId);
+          if (active) setSaved(nextSaved);
+        } catch {
+          if (active) setSaved(false);
+        }
+      };
+
+      loadSavedStatus();
+
+      return () => {
+        active = false;
+      };
+    }, [profileId])
+  );
 
   useEffect(() => {
     (async () => {
@@ -247,7 +275,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         setLoading(false);
       }
     })();
-  }, [profileId]);
+  }, [navigation, profileId]);
 
   const sendRequest = async () => {
     try {
@@ -262,7 +290,31 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
     }
   };
 
- const openChat = async () => {
+  const toggleSavedProfile = async () => {
+    if (savingProfile || !profileId) return;
+
+    try {
+      setSavingProfile(true);
+      const nextSaved = !saved;
+      if (nextSaved) {
+        await saveProfile(profileId);
+      } else {
+        await removeSavedProfile(profileId);
+      }
+
+      setSaved(nextSaved);
+      Alert.alert(
+        nextSaved ? 'Saved' : 'Removed',
+        nextSaved ? 'Profile saved' : 'Profile removed from saved',
+      );
+    } catch {
+      Alert.alert('Error', 'Could not update saved profile');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const openChat = async () => {
     if (!canChat) {
       navigation.navigate('Plans', { profileId });
       return;
@@ -400,13 +452,8 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile Details</Text>
         <TouchableOpacity
-          onPress={() => {
-            setSaved(s => !s);
-            Alert.alert(
-              saved ? 'Removed' : 'Saved',
-              saved ? 'Profile removed from saved' : 'Profile saved',
-            );
-          }}
+          onPress={toggleSavedProfile}
+          disabled={savingProfile}
         >
           <Bookmark
             color="#D20236"
@@ -491,8 +538,14 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               </Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.saveBtn}>
-            <Text style={styles.saveText}>Save Profile</Text>
+          <TouchableOpacity
+            style={styles.saveBtn}
+            onPress={toggleSavedProfile}
+            disabled={savingProfile}
+          >
+            <Text style={styles.saveText}>
+              {saved ? 'Remove Saved Profile' : 'Save Profile'}
+            </Text>
           </TouchableOpacity>
         </View>
 

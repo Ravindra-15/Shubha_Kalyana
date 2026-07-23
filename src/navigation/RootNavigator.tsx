@@ -50,6 +50,7 @@ import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import ChooseLanguageScreen from '../screens/profile/ChooseLanguageScreen';
 import PrivacySettingsScreen from '../screens/profile/PrivacySettingsScreen';
 import VendorListScreen from '../screens/vendor/VendorListScreen';
+import SavedProfilesScreen from '../screens/profile/SavedProfilesScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
@@ -98,6 +99,7 @@ export default function RootNavigator() {
             <Stack.Screen name="ChooseLanguage" component={ChooseLanguageScreen} />
             <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
             <Stack.Screen name="VendorList" component={VendorListScreen} />
+            <Stack.Screen name="SavedProfiles" component={SavedProfilesScreen} />
           </>
         ) : (
           <>

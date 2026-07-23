@@ -1,16 +1,15 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
-  Image, Alert, BackHandler,
+  Image, Alert, BackHandler, PermissionsAndroid, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, Camera, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, Camera } from 'lucide-react-native';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import KeyboardWrapper from '../../components/KeyboardWrapper';
 import SearchableDropdown from '../../components/SearchableDropdown';
 import { getMyFullProfile, updateMyProfile, updateMyPartnerPreference, uploadMyProfilePhoto } from '../../api/profile';
-import { getCastes, Caste } from '../../api/caste';
 import { resolveImageUrl } from '../../utils/imageUrl';
 
 const MARITAL_STATUS = [
@@ -132,15 +131,13 @@ export default function EditProfileScreen({ navigation }: any) {
   const [prefEducation, setPrefEducation] = useState('');
   const [prefProfession, setPrefProfession] = useState('');
 
-  const [castes, setCastes] = useState<Caste[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const [data, casteList] = await Promise.all([getMyFullProfile(), getCastes()]);
-      setCastes(casteList);
+      const data = await getMyFullProfile();
 
       const user = data?.user || {};
       const profile = data?.profile || {};
@@ -271,8 +268,6 @@ export default function EditProfileScreen({ navigation }: any) {
 
   const markChanged = () => setHasChanges(true);
 
-  const subCasteOptions = castes.find((c) => c.casteName === readonly.casteName)?.subCastes || [];
-
   const pickPhoto = () => {
     Alert.alert('Change Photo', 'Choose an option', [
       { text: 'Camera', onPress: openCamera },
@@ -281,14 +276,45 @@ export default function EditProfileScreen({ navigation }: any) {
     ]);
   };
 
+  const requestCameraPermission = async () => {
+    if (Platform.OS !== 'android') return true;
+
+    const permission = PermissionsAndroid.PERMISSIONS.CAMERA;
+    const alreadyGranted = await PermissionsAndroid.check(permission);
+    if (alreadyGranted) return true;
+
+    const result = await PermissionsAndroid.request(permission, {
+      title: 'Camera Permission',
+      message: 'Allow Shubha Kalyana to use your camera to take a profile photo.',
+      buttonPositive: 'Allow',
+      buttonNegative: 'Cancel',
+    });
+
+    return result === PermissionsAndroid.RESULTS.GRANTED;
+  };
+
   const openCamera = async () => {
-    const result = await launchCamera({ mediaType: 'photo', quality: 0.8 });
-    handlePhotoResult(result);
+    try {
+      const hasPermission = await requestCameraPermission();
+      if (!hasPermission) {
+        Alert.alert('Permission Required', 'Please allow camera access to take a profile photo.');
+        return;
+      }
+
+      const result = await launchCamera({ mediaType: 'photo', quality: 0.8 });
+      handlePhotoResult(result);
+    } catch {
+      Alert.alert('Error', 'Could not open camera');
+    }
   };
 
   const openGallery = async () => {
-    const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8 });
-    handlePhotoResult(result);
+    try {
+      const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8 });
+      handlePhotoResult(result);
+    } catch {
+      Alert.alert('Error', 'Could not open gallery');
+    }
   };
 
   const handlePhotoResult = async (result: any) => {
@@ -541,7 +567,9 @@ export default function EditProfileScreen({ navigation }: any) {
                 <Camera color="#fff" size={13} />
               </View>
             </TouchableOpacity>
-            <Text style={styles.changePhotoText}>Change Photo</Text>
+            <TouchableOpacity onPress={pickPhoto} disabled={uploadingPhoto}>
+              <Text style={styles.changePhotoText}>Change Photo</Text>
+            </TouchableOpacity>
           </View>
 
           {!!errorMsg && <Text style={styles.errorBanner}>{errorMsg}</Text>}
