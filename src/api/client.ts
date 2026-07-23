@@ -2,10 +2,10 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // const BASE_URL = 'https://subhakalyan.delicod.com/api/v1';
-const BASE_URL = 'http://192.168.1.7:5000/api/v1';
+export const API_BASE_URL = 'http://localhost:5000/api/v1';
 
 const apiClient = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 });
@@ -25,8 +25,8 @@ apiClient.interceptors.request.use(async (config) => {
     }
   }
 
- // Let axios auto-detect multipart boundary for FormData bodies —
-  // never force JSON content-type on file uploads.
+  // Let axios auto-detect multipart boundary for FormData bodies.
+  // Never force JSON content-type on file uploads.
   if (config.data instanceof FormData) {
     if (typeof config.headers?.delete === 'function') {
       config.headers.delete('Content-Type');

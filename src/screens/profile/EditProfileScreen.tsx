@@ -5,11 +5,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, Camera } from 'lucide-react-native';
+import { ArrowLeft, BadgeCheck, Camera } from 'lucide-react-native';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import KeyboardWrapper from '../../components/KeyboardWrapper';
 import SearchableDropdown from '../../components/SearchableDropdown';
-import { getMyFullProfile, updateMyProfile, updateMyPartnerPreference, uploadMyProfilePhoto } from '../../api/profile';
+import {
+  getMyFullProfile,
+  isProfilePictureVerified,
+  updateMyProfile,
+  updateMyPartnerPreference,
+  uploadMyProfilePhoto,
+} from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 
 const MARITAL_STATUS = [
@@ -133,6 +139,7 @@ export default function EditProfileScreen({ navigation }: any) {
 
   const [hasChanges, setHasChanges] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [profilePictureVerified, setProfilePictureVerified] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -216,6 +223,7 @@ export default function EditProfileScreen({ navigation }: any) {
       setPrefEducation((pref.education || []).join(', '));
       setPrefProfession((pref.profession || []).join(', '));
 
+      setProfilePictureVerified(isProfilePictureVerified(profile));
       setHasChanges(false);
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not load profile');
@@ -267,6 +275,23 @@ export default function EditProfileScreen({ navigation }: any) {
   };
 
   const markChanged = () => setHasChanges(true);
+
+  const openProfileVerification = () => {
+    if (!readonly.photoUrl) {
+      Alert.alert('Profile photo required', 'Please upload a profile photo before verification.');
+      return;
+    }
+
+    if (hasChanges) {
+      Alert.alert(
+        'Unsaved changes',
+        'Please save or discard your profile changes before verification.',
+      );
+      return;
+    }
+
+    navigation.navigate('FaceTecTest');
+  };
 
   const pickPhoto = () => {
     Alert.alert('Change Photo', 'Choose an option', [
@@ -340,6 +365,7 @@ export default function EditProfileScreen({ navigation }: any) {
       if (newPhoto) {
         setReadonly((prev) => ({ ...prev, photoUrl: newPhoto }));
       }
+      setProfilePictureVerified(isProfilePictureVerified(updated?.profile));
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not upload photo');
     } finally {
@@ -531,6 +557,8 @@ export default function EditProfileScreen({ navigation }: any) {
     );
   }
 
+  const displayName = [firstName, lastName].filter(Boolean).join(' ').trim() || 'Your Profile';
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
@@ -570,6 +598,22 @@ export default function EditProfileScreen({ navigation }: any) {
             <TouchableOpacity onPress={pickPhoto} disabled={uploadingPhoto}>
               <Text style={styles.changePhotoText}>Change Photo</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.verifyProfileBtn,
+                (!readonly.photoUrl || uploadingPhoto) && styles.verifyProfileBtnDisabled,
+              ]}
+              onPress={openProfileVerification}
+              disabled={!readonly.photoUrl || uploadingPhoto}
+            >
+              <Text style={styles.verifyProfileText}>Verify Profile</Text>
+            </TouchableOpacity>
+            <View style={styles.profileNameRow}>
+              <Text style={styles.profileName} numberOfLines={1}>{displayName}</Text>
+              {profilePictureVerified && (
+                <BadgeCheck color="#fff" size={17} fill="#D20236" />
+              )}
+            </View>
           </View>
 
           {!!errorMsg && <Text style={styles.errorBanner}>{errorMsg}</Text>}
@@ -908,6 +952,27 @@ const styles = StyleSheet.create({
     borderWidth: 2, borderColor: '#fff',
   },
   changePhotoText: { fontSize: 13, fontWeight: '600', color: '#D20236', marginTop: 8 },
+  verifyProfileBtn: {
+    minWidth: 150,
+    minHeight: 42,
+    borderRadius: 10,
+    backgroundColor: '#D20236',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    paddingHorizontal: 18,
+  },
+  verifyProfileBtnDisabled: { backgroundColor: '#e9a9b6' },
+  verifyProfileText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+  profileNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    maxWidth: '90%',
+    marginTop: 10,
+  },
+  profileName: { flexShrink: 1, fontSize: 16, fontWeight: '700', color: '#000' },
   sectionTitle: { fontSize: 12, color: '#999', fontWeight: '700', letterSpacing: 0.5, marginTop: 20, marginBottom: 10 },
   label: { fontSize: 13, fontWeight: '600', color: '#333', marginBottom: 8, marginTop: 4 },
   hint: { fontSize: 11, color: '#999', marginTop: -8, marginBottom: 10 },
