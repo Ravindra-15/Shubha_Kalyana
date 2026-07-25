@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // const BASE_URL = 'https://subhakalyan.delicod.com/api/v1';
 export const API_BASE_URL = 'http://localhost:5000/api/v1';
+// export const API_BASE_URL = 'http://192.168.1.7:5000/api/v1';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

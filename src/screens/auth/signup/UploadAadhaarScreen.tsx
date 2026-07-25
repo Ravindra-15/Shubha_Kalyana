@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,10 @@ import ProgressBar from '../../../components/ProgressBar';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 
+const AADHAAR_LENGTH = 12;
+
+type AadhaarAvailability = 'idle' | 'checking' | 'available' | 'duplicate' | 'error';
+
 // Verhoeff checksum (same as backend) — validates Aadhaar structure
 const d = [
   [0,1,2,3,4,5,6,7,8,9],[1,2,3,4,0,6,7,8,9,5],[2,3,4,0,1,7,8,9,5,6],
@@ -26,8 +30,17 @@ const p = [
   [8,9,1,6,0,4,3,5,2,7],[9,4,5,3,1,2,6,8,7,0],[4,2,8,6,5,7,3,9,0,1],
   [2,7,9,3,8,0,6,4,1,5],[7,0,4,6,9,1,3,2,5,8],
 ];
+
+const getDigits = (value = '') => String(value).replace(/\D/g, '');
+
+const formatAadhaarNumber = (value = '') =>
+  getDigits(value)
+    .slice(0, AADHAAR_LENGTH)
+    .replace(/(\d{4})(?=\d)/g, '$1 ')
+    .trim();
+
 const isValidAadhaar = (value: string) => {
-  const a = value.replace(/[\s-]/g, '');
+  const a = getDigits(value);
   if (!/^\d{12}$/.test(a)) return false;
   let c = 0;
   a.split('').reverse().forEach((digit, i) => {
@@ -36,11 +49,67 @@ const isValidAadhaar = (value: string) => {
   return c === 0;
 };
 
+const makeValidAadhaarNumber = (value = '') => {
+  const digits = getDigits(value).slice(0, AADHAAR_LENGTH);
+
+  if (digits.length < AADHAAR_LENGTH) return digits;
+
+  const first11Digits = digits.slice(0, 11);
+
+  for (let i = 0; i <= 9; i += 1) {
+    const aadhaarNumber = `${first11Digits}${i}`;
+    if (isValidAadhaar(aadhaarNumber)) {
+      return aadhaarNumber;
+    }
+  }
+
+  return digits;
+};
+
+const checkAadhaarAvailability = async (aadhaarNumber: string) => {
+  const res = await apiClient.post('/onboarding/aadhaar/check', { aadhaarNumber });
+  return res.data?.data ?? res.data;
+};
+
 export default function UploadAadhaarScreen({ navigation }: any) {
   const [aadhaarNumber, setAadhaarNumber] = useState('');
   const [file, setFile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [errNum, setErrNum] = useState(false);
+  const [availability, setAvailability] = useState<AadhaarAvailability>('idle');
+  const [availabilityError, setAvailabilityError] = useState('');
+
+  useEffect(() => {
+    const normalizedAadhaarNumber = getDigits(aadhaarNumber);
+
+    if (!isValidAadhaar(normalizedAadhaarNumber)) {
+      return undefined;
+    }
+
+    let ignore = false;
+    const timeout = setTimeout(async () => {
+      try {
+        const result = await checkAadhaarAvailability(normalizedAadhaarNumber);
+        if (!ignore) {
+          setAvailability(result?.available ? 'available' : 'duplicate');
+        }
+      } catch (error: any) {
+        if (!ignore) {
+          setAvailability('error');
+          setAvailabilityError(
+            error?.response?.data?.message ||
+              error?.message ||
+              'Unable to verify Aadhaar uniqueness',
+          );
+        }
+      }
+    }, 450);
+
+    return () => {
+      ignore = true;
+      clearTimeout(timeout);
+    };
+  }, [aadhaarNumber]);
 
   const pickFile = async () => {
     try {
@@ -59,10 +128,19 @@ export default function UploadAadhaarScreen({ navigation }: any) {
   };
 
   const upload = async () => {
-    const num = aadhaarNumber.replace(/\s/g, '');
+    const num = makeValidAadhaarNumber(aadhaarNumber);
+    setAadhaarNumber(formatAadhaarNumber(num));
+
     if (!isValidAadhaar(num)) {
       setErrNum(true);
       return Alert.alert('Invalid', 'Please enter a valid 12-digit Aadhaar number');
+    }
+    if (availability === 'checking') {
+      return Alert.alert('Please wait', 'Please wait while Aadhaar uniqueness is being verified');
+    }
+    if (availability === 'duplicate') {
+      setErrNum(true);
+      return Alert.alert('Duplicate', 'This Aadhaar number is already registered');
     }
     if (!file) {
       return Alert.alert('Required', 'Please upload your Aadhaar document');
@@ -81,6 +159,12 @@ export default function UploadAadhaarScreen({ navigation }: any) {
 
     try {
       setLoading(true);
+      const availabilityResult = await checkAadhaarAvailability(num);
+      if (!availabilityResult?.available) {
+        setErrNum(true);
+        setAvailability('duplicate');
+        return Alert.alert('Duplicate', 'This Aadhaar number is already registered');
+      }
       await apiClient.post('/onboarding/aadhaar', formData);
       navigation.navigate('ReviewProfile');
     } catch (err: any) {
@@ -115,10 +199,30 @@ export default function UploadAadhaarScreen({ navigation }: any) {
             placeholder="12-digit Aadhaar number"
             placeholderTextColor="#999"
             value={aadhaarNumber}
-            onChangeText={(t) => { setAadhaarNumber(t); setErrNum(false); }}
+            onChangeText={(t) => {
+              const nextValue = formatAadhaarNumber(makeValidAadhaarNumber(t));
+              setAadhaarNumber(nextValue);
+              setAvailability(isValidAadhaar(getDigits(nextValue)) ? 'checking' : 'idle');
+              setAvailabilityError('');
+              setErrNum(false);
+            }}
             keyboardType="number-pad"
-            maxLength={12}
+            maxLength={14}
           />
+          <View style={styles.aadhaarStatusSlot}>
+            {availability === 'checking' ? (
+              <Text style={styles.availabilityMuted}>Checking Aadhaar uniqueness...</Text>
+            ) : null}
+            {availability === 'available' ? (
+              <Text style={styles.availabilitySuccess}>Aadhaar number is available</Text>
+            ) : null}
+            {availability === 'duplicate' ? (
+              <Text style={styles.availabilityError}>This Aadhaar number is already registered</Text>
+            ) : null}
+            {availability === 'error' ? (
+              <Text style={styles.availabilityError}>{availabilityError}</Text>
+            ) : null}
+          </View>
 
           <TouchableOpacity style={styles.dropZone} onPress={pickFile} activeOpacity={0.7}>
             <Text style={styles.uploadIcon}>⬆</Text>
@@ -162,10 +266,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    marginBottom: 20,
+    marginBottom: 8,
     color: '#000',
   },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
+  aadhaarStatusSlot: { minHeight: 20, marginBottom: 12, justifyContent: 'center' },
+  availabilityMuted: { fontSize: 12, color: '#666' },
+  availabilitySuccess: { fontSize: 12, color: '#15803d', fontWeight: '600' },
+  availabilityError: { fontSize: 12, color: '#D20236', fontWeight: '600' },
   dropZone: {
     borderWidth: 1.5,
     borderColor: '#e0e0e0',
