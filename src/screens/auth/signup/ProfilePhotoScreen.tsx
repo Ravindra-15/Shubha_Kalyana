@@ -13,6 +13,7 @@ import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import ProgressBar from '../../../components/ProgressBar';
 import apiClient from '../../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { validateProfilePhotoAsset } from '../../../utils/profilePhotoValidation';
 export default function ProfilePhotoScreen({ navigation }: any) {
   const [photo, setPhoto] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -48,10 +49,9 @@ export default function ProfilePhotoScreen({ navigation }: any) {
     }
     const asset = result.assets?.[0];
     if (asset) {
-      // size check (5MB)
-      if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
-        return Alert.alert('Too large', 'Image must be under 5MB');
-      }
+      const validationError = validateProfilePhotoAsset(asset);
+      if (validationError) return Alert.alert('Invalid photo', validationError);
+
       setPhoto(asset);
     }
   };

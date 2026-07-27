@@ -19,6 +19,7 @@ import {
 import { getActiveMembership } from '../../api/membership';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { canVerifyProfilePhotoWithMembership } from '../../utils/membershipEligibility';
+import { validateProfilePhotoAsset } from '../../utils/profilePhotoValidation';
 
 const MARITAL_STATUS = [
   { label: 'Never Married', value: 'NEVER_MARRIED' },
@@ -365,9 +366,8 @@ export default function EditProfileScreen({ navigation }: any) {
     const asset = result.assets?.[0];
     if (!asset) return;
 
-    if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
-      return Alert.alert('Too large', 'Image must be under 5MB');
-    }
+    const validationError = validateProfilePhotoAsset(asset);
+    if (validationError) return Alert.alert('Invalid photo', validationError);
 
     try {
       setUploadingPhoto(true);
