@@ -5,10 +5,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  ArrowLeft, Settings, BadgeCheck, Edit3, Bookmark, CreditCard, Download, Heart, Shield, ChevronRight, Crown,
+  ArrowLeft, Settings, BadgeCheck, Edit3, Bookmark, CreditCard, Download, Heart, Shield, ChevronRight, Crown, Eye,
 } from 'lucide-react-native';
 import apiClient from '../../api/client';
 import { getActiveMembership } from '../../api/membership';
+import { getProfileViewersSummary } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 
 
@@ -28,16 +29,25 @@ export default function ProfileScreen({ navigation }: any) {
   const [profile, setProfile] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
   const [membership, setMembership] = useState<any>(null);
+  const [viewerSummary, setViewerSummary] = useState({
+    profileViewersCount: 0,
+    totalProfileViews: 0,
+  });
 
   const load = useCallback(async () => {
     try {
-      const [profileRes, membershipRes] = await Promise.all([
+      const [profileRes, membershipRes, viewerSummaryRes] = await Promise.all([
         apiClient.get('/user/me/profile'),
         getActiveMembership(),
+        getProfileViewersSummary().catch(() => null),
       ]);
       setUser(profileRes.data?.data?.user);
       setProfile(profileRes.data?.data?.profile);
       setMembership(membershipRes);
+      setViewerSummary({
+        profileViewersCount: Number(viewerSummaryRes?.profileViewersCount || 0),
+        totalProfileViews: Number(viewerSummaryRes?.totalProfileViews || 0),
+      });
     } catch {
       // keep screen usable even if one call fails
     } finally {
@@ -78,6 +88,7 @@ export default function ProfileScreen({ navigation }: any) {
   const quickActions = [
     { label: 'Edit Profile', Icon: Edit3, onPress: () => navigation.navigate('EditProfile') },
     { label: 'Saved Profiles', Icon: Bookmark, onPress: () => navigation.navigate('SavedProfiles') },
+    { label: `Profile Viewers (${viewerSummary.profileViewersCount})`, Icon: Eye, onPress: () => navigation.navigate('ProfileViewers') },
     { label: 'Payment History', Icon: CreditCard, onPress: () => navigation.navigate('PaymentHistory') },
     { label: 'Download Receipts', Icon: Download, onPress: () => navigation.navigate('PaymentHistory') },
     { label: 'Interests', Icon: Heart, onPress: () => navigation.navigate('AllInterested', { pushed: true }) },

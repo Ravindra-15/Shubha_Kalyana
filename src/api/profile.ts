@@ -5,6 +5,24 @@ export const getPartnerProfile = async (id: string) => {
   return res.data?.data || null;
 };
 
+export const getProfileViewersSummary = async () => {
+  const res = await apiClient.get('/relationship/profile-viewers/me/summary');
+  return res.data?.data || { profileViewersCount: 0, totalProfileViews: 0 };
+};
+
+export const getProfileViewers = async (params?: { page?: number; limit?: number }) => {
+  const res = await apiClient.get('/relationship/profile-viewers/me', {
+    params,
+  });
+
+  return res.data?.data || {
+    viewers: [],
+    pagination: null,
+    profileViewersCount: 0,
+    totalProfileViews: 0,
+  };
+};
+
 export const getMyFullProfile = async () => {
   const res = await apiClient.get('/user/me/profile');
   return res.data?.data || null; // { user, profile, partnerPreference }
