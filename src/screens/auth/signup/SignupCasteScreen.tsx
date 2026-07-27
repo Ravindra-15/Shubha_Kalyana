@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Image,
@@ -10,38 +9,29 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Picker } from '@react-native-picker/picker';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import { useSignup } from '../../../context/SignupContext';
 import { getCastes, Caste } from '../../../api/caste';
 import SearchableDropdown from '../../../components/SearchableDropdown';
-const INDIAN_CITIES = [
-  'Bangalore',
-  'Mumbai',
-  'Delhi',
-  'Hyderabad',
-  'Chennai',
-  'Kolkata',
-  'Pune',
-  'Ahmedabad',
-  'Jaipur',
-  'Lucknow',
-  'Surat',
-  'Kanpur',
-  'Nagpur',
-  'Indore',
-  'Bhopal',
-  'Visakhapatnam',
-  'Patna',
-  'Vadodara',
-  'Mysore',
-  'Mangalore',
-  'Hubli',
-  'Coimbatore',
-  'Kochi',
-  'Trivandrum',
+
+const MOTHER_TONGUES = [
+  'Kannada',
+  'Hindi',
+  'English',
+  'Telugu',
+  'Tamil',
+  'Malayalam',
+  'Marathi',
+  'Konkani',
+  'Tulu',
+  'Kodava',
+  'Urdu',
+  'Gujarati',
+  'Bengali',
+  'Punjabi',
   'Other',
 ];
+
 const RELIGIONS = [
   'Hindu',
   'Muslim',
@@ -58,7 +48,7 @@ export default function SignupCasteScreen({ navigation }: any) {
   const [religion, setReligion] = useState(data.religion || 'Hindu');
   const [casteId, setCasteId] = useState(data.caste || '');
   const [subCaste, setSubCaste] = useState(data.subCaste || '');
-  const [livingIn, setLivingIn] = useState(data.livingIn || '');
+  const [motherTongue, setMotherTongue] = useState(data.motherTongue || '');
 
   const [castes, setCastes] = useState<Caste[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +58,7 @@ export default function SignupCasteScreen({ navigation }: any) {
       try {
         const list = await getCastes();
         setCastes(list);
-      } catch (e: any) {
+      } catch {
         Alert.alert('Error', 'Could not load castes');
       } finally {
         setLoading(false);
@@ -84,14 +74,13 @@ export default function SignupCasteScreen({ navigation }: any) {
       return Alert.alert('Required', 'Please enter religion');
     if (!casteId) return Alert.alert('Required', 'Please select caste');
     if (!subCaste) return Alert.alert('Required', 'Please select sub caste');
-    if (!livingIn.trim())
-      return Alert.alert('Required', 'Please enter living location');
+    if (!motherTongue.trim())
+      return Alert.alert('Required', 'Please enter mother tongue');
 
     setField('religion', religion.trim());
     setField('caste', casteId);
     setField('subCaste', subCaste);
-    setField('livingIn', livingIn.trim());
-    setField('motherTongue', religion === 'Hindu' ? 'Kannada' : 'Kannada'); // default; adjust if needed
+    setField('motherTongue', motherTongue.trim());
     navigation.navigate('SignupContact');
   };
 
@@ -150,13 +139,13 @@ export default function SignupCasteScreen({ navigation }: any) {
         />
 
         <Text style={styles.label}>
-          Living in <Text style={styles.star}>*</Text>
+          Mother Tongue <Text style={styles.star}>*</Text>
         </Text>
         <SearchableDropdown
-          placeholder="Select City"
-          value={livingIn}
-          options={INDIAN_CITIES.map(c => ({ label: c, value: c }))}
-          onSelect={val => setLivingIn(val)}
+          placeholder="Select Mother Tongue"
+          value={motherTongue}
+          options={MOTHER_TONGUES.map(tongue => ({ label: tongue, value: tongue }))}
+          onSelect={val => setMotherTongue(val)}
           allowCustom
         />
 
@@ -201,23 +190,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   star: { color: '#D20236' },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    marginBottom: 10,
-    color: '#000',
-  },
-  pickerWrap: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    marginBottom: 12,
-    overflow: 'hidden',
-  },
   continueBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,
@@ -226,5 +198,4 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   continueText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  picker: { color: '#101b0a' },
 });
