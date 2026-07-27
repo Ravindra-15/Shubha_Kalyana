@@ -16,7 +16,9 @@ import {
   updateMyPartnerPreference,
   uploadMyProfilePhoto,
 } from '../../api/profile';
+import { getActiveMembership } from '../../api/membership';
 import { resolveImageUrl } from '../../utils/imageUrl';
+import { canVerifyProfilePhotoWithMembership } from '../../utils/membershipEligibility';
 
 const MARITAL_STATUS = [
   { label: 'Never Married', value: 'NEVER_MARRIED' },
@@ -140,11 +142,16 @@ export default function EditProfileScreen({ navigation }: any) {
   const [hasChanges, setHasChanges] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [profilePictureVerified, setProfilePictureVerified] = useState(false);
+  const [canVerifyProfilePhoto, setCanVerifyProfilePhoto] = useState(false);
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getMyFullProfile();
+      const [data, membership] = await Promise.all([
+        getMyFullProfile(),
+        getActiveMembership(),
+      ]);
+      setCanVerifyProfilePhoto(canVerifyProfilePhotoWithMembership(membership));
 
       const user = data?.user || {};
       const profile = data?.profile || {};
@@ -277,6 +284,14 @@ export default function EditProfileScreen({ navigation }: any) {
   const markChanged = () => setHasChanges(true);
 
   const openProfileVerification = () => {
+    if (!canVerifyProfilePhoto) {
+      Alert.alert(
+        'Membership required',
+        'Photo verification is available with an active membership plan.',
+      );
+      return;
+    }
+
     if (!readonly.photoUrl) {
       Alert.alert('Profile photo required', 'Please upload a profile photo before verification.');
       return;
@@ -598,16 +613,18 @@ export default function EditProfileScreen({ navigation }: any) {
             <TouchableOpacity onPress={pickPhoto} disabled={uploadingPhoto}>
               <Text style={styles.changePhotoText}>Change Photo</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.verifyProfileBtn,
-                (!readonly.photoUrl || uploadingPhoto) && styles.verifyProfileBtnDisabled,
-              ]}
-              onPress={openProfileVerification}
-              disabled={!readonly.photoUrl || uploadingPhoto}
-            >
-              <Text style={styles.verifyProfileText}>Verify Profile</Text>
-            </TouchableOpacity>
+            {canVerifyProfilePhoto && (
+              <TouchableOpacity
+                style={[
+                  styles.verifyProfileBtn,
+                  (!readonly.photoUrl || uploadingPhoto) && styles.verifyProfileBtnDisabled,
+                ]}
+                onPress={openProfileVerification}
+                disabled={!readonly.photoUrl || uploadingPhoto}
+              >
+                <Text style={styles.verifyProfileText}>Verify Profile Photo</Text>
+              </TouchableOpacity>
+            )}
             <View style={styles.profileNameRow}>
               <Text style={styles.profileName} numberOfLines={1}>{displayName}</Text>
               {profilePictureVerified && (
