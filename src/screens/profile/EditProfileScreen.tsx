@@ -16,9 +16,7 @@ import {
   updateMyPartnerPreference,
   uploadMyProfilePhoto,
 } from '../../api/profile';
-import { getActiveMembership } from '../../api/membership';
 import { resolveImageUrl } from '../../utils/imageUrl';
-import { canVerifyProfilePhotoWithMembership } from '../../utils/membershipEligibility';
 import { validateProfilePhotoAsset } from '../../utils/profilePhotoValidation';
 
 const MARITAL_STATUS = [
@@ -143,16 +141,12 @@ export default function EditProfileScreen({ navigation }: any) {
   const [hasChanges, setHasChanges] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [profilePictureVerified, setProfilePictureVerified] = useState(false);
-  const [canVerifyProfilePhoto, setCanVerifyProfilePhoto] = useState(false);
+  const canVerifyProfilePhoto = true;
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const [data, membership] = await Promise.all([
-        getMyFullProfile(),
-        getActiveMembership(),
-      ]);
-      setCanVerifyProfilePhoto(canVerifyProfilePhotoWithMembership(membership));
+      const data = await getMyFullProfile();
 
       const user = data?.user || {};
       const profile = data?.profile || {};

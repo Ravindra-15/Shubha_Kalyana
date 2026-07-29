@@ -13,10 +13,14 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ArrowLeft, Crown, Check } from 'lucide-react-native';
 import { getPlans, getActiveMembership, createMembershipOrder } from '../../api/membershipPlans';
 import type { Plan } from '../../api/membershipPlans';
+import { getMyFullProfile } from '../../api/profile';
 import { openRazorpayOrder } from '../../utils/razorpayCheckout';
 import type { PaymentOrderResult } from '../../utils/paymentBreakup';
 import PaymentBreakupModal from '../../components/PaymentBreakupModal';
 import BottomNav from '../../components/BottomNav';
+import VerificationPromptModal from '../../components/VerificationPromptModal';
+import { getVerificationPromptStatus } from '../../utils/verificationPrompt';
+import type { VerificationPromptStatus } from '../../utils/verificationPrompt';
 
 // human-readable benefit lines from the toggles
 const benefitLines = (plan: Plan): string[] => {
@@ -60,6 +64,8 @@ export default function PlansScreen({ navigation, route }: any) {
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
+  const [verificationPrompt, setVerificationPrompt] =
+    useState<VerificationPromptStatus | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -81,6 +87,21 @@ export default function PlansScreen({ navigation, route }: any) {
       load();
     }, [load])
   );
+
+  const showVerificationPrompt = useCallback(async () => {
+    try {
+      const profile = await getMyFullProfile();
+      const status = getVerificationPromptStatus(profile);
+      if (status.shouldShow) {
+        setVerificationPrompt(status);
+        return true;
+      }
+    } catch {
+      // Keep membership success intact if this secondary check fails.
+    }
+
+    return false;
+  }, []);
 
   const buy = async (plan: Plan) => {
     setBuyingId(plan._id);
@@ -120,8 +141,11 @@ export default function PlansScreen({ navigation, route }: any) {
     setPendingPayment(null);
 
     if (result.success) {
-      Alert.alert('Success', `${payment.plan.planName} activated successfully!`);
-      load(); // refresh active membership
+      await load(); // refresh active membership
+      const promptShown = await showVerificationPrompt();
+      if (!promptShown) {
+        Alert.alert('Success', `${payment.plan.planName} activated successfully!`);
+      }
     } else {
       Alert.alert('Payment', result.message || 'Payment failed');
     }
@@ -218,6 +242,16 @@ export default function PlansScreen({ navigation, route }: any) {
         loading={confirmingPayment}
         onClose={closePaymentBreakup}
         onPurchase={confirmPayment}
+      />
+      <VerificationPromptModal
+        visible={Boolean(verificationPrompt)}
+        status={verificationPrompt}
+        onClose={() => setVerificationPrompt(null)}
+        onVerifyPhoto={() => {
+          setVerificationPrompt(null);
+          navigation.navigate('FaceTecTest');
+        }}
+        onVerifyAadhaar={() => undefined}
       />
     </SafeAreaView>
   );

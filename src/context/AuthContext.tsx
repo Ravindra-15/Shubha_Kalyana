@@ -7,6 +7,7 @@ type AuthContextType = {
   user: User | null;
   token: string | null;
   loading: boolean;
+  loginPromptVersion: number | null;
   login: (token: string, user: User) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -17,6 +18,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loginPromptVersion, setLoginPromptVersion] = useState<number | null>(null);
 
   // On app start, check if a token is already saved
   useEffect(() => {
@@ -28,7 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setToken(savedToken);
           if (savedUser) setUser(JSON.parse(savedUser));
         }
-      } catch (e) {
+      } catch {
         // ignore
       } finally {
         setLoading(false);
@@ -41,6 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await AsyncStorage.setItem('user', JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
+    setLoginPromptVersion(Date.now());
   };
 
   const logout = async () => {
@@ -48,10 +51,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await AsyncStorage.removeItem('user');
     setToken(null);
     setUser(null);
+    setLoginPromptVersion(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, loginPromptVersion, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
