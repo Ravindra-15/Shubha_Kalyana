@@ -30,11 +30,17 @@ import apiClient from '../../api/client';
 import { LayoutAnimation, Platform, UIManager } from 'react-native';
 import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
-import { payToUnlockProfile } from '../../utils/razorpayCheckout';
-import { getUnlockPrice, getProfileAccess } from '../../api/membershipPayment';
-import { revealContact } from '../../api/membershipPayment';
+import PaymentBreakupModal from '../../components/PaymentBreakupModal';
+import { openRazorpayOrder } from '../../utils/razorpayCheckout';
+import {
+  createProfileUnlockOrder,
+  getUnlockPrice,
+  getProfileAccess,
+  revealContact,
+  getAccessSummary,
+} from '../../api/membershipPayment';
 import { startChat } from '../../api/chat';
-import { getAccessSummary } from '../../api/membershipPayment';
+import type { PaymentOrderResult } from '../../utils/paymentBreakup';
 import { isProfileSaved, removeSavedProfile, saveProfile } from '../../utils/savedProfiles';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -58,6 +64,13 @@ const getAge = (dob?: string) => {
   const m = t.getMonth() - b.getMonth();
   if (m < 0 || (m === 0 && t.getDate() < b.getDate())) a--;
   return a;
+};
+
+type PendingPayment = {
+  orderResult: PaymentOrderResult;
+  title: string;
+  description: string;
+  itemLabel: string;
 };
 
 // A row that shows value OR a lock if blurred
@@ -183,6 +196,8 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const [contact, setContact] = useState<any>(null);
   const [canChat, setCanChat] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
+  const [confirmingPayment, setConfirmingPayment] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -340,10 +355,42 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   };
   const handleUnlock = async () => {
     setPaying(true);
-    const result = await payToUnlockProfile(profileId, { name });
-    setPaying(false);
-    if (result.success) {
+    try {
+      const orderResult = await createProfileUnlockOrder(profileId);
+      if (!orderResult?.order?.gatewayOrderId || !orderResult?.keyId) {
+        Alert.alert('Payment', 'Could not create payment order');
+        return;
+      }
+
       setShowUnlock(false);
+      setPendingPayment({
+        orderResult,
+        title: 'Profile Unlock',
+        description: `Review the GST breakup before unlocking ${name || 'this profile'}.`,
+        itemLabel: 'Profile unlock fee',
+      });
+    } catch (err: any) {
+      Alert.alert('Payment', err?.response?.data?.message || 'Could not create payment order');
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  const closePaymentBreakup = () => {
+    if (confirmingPayment) return;
+    setPendingPayment(null);
+  };
+
+  const confirmUnlockPayment = async () => {
+    const payment = pendingPayment;
+    if (!payment) return;
+
+    setConfirmingPayment(true);
+    const result = await openRazorpayOrder(payment.orderResult, 'Unlock Profile Access', { name });
+    setConfirmingPayment(false);
+    setPendingPayment(null);
+
+    if (result.success) {
       // refetch everything in parallel so all sections update together
       try {
         const [fresh, acc, c] = await Promise.all([
@@ -444,6 +491,13 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           setShowUnlock(false);
           navigation.navigate('Plans');
         }}
+      />
+      <PaymentBreakupModal
+        visible={Boolean(pendingPayment)}
+        payment={pendingPayment}
+        loading={confirmingPayment}
+        onClose={closePaymentBreakup}
+        onPurchase={confirmUnlockPayment}
       />
       {/* Header */}
       <View style={styles.header}>

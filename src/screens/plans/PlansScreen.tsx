@@ -11,8 +11,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { ArrowLeft, Crown, Check } from 'lucide-react-native';
-import { getPlans, getActiveMembership, Plan } from '../../api/membershipPlans';
-import { payForMembership } from '../../utils/razorpayCheckout';
+import { getPlans, getActiveMembership, createMembershipOrder } from '../../api/membershipPlans';
+import type { Plan } from '../../api/membershipPlans';
+import { openRazorpayOrder } from '../../utils/razorpayCheckout';
+import type { PaymentOrderResult } from '../../utils/paymentBreakup';
+import PaymentBreakupModal from '../../components/PaymentBreakupModal';
 import BottomNav from '../../components/BottomNav';
 
 // human-readable benefit lines from the toggles
@@ -40,12 +43,23 @@ const planTheme = (planName?: string) => {
   if (n.includes('diamond')) return { bg: '#2b6cb0', light: 'rgba(255,255,255,0.18)', text: '#fff', btnText: '#2b6cb0' };
   return { bg: '#7A5CA6', light: 'rgba(255,255,255,0.18)', text: '#fff', btnText: '#7A5CA6' }; // default
 };
+
+type PendingPayment = {
+  plan: Plan;
+  orderResult: PaymentOrderResult;
+  title: string;
+  description: string;
+  itemLabel: string;
+};
+
 export default function PlansScreen({ navigation, route }: any) {
   const targetProfileId = route?.params?.profileId; // optional (opened from a profile)
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
   const [buyingId, setBuyingId] = useState<string | null>(null);
+  const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
+  const [confirmingPayment, setConfirmingPayment] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -70,10 +84,43 @@ export default function PlansScreen({ navigation, route }: any) {
 
   const buy = async (plan: Plan) => {
     setBuyingId(plan._id);
-    const result = await payForMembership(plan._id);
-    setBuyingId(null);
+    try {
+      const orderResult = await createMembershipOrder(plan._id);
+      if (!orderResult?.order?.gatewayOrderId || !orderResult?.keyId) {
+        Alert.alert('Payment', 'Could not create membership order');
+        return;
+      }
+
+      setPendingPayment({
+        plan,
+        orderResult,
+        title: `${plan.planName} Membership`,
+        description: 'Review the GST breakup before continuing to Razorpay.',
+        itemLabel: 'Membership price',
+      });
+    } catch (err: any) {
+      Alert.alert('Payment', err?.response?.data?.message || 'Could not create membership order');
+    } finally {
+      setBuyingId(null);
+    }
+  };
+
+  const closePaymentBreakup = () => {
+    if (confirmingPayment) return;
+    setPendingPayment(null);
+  };
+
+  const confirmPayment = async () => {
+    const payment = pendingPayment;
+    if (!payment) return;
+
+    setConfirmingPayment(true);
+    const result = await openRazorpayOrder(payment.orderResult, 'Membership Plan');
+    setConfirmingPayment(false);
+    setPendingPayment(null);
+
     if (result.success) {
-      Alert.alert('Success', `${plan.planName} activated successfully!`);
+      Alert.alert('Success', `${payment.plan.planName} activated successfully!`);
       load(); // refresh active membership
     } else {
       Alert.alert('Payment', result.message || 'Payment failed');
@@ -165,6 +212,13 @@ export default function PlansScreen({ navigation, route }: any) {
       </View>
 
       <BottomNav active="ProfileTab" />
+      <PaymentBreakupModal
+        visible={Boolean(pendingPayment)}
+        payment={pendingPayment}
+        loading={confirmingPayment}
+        onClose={closePaymentBreakup}
+        onPurchase={confirmPayment}
+      />
     </SafeAreaView>
   );
 }
