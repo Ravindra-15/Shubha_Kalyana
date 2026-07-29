@@ -26,6 +26,7 @@ import { resolveImageUrl } from '../../utils/imageUrl';
 import { useFocusEffect } from '@react-navigation/native';
 import RequestSentModal from '../../components/RequestSentModal';
 import { getUnreadCount } from '../../api/notification';
+import { sortProfilesByMatchPercent } from '../../utils/matchSorting';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
@@ -43,8 +44,7 @@ export default function HomeScreen({ navigation }: any) {
   const [sentModal, setSentModal] = useState<{ show: boolean; name?: string }>({
     show: false,
   });
-const [unreadCount, setUnreadCount] = useState(0);
-
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -55,6 +55,7 @@ const [unreadCount, setUnreadCount] = useState(0);
       loadInterested();
       loadVendors();
       loadUnread();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
   );
 
@@ -81,8 +82,8 @@ const [unreadCount, setUnreadCount] = useState(0);
 
       console.log('Search Response:', res.data);
 
-      setMatches(res.data?.data?.profiles || []);
-    } catch (err) {
+      setMatches(sortProfilesByMatchPercent(res.data?.data?.profiles || []));
+    } catch {
       setMatches([]);
     } finally {
       setLoadingMatches(false);
@@ -318,7 +319,7 @@ const [unreadCount, setUnreadCount] = useState(0);
           await AsyncStorage.setItem(`welcomeSeen_${userId}`, 'true');
         }
       }
-    } catch (err) {
+    } catch {
       // ignore — header still renders
     }
   };

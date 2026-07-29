@@ -16,6 +16,7 @@ import apiClient from '../../api/client';
 import ProfileCard from '../../components/ProfileCard';
 import FilterModal, { Filters } from '../../components/FilterModal';
 import BottomNav from '../../components/BottomNav';
+import { sortProfilesByMatchPercent } from '../../utils/matchSorting';
 
 const GENDERS = [
   { label: 'All', value: '' },
@@ -66,8 +67,10 @@ export default function AllMatchesScreen({ navigation, route }: any) {
         const params = buildParams(pageNum);
         const res = await apiClient.get('/user/search', { params });
         const data = res.data?.data;
-        const newProfiles = data?.profiles || [];
-        setProfiles((prev) => (replace ? newProfiles : [...prev, ...newProfiles]));
+        const newProfiles = sortProfilesByMatchPercent(data?.profiles || []);
+        setProfiles((prev) =>
+          replace ? newProfiles : sortProfilesByMatchPercent([...prev, ...newProfiles])
+        );
         setTotal(data?.pagination?.total || 0);
         setHasNext(data?.pagination?.hasNextPage || false);
         setPage(pageNum);
