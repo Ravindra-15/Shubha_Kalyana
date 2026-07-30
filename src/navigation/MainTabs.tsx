@@ -9,6 +9,7 @@ import { useChat } from '../context/ChatContext';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import { useAuth } from '../context/AuthContext';
 import { getMyFullProfile } from '../api/profile';
+import { getActiveMembership } from '../api/membership';
 import VerificationPromptModal from '../components/VerificationPromptModal';
 import { getVerificationPromptStatus } from '../utils/verificationPrompt';
 import type { VerificationPromptStatus } from '../utils/verificationPrompt';
@@ -23,10 +24,15 @@ export default function MainTabs({ navigation }: any) {
 
   const showVerificationPrompt = useCallback(async () => {
     try {
-      const profile = await getMyFullProfile();
-      const status = getVerificationPromptStatus(profile);
+      const [profile, activeMembership] = await Promise.all([
+        getMyFullProfile(),
+        getActiveMembership(),
+      ]);
+      const status = getVerificationPromptStatus(profile, activeMembership);
       if (status.shouldShow) {
         setVerificationPrompt(status);
+      } else {
+        setVerificationPrompt(null);
       }
     } catch {
       setVerificationPrompt(null);

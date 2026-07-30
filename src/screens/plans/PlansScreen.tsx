@@ -90,12 +90,16 @@ export default function PlansScreen({ navigation, route }: any) {
 
   const showVerificationPrompt = useCallback(async () => {
     try {
-      const profile = await getMyFullProfile();
-      const status = getVerificationPromptStatus(profile);
+      const [profile, activeMembership] = await Promise.all([
+        getMyFullProfile(),
+        getActiveMembership(),
+      ]);
+      const status = getVerificationPromptStatus(profile, activeMembership);
       if (status.shouldShow) {
         setVerificationPrompt(status);
         return true;
       }
+      setVerificationPrompt(null);
     } catch {
       // Keep membership success intact if this secondary check fails.
     }
