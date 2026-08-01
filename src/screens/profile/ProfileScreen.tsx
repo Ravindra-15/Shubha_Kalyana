@@ -24,6 +24,28 @@ const getAge = (dob?: string) => {
   return a;
 };
 
+const titleCase = (value?: string) => {
+  if (!value) return '';
+  return String(value)
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, char => char.toUpperCase());
+};
+
+const getProfileType = (gender?: string) => {
+  const normalizedGender = String(gender || '').trim().toUpperCase();
+  if (normalizedGender === 'MALE') return 'Groom';
+  if (normalizedGender === 'FEMALE') return 'Bride';
+  return '';
+};
+
+const formatDate = (date?: string) => {
+  if (!date) return '';
+  const parsed = new Date(date);
+  if (isNaN(parsed.getTime())) return '';
+  return parsed.toLocaleDateString('en-GB');
+};
+
 export default function ProfileScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
@@ -78,6 +100,15 @@ export default function ProfileScreen({ navigation }: any) {
   const location = [profile?.address?.current?.city, profile?.address?.current?.state]
     .filter(Boolean).join(', ');
   const completion = profile?.completionPercentage || 0;
+  const caste = basic.caste?.casteName || basic.caste?.name || '';
+  const summaryItems = [
+    { label: 'Date of Birth', value: formatDate(basic.dob) },
+    { label: 'Religion', value: basic.religion },
+    { label: 'Caste', value: caste },
+    { label: 'Sub Caste', value: basic.subCaste },
+    { label: 'Marital Status', value: titleCase(basic.maritalStatus) },
+    { label: 'Profile Type', value: getProfileType(basic.gender) },
+  ];
 
   const hasActivePlan = Boolean(membership?.planSnapshot?.planName);
   const planName = membership?.planSnapshot?.planName || 'Free Plan';
@@ -131,6 +162,15 @@ export default function ProfileScreen({ navigation }: any) {
               {!!location && <Text style={styles.meta}>{location}</Text>}
               {!!user?.mobile && <Text style={styles.meta}>+91 {user.mobile}</Text>}
             </View>
+          </View>
+
+          <View style={styles.summaryBox}>
+            {summaryItems.map(item => (
+              <View key={item.label} style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>{item.label}</Text>
+                <Text style={styles.summaryValue}>{item.value || 'Not added'}</Text>
+              </View>
+            ))}
           </View>
 
           {completion < 100 ? (
@@ -226,6 +266,20 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center' },
   name: { fontSize: 17, fontWeight: '700', color: '#000' },
   meta: { fontSize: 13, color: '#777', marginTop: 2 },
+  summaryBox: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginBottom: 16,
+  },
+  summaryItem: { width: '50%', paddingVertical: 10, paddingRight: 10 },
+  summaryLabel: { fontSize: 11, color: '#888', fontWeight: '700' },
+  summaryValue: { fontSize: 13, color: '#000', fontWeight: '700', marginTop: 3 },
   completionBox: { backgroundColor: '#fdf2f5', borderRadius: 16, padding: 18, marginBottom: 16 },
   completionRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   completionLabel: { fontSize: 14, fontWeight: '700', color: '#000' },

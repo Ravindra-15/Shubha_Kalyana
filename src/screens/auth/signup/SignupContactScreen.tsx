@@ -15,6 +15,11 @@ import { useSignup } from '../../../context/SignupContext';
 import apiClient from '../../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const getLookingForFromGender = (selectedGender?: string) => {
+  if (selectedGender === 'MALE') return 'Bride';
+  if (selectedGender === 'FEMALE') return 'Groom';
+  return '';
+};
 
 export default function SignupContactScreen({ navigation }: any) {
   const { data, setField } = useSignup();
@@ -46,7 +51,7 @@ export default function SignupContactScreen({ navigation }: any) {
       caste: data.caste,
       subCaste: data.subCaste,
       motherTongue: data.motherTongue || 'Kannada',
-      lookingFor: data.gender === 'MALE' ? 'FEMALE' : 'MALE',
+      lookingFor: data.lookingFor || getLookingForFromGender(data.gender),
     };
 
     try {

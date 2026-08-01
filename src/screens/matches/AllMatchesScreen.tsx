@@ -18,16 +18,9 @@ import FilterModal, { Filters } from '../../components/FilterModal';
 import BottomNav from '../../components/BottomNav';
 import { sortProfilesByMatchPercent } from '../../utils/matchSorting';
 
-const GENDERS = [
-  { label: 'All', value: '' },
-  { label: 'Male', value: 'MALE' },
-  { label: 'Female', value: 'FEMALE' },
-];
-
 export default function AllMatchesScreen({ navigation, route }: any) {
   const pushed = route?.params?.pushed === true;
 
-  const [gender, setGender] = useState('');
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<Filters | null>(null);
   const [showFilter, setShowFilter] = useState(false);
@@ -42,7 +35,6 @@ export default function AllMatchesScreen({ navigation, route }: any) {
   const buildParams = useCallback(
     (pageNum: number) => {
       const params: any = { page: pageNum, limit: 10 };
-      if (gender) params.gender = gender;
       if (search.trim()) params.search = search.trim();
       if (filters) {
         params.minAge = filters.minAge;
@@ -56,7 +48,7 @@ export default function AllMatchesScreen({ navigation, route }: any) {
       }
       return params;
     },
-    [gender, search, filters]
+    [search, filters]
   );
 
   const load = useCallback(
@@ -92,7 +84,7 @@ export default function AllMatchesScreen({ navigation, route }: any) {
       setInitialLoading(true);
       load(1, true);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [gender, filters])
+    }, [filters])
   );
 
   // debounce free-text search so we don't hit the API on every keystroke
@@ -196,22 +188,6 @@ export default function AllMatchesScreen({ navigation, route }: any) {
         </TouchableOpacity>
       </View>
 
-      {/* Gender chips */}
-      <View style={styles.chipRow}>
-        {GENDERS.map((g) => {
-          const active = gender === g.value;
-          return (
-            <TouchableOpacity
-              key={g.label}
-              style={[styles.chip, active && styles.chipActive]}
-              onPress={() => setGender(g.value)}
-            >
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>{g.label}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
       {!initialLoading && (
         <Text style={styles.countText}>{total} profile{total !== 1 ? 's' : ''} found</Text>
       )}
@@ -285,17 +261,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   filterBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
-  chipRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 10, marginBottom: 10 },
-  chip: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 30,
-    paddingVertical: 8,
-    paddingHorizontal: 22,
-  },
-  chipActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
-  chipText: { fontSize: 14, color: '#333' },
-  chipTextActive: { color: '#D20236', fontWeight: '600' },
   countText: { fontSize: 12, color: '#999', paddingHorizontal: 16, marginBottom: 8 },
   list: { paddingHorizontal: 16, paddingBottom: 20 },
   empty: { textAlign: 'center', color: '#999', marginTop: 40 },

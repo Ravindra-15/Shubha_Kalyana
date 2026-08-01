@@ -25,6 +25,13 @@ const GENDER_OPTIONS = [
   { label: 'Male', value: 'MALE' },
   { label: 'Female', value: 'FEMALE' },
 ];
+
+const getLookingForFromGender = (selectedGender: string) => {
+  if (selectedGender === 'MALE') return 'Bride';
+  if (selectedGender === 'FEMALE') return 'Groom';
+  return '';
+};
+
 const OTHER_RELATIONS = [
   'Cousin',
   'Nephew',
@@ -47,8 +54,12 @@ export default function SignupProfileForScreen({ navigation }: any) {
     if (!gender) return Alert.alert('Required', 'Please select gender');
     setField('profileFor', showOther ? 'My Relative' : finalProfileFor);
     setField('gender', gender);
+    setField('lookingFor', getLookingForFromGender(gender));
     navigation.navigate('SignupAbout');
   };
+
+  const lookingFor = getLookingForFromGender(gender);
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardWrapper>
@@ -138,6 +149,13 @@ export default function SignupProfileForScreen({ navigation }: any) {
               </Text>
             </TouchableOpacity>
           ))}
+        </View>
+
+        <View style={styles.lookingForBox}>
+          <Text style={styles.lookingForLabel}>Looking For</Text>
+          <Text style={[styles.lookingForValue, !lookingFor && styles.lookingForPlaceholder]}>
+            {lookingFor || 'Select gender first'}
+          </Text>
         </View>
 
         {showOther && (
@@ -248,8 +266,20 @@ const styles = StyleSheet.create({
   genderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  lookingForBox: {
+    borderWidth: 1,
+    borderColor: '#f0d0d8',
+    borderRadius: 14,
+    backgroundColor: '#fdf2f5',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     marginBottom: 24,
   },
+  lookingForLabel: { fontSize: 12, color: '#777', fontWeight: '700', marginBottom: 4 },
+  lookingForValue: { fontSize: 16, color: '#D20236', fontWeight: '700' },
+  lookingForPlaceholder: { color: '#999' },
   continueBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,
