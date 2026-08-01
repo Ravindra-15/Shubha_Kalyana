@@ -8,6 +8,18 @@ export type PlanBenefits = {
   verifiedBadge?: boolean;
 };
 
+export type UpgradePricing = {
+  isUpgrade: boolean;
+  currentMembershipId?: string;
+  currentPlanName?: string;
+  currentPlanPrice: number;
+  targetPlanPrice: number;
+  creditAmount: number;
+  payableAmount: number;
+  remainingDays: number;
+  totalDays: number;
+};
+
 export type Plan = {
   _id: string;
   planName: string;
@@ -19,6 +31,7 @@ export type Plan = {
   rank?: number;
   displayOrder?: number;
   benefits?: PlanBenefits;
+  upgradePricing?: UpgradePricing;
   
 };
 

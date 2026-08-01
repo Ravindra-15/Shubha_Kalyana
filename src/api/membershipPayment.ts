@@ -36,6 +36,15 @@ export const verifyPayment = async (payload: {
   return res.data?.data;
 };
 
+export const recordPaymentFailure = async (payload: {
+  gatewayOrderId: string;
+  gatewayPaymentId: string;
+  error?: unknown;
+}) => {
+  const res = await apiClient.post('/membership/payments/failure', payload);
+  return res.data?.data;
+};
+
 // active membership + access summary
 export const getAccessSummary = async () => {
   try {

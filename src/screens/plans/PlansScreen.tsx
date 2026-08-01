@@ -15,7 +15,7 @@ import { getPlans, getActiveMembership, createMembershipOrder } from '../../api/
 import type { Plan } from '../../api/membershipPlans';
 import { getMyFullProfile } from '../../api/profile';
 import { openRazorpayOrder } from '../../utils/razorpayCheckout';
-import type { PaymentOrderResult } from '../../utils/paymentBreakup';
+import { formatMoney, type PaymentOrderResult } from '../../utils/paymentBreakup';
 import PaymentBreakupModal from '../../components/PaymentBreakupModal';
 import BottomNav from '../../components/BottomNav';
 import VerificationPromptModal from '../../components/VerificationPromptModal';
@@ -48,6 +48,12 @@ const planTheme = (planName?: string) => {
   return { bg: '#7A5CA6', light: 'rgba(255,255,255,0.18)', text: '#fff', btnText: '#7A5CA6' }; // default
 };
 
+const getPlanUpgradePricing = (plan: Plan) =>
+  plan.upgradePricing?.isUpgrade ? plan.upgradePricing : null;
+
+const getPlanPayableAmount = (plan: Plan) =>
+  getPlanUpgradePricing(plan)?.payableAmount ?? plan.price;
+
 type PendingPayment = {
   plan: Plan;
   orderResult: PaymentOrderResult;
@@ -61,6 +67,7 @@ export default function PlansScreen({ navigation, route }: any) {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
+  const [activePlanRank, setActivePlanRank] = useState(0);
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
@@ -74,9 +81,12 @@ export default function PlansScreen({ navigation, route }: any) {
       console.log('PLANS RAW:', JSON.stringify(list.map((p) => ({ name: p.planName, rank: p.rank }))));
       console.log('PLANS FULL:', JSON.stringify(list[0]));
       setPlans(list.sort((a: any, b: any) => (a.displayOrder ?? a.rank ?? 99) - (b.displayOrder ?? b.rank ?? 99)));
-      setActivePlanId(active?.planId || active?.plan?._id || null);
+      setActivePlanId(active?.planId?._id || active?.planId || active?.plan?._id || null);
+      setActivePlanRank(Number(active?.planSnapshot?.rank || active?.plan?.rank || 0));
     } catch {
       setPlans([]);
+      setActivePlanId(null);
+      setActivePlanRank(0);
     } finally {
       setLoading(false);
     }
@@ -116,12 +126,16 @@ export default function PlansScreen({ navigation, route }: any) {
         return;
       }
 
+      const upgradePricing =
+        orderResult?.order?.metadata?.upgradePricing || getPlanUpgradePricing(plan);
       setPendingPayment({
         plan,
         orderResult,
         title: `${plan.planName} Membership`,
-        description: 'Review the GST breakup before continuing to Razorpay.',
-        itemLabel: 'Membership price',
+        description: upgradePricing?.isUpgrade
+          ? `Your unused ${upgradePricing.currentPlanName || 'current plan'} value is adjusted before GST.`
+          : 'Review the GST breakup before continuing to Razorpay.',
+        itemLabel: upgradePricing?.isUpgrade ? 'Upgrade amount' : 'Membership price',
       });
     } catch (err: any) {
       Alert.alert('Payment', err?.response?.data?.message || 'Could not create membership order');
@@ -193,6 +207,10 @@ export default function PlansScreen({ navigation, route }: any) {
               plans.map((plan) => {
                 const theme = planTheme(plan.planName);
                 const isActive = activePlanId === plan._id;
+                const cannotUpgrade =
+                  !isActive && activePlanRank > 0 && Number(plan.rank || 0) <= activePlanRank;
+                const upgradePricing = getPlanUpgradePricing(plan);
+                const payableAmount = getPlanPayableAmount(plan);
                 return (
                   <View key={plan._id} style={[styles.planCard, { backgroundColor: theme.bg }]}>
                     <View style={styles.planHead}>
@@ -203,11 +221,16 @@ export default function PlansScreen({ navigation, route }: any) {
                       {plan.label || 'Upgrade to unlock premium features'}
                     </Text>
                     <Text style={[styles.planPrice, { color: theme.text }]}>
-                      ₹{plan.price}
+                      {formatMoney(payableAmount, plan.currency)}
                       {plan.duration ? (
                         <Text style={styles.planDuration}> / {plan.duration.value} {plan.duration.unit.toLowerCase()}</Text>
                       ) : null}
                     </Text>
+                    {upgradePricing ? (
+                      <Text style={[styles.upgradeCredit, { color: theme.text }]}>
+                        {formatMoney(upgradePricing.targetPlanPrice, plan.currency)} before {formatMoney(upgradePricing.creditAmount, plan.currency)} credit
+                      </Text>
+                    ) : null}
 
                     <View style={[styles.benefitBox, { backgroundColor: theme.light }]}>
                       {benefitLines(plan).map((line, i) => (
@@ -220,14 +243,14 @@ export default function PlansScreen({ navigation, route }: any) {
 
                     <TouchableOpacity
                       style={[styles.buyBtn, isActive && styles.buyBtnActive]}
-                      onPress={() => !isActive && buy(plan)}
-                      disabled={isActive || buyingId === plan._id}
+                      onPress={() => !isActive && !cannotUpgrade && buy(plan)}
+                      disabled={isActive || cannotUpgrade || buyingId === plan._id}
                     >
                       {buyingId === plan._id ? (
                         <ActivityIndicator color={theme.btnText} />
                       ) : (
                         <Text style={[styles.buyText, { color: isActive ? '#1a7f37' : theme.btnText }]}>
-                          {isActive ? '✓ Active Plan' : 'Upgrade Plan'}
+                          {isActive ? 'Active Plan' : cannotUpgrade ? 'Higher Plan Required' : 'Upgrade Plan'}
                         </Text>
                       )}
                     </TouchableOpacity>
@@ -283,6 +306,7 @@ const styles = StyleSheet.create({
   planSub: { fontSize: 13, marginBottom: 12, opacity: 0.9 },
   planPrice: { fontSize: 26, fontWeight: '800', marginBottom: 14 },
   planDuration: { fontSize: 13, fontWeight: '500' },
+  upgradeCredit: { marginTop: -8, marginBottom: 14, fontSize: 12, fontWeight: '700', opacity: 0.88 },
   benefitBox: { borderRadius: 12, padding: 14, marginBottom: 16 },
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   benefitText: { fontSize: 13 },

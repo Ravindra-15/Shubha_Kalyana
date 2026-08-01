@@ -24,6 +24,8 @@ export default function ProfileCard({
   onRemove,
   removeLabel,
 }: Props) {
+  const profileIsInterested = Boolean(profile._interested || profile.isInterested);
+
   return (
     <View style={styles.card}>
       <View style={styles.topRow}>
@@ -69,12 +71,12 @@ export default function ProfileCard({
         {showInterested && (
           <TouchableOpacity style={styles.linkBtn} onPress={onInterested}>
             <Heart
-              color={profile._interested || profile.isInterested ? '#D20236' : '#666'}
-              fill={profile._interested || profile.isInterested ? '#D20236' : 'transparent'}
+              color={profileIsInterested ? '#D20236' : '#666'}
+              fill={profileIsInterested ? '#D20236' : 'transparent'}
               size={15}
             />
-            <Text style={[styles.linkText, (profile._interested || profile.isInterested) && { color: '#D20236' }]}>
-              Interested
+            <Text style={[styles.linkText, profileIsInterested && { color: '#D20236' }]}>
+              {profileIsInterested ? 'Interested' : 'Interest'}
             </Text>
           </TouchableOpacity>
         )}

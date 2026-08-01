@@ -15,12 +15,7 @@ const PURPOSE_LABELS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, { color: string; label: string }> = {
   PAID: { color: '#1a7f37', label: 'Completed' },
-  CREATED: { color: '#b8860b', label: 'Pending' },
   FAILED: { color: '#D20236', label: 'Failed' },
-  FULFILLMENT_FAILED: { color: '#D20236', label: 'Failed' },
-  REFUND_PENDING: { color: '#b8860b', label: 'Refund Pending' },
-  REFUNDED: { color: '#666', label: 'Refunded' },
-  EXPIRED: { color: '#999', label: 'Expired' },
 };
 
 const formatDate = (dateStr?: string) => {
@@ -88,15 +83,19 @@ export default function PaymentHistoryScreen({ navigation }: any) {
                 <View style={styles.cardTopRow}>
                   <Text style={styles.title}>{formatTitle(item)}</Text>
                   <Text style={styles.amount}>
-                    {item.currency === 'INR' ? '₹' : item.currency} {item.amount}
+                    {item.currency === 'INR' ? '\u20B9' : item.currency} {item.amount}
                   </Text>
                 </View>
                 <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
                 <View style={styles.cardBottomRow}>
-                  <TouchableOpacity style={styles.downloadRow} onPress={handleDownload}>
-                    <Download color="#D20236" size={14} />
-                    <Text style={styles.downloadText}>Download Invoice</Text>
-                  </TouchableOpacity>
+                  {item.status === 'PAID' ? (
+                    <TouchableOpacity style={styles.downloadRow} onPress={handleDownload}>
+                      <Download color="#D20236" size={14} />
+                      <Text style={styles.downloadText}>Download Invoice</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <View />
+                  )}
                   <Text style={[styles.status, { color: statusInfo.color }]}>{statusInfo.label}</Text>
                 </View>
               </View>

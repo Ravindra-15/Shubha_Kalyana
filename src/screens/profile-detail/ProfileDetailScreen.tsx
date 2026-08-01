@@ -39,6 +39,10 @@ import {
   revealContact,
   getAccessSummary,
 } from '../../api/membershipPayment';
+import {
+  getSingleProfileUnlockLimitMessage,
+  isFreePlanSingleUnlockLimitReached,
+} from '../../utils/singleProfileUnlockAccess';
 import { startChat } from '../../api/chat';
 import type { PaymentOrderResult } from '../../utils/paymentBreakup';
 import { isProfileSaved, removeSavedProfile, saveProfile } from '../../utils/savedProfiles';
@@ -354,6 +358,11 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
     }
   };
   const handleUnlock = async () => {
+    if (isFreePlanSingleUnlockLimitReached(access)) {
+      Alert.alert('Payment', getSingleProfileUnlockLimitMessage(access));
+      return;
+    }
+
     setPaying(true);
     try {
       const orderResult = await createProfileUnlockOrder(profileId);
@@ -370,7 +379,13 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         itemLabel: 'Profile unlock fee',
       });
     } catch (err: any) {
-      Alert.alert('Payment', err?.response?.data?.message || 'Could not create payment order');
+      const payload = err?.response?.data;
+      Alert.alert(
+        'Payment',
+        payload?.code === 'SINGLE_PROFILE_UNLOCK_LIMIT_REACHED'
+          ? getSingleProfileUnlockLimitMessage(payload)
+          : payload?.message || 'Could not create payment order',
+      );
     } finally {
       setPaying(false);
     }
@@ -484,6 +499,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         visible={showUnlock}
         name={name}
         price={unlockPrice}
+        access={access}
         loading={paying}
         onClose={() => setShowUnlock(false)}
         onUnlock={handleUnlock}

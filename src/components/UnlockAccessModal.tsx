@@ -1,11 +1,18 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator } from 'react-native';
 import { X, Lock, Phone, Users, MapPin } from 'lucide-react-native';
+import {
+  getSingleProfileUnlockLimitMessage,
+  getSingleProfileUnlockRemainingLabel,
+  isFreePlanSingleUnlockLimitReached,
+} from '../utils/singleProfileUnlockAccess';
 
 type Props = {
   visible: boolean;
   name?: string;
   price?: number;
+  access?: any;
+  variant?: 'profile' | 'accept';
   loading?: boolean;
   onClose: () => void;
   onUnlock: () => void;          // pay ₹price to unlock this profile
@@ -16,11 +23,17 @@ export default function UnlockAccessModal({
   visible,
   name,
   price = 99,
+  access,
+  variant = 'profile',
   loading = false,
   onClose,
   onUnlock,
   onUpgrade,
 }: Props) {
+  const showSingleUnlockUsage = Boolean(access && !access.hasActiveMembership);
+  const singleUnlockLimitReached = isFreePlanSingleUnlockLimitReached(access);
+  const isAcceptFlow = variant === 'accept';
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -33,10 +46,23 @@ export default function UnlockAccessModal({
             <Lock color="#fff" size={26} />
           </View>
 
-          <Text style={styles.title}>Unlock Full Profile Access</Text>
-          <Text style={styles.subtitle}>
-            View contact details and start communicating with {name || 'this profile'} securely.
+          <Text style={styles.title}>
+            {isAcceptFlow ? 'Oops !' : 'Unlock Full Profile Access'}
           </Text>
+          <Text style={styles.subtitle}>
+            {singleUnlockLimitReached
+              ? getSingleProfileUnlockLimitMessage(access)
+              : isAcceptFlow
+                ? `Access required to accept ${name || 'this profile'}.`
+                : `View contact details and start communicating with ${name || 'this profile'} securely.`}
+          </Text>
+          {showSingleUnlockUsage ? (
+            <View style={styles.remainingBox}>
+              <Text style={styles.remainingText}>
+                {getSingleProfileUnlockRemainingLabel(access)}
+              </Text>
+            </View>
+          ) : null}
 
           <View style={styles.benefitBox}>
             <Text style={styles.benefitHead}>You'll get access to:</Text>
@@ -54,13 +80,15 @@ export default function UnlockAccessModal({
             </View>
           </View>
 
-          <TouchableOpacity style={styles.unlockBtn} onPress={onUnlock} disabled={loading}>
+          {!singleUnlockLimitReached ? (
+            <TouchableOpacity style={styles.unlockBtn} onPress={onUnlock} disabled={loading}>
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.unlockText}>Unlock for ₹{price}</Text>
             )}
-          </TouchableOpacity>
+            </TouchableOpacity>
+          ) : null}
 
           <TouchableOpacity style={styles.upgradeBtn} onPress={onUpgrade} disabled={loading}>
             <Text style={styles.upgradeText}>Upgrade to Premium</Text>
@@ -89,6 +117,15 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 19, fontWeight: '700', color: '#000', marginBottom: 8 },
   subtitle: { fontSize: 13, color: '#777', textAlign: 'center', marginBottom: 20, lineHeight: 19 },
+  remainingBox: {
+    width: '100%',
+    backgroundColor: '#fdf2f5',
+    borderRadius: 10,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    marginBottom: 16,
+  },
+  remainingText: { color: '#D20236', fontSize: 13, fontWeight: '800', textAlign: 'center' },
   benefitBox: {
     width: '100%', backgroundColor: '#f7f7f7', borderRadius: 12, padding: 16, marginBottom: 20,
   },

@@ -16,9 +16,28 @@ import apiClient from '../../api/client';
 import BottomNav from '../../components/BottomNav';
 import RequestCard from '../../components/RequestCard';
 import { resolveImageUrl } from '../../utils/imageUrl';
+import UnlockAccessModal from '../../components/UnlockAccessModal';
+import PaymentBreakupModal from '../../components/PaymentBreakupModal';
+import {
+  createProfileUnlockOrder,
+  getProfileAccess,
+  getUnlockPrice,
+} from '../../api/membershipPayment';
+import { openRazorpayOrder } from '../../utils/razorpayCheckout';
+import type { PaymentOrderResult } from '../../utils/paymentBreakup';
+import { getSingleProfileUnlockLimitMessage } from '../../utils/singleProfileUnlockAccess';
 
 const TABS = ['Received', 'Sent', 'Accepted'] as const;
 type Tab = typeof TABS[number];
+
+type PendingPayment = {
+  orderResult: PaymentOrderResult;
+  title: string;
+  description: string;
+  itemLabel: string;
+  requestId: string;
+  profile: any;
+};
 
 const getAge = (dob?: string) => {
   if (!dob) return null;
@@ -31,14 +50,14 @@ const getAge = (dob?: string) => {
   return a;
 };
 
-const mapCard = (item: any, kind: Tab) => {
+const mapCard = (item: any) => {
   const p = item.profile || {};
   const basic = p.basicInfo || {};
   const photo = p.photos?.find((x: any) => x.isProfilePhoto)?.url || p.photos?.[0]?.url || '';
   return {
     requestId: item._id,
     connectionId: item._id, // for accepted (connection id)
-    profileId: p._id,
+    profileId: p._id || item.profileId || item.otherProfileId,
     name: [item.user?.firstName, item.user?.lastName].filter(Boolean).join(' ') || 'Profile',
     age: getAge(basic.dob),
     caste: basic.caste?.casteName || '',
@@ -47,17 +66,21 @@ const mapCard = (item: any, kind: Tab) => {
   };
 };
 
-// Card for Sent (Withdraw + View) and Accepted (View only)
+// Card for Sent and Accepted request lists.
 function SimpleCard({
   profile,
   kind,
   onWithdraw,
+  onRemove,
   onView,
+  busy,
 }: {
   profile: any;
   kind: Tab;
   onWithdraw?: () => void;
+  onRemove?: () => void;
   onView?: () => void;
+  busy?: boolean;
 }) {
   return (
     <View style={styles.card}>
@@ -79,14 +102,34 @@ function SimpleCard({
       </View>
 
       {kind === 'Sent' && (
-        <TouchableOpacity style={styles.withdrawBtn} onPress={onWithdraw}>
+        <TouchableOpacity style={styles.withdrawBtn} onPress={onWithdraw} disabled={busy}>
           <Text style={styles.withdrawText}>Withdraw</Text>
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity onPress={onView} style={styles.viewWrap}>
-        <Text style={styles.viewText}>View Profile</Text>
-      </TouchableOpacity>
+      {kind === 'Accepted' ? (
+        <View style={styles.acceptedActions}>
+          <TouchableOpacity onPress={onView} style={styles.profileBtn} activeOpacity={0.85}>
+            <Text style={styles.profileBtnText}>View Profile</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={onRemove}
+            style={[styles.removeBtn, busy && styles.disabledBtn]}
+            disabled={busy}
+            activeOpacity={0.85}
+          >
+            {busy ? (
+              <ActivityIndicator color="#D20236" size="small" />
+            ) : (
+              <Text style={styles.removeText}>Remove</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity onPress={onView} style={styles.viewWrap}>
+          <Text style={styles.viewText}>View Profile</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -95,6 +138,12 @@ export default function RequestsScreen({ navigation }: any) {
   const [tab, setTab] = useState<Tab>('Received');
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actingId, setActingId] = useState('');
+  const [accessPrompt, setAccessPrompt] = useState<any | null>(null);
+  const [unlockPrice, setUnlockPrice] = useState(99);
+  const [unlockingRequestId, setUnlockingRequestId] = useState('');
+  const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
+  const [confirmingPayment, setConfirmingPayment] = useState(false);
 
   const load = useCallback(async (which: Tab) => {
     setLoading(true);
@@ -102,15 +151,15 @@ export default function RequestsScreen({ navigation }: any) {
       let res;
       if (which === 'Received') {
         res = await apiClient.get('/relationship/requests/received', { params: { status: 'PENDING', limit: 50 } });
-        setItems((res.data?.data?.requests || []).map((r: any) => mapCard(r, which)));
+        setItems((res.data?.data?.requests || []).map((r: any) => mapCard(r)));
       } else if (which === 'Sent') {
         res = await apiClient.get('/relationship/requests/sent', { params: { status: 'PENDING', limit: 50 } });
-        setItems((res.data?.data?.requests || []).map((r: any) => mapCard(r, which)));
+        setItems((res.data?.data?.requests || []).map((r: any) => mapCard(r)));
       } else {
         // Accepted → connections
         res = await apiClient.get('/relationship/connections/me', { params: { limit: 50 } });
         const conns = res.data?.data?.connections || res.data?.data?.items || [];
-        setItems(conns.map((c: any) => mapCard(c, which)));
+        setItems(conns.map((c: any) => mapCard(c)));
       }
     } catch {
       setItems([]);
@@ -125,11 +174,31 @@ export default function RequestsScreen({ navigation }: any) {
     }, [tab, load])
   );
 
-  const accept = async (id: string) => {
+  const showAccessRequired = async (profile: any) => {
+    const [accessResult, priceResult] = await Promise.allSettled([
+      profile.profileId ? getProfileAccess(profile.profileId) : Promise.resolve(null),
+      getUnlockPrice(),
+    ]);
+
+    setAccessPrompt({
+      profile,
+      access: accessResult.status === 'fulfilled' ? accessResult.value : null,
+    });
+
+    if (priceResult.status === 'fulfilled') {
+      setUnlockPrice(priceResult.value?.amount || 99);
+    }
+  };
+
+  const accept = async (profile: any) => {
     try {
-      await apiClient.patch(`/relationship/requests/${id}/accept`);
-      setItems((prev) => prev.filter((x) => x.requestId !== id));
+      await apiClient.patch(`/relationship/requests/${profile.requestId}/accept`);
+      setItems((prev) => prev.filter((x) => x.requestId !== profile.requestId));
     } catch (err: any) {
+      if (err?.response?.status === 402) {
+        await showAccessRequired(profile);
+        return;
+      }
       Alert.alert('Error', err?.response?.data?.message || 'Could not accept');
     }
   };
@@ -147,6 +216,99 @@ export default function RequestsScreen({ navigation }: any) {
       setItems((prev) => prev.filter((x) => x.requestId !== id));
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not withdraw');
+    }
+  };
+
+  const removeConnection = (connectionId: string, name?: string) => {
+    Alert.alert(
+      'Remove Connection',
+      `Remove ${name || 'this profile'} from your accepted connections?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setActingId(connectionId);
+              await apiClient.patch(`/relationship/connections/${connectionId}/disconnect`, {});
+              setItems((prev) => prev.filter((x) => x.connectionId !== connectionId));
+            } catch (err: any) {
+              Alert.alert('Error', err?.response?.data?.message || 'Could not remove connection');
+            } finally {
+              setActingId('');
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const unlockPromptProfile = async () => {
+    const prompt = accessPrompt;
+    if (!prompt?.profile?.profileId || !prompt?.profile?.requestId) return;
+
+    try {
+      setUnlockingRequestId(prompt.profile.requestId);
+      const orderResult = await createProfileUnlockOrder(prompt.profile.profileId);
+      if (!orderResult?.order?.gatewayOrderId || !orderResult?.keyId) {
+        Alert.alert('Payment', 'Could not create payment order');
+        return;
+      }
+
+      setAccessPrompt(null);
+      setPendingPayment({
+        orderResult,
+        title: 'Profile Unlock',
+        description: `Review the GST breakup before unlocking ${prompt.profile.name || 'this profile'}.`,
+        itemLabel: 'Profile unlock fee',
+        requestId: prompt.profile.requestId,
+        profile: prompt.profile,
+      });
+    } catch (err: any) {
+      const payload = err?.response?.data;
+      Alert.alert(
+        'Payment',
+        payload?.code === 'SINGLE_PROFILE_UNLOCK_LIMIT_REACHED'
+          ? getSingleProfileUnlockLimitMessage(payload)
+          : payload?.message || 'Could not create payment order',
+      );
+    } finally {
+      setUnlockingRequestId('');
+    }
+  };
+
+  const closePaymentBreakup = () => {
+    if (confirmingPayment) return;
+    setPendingPayment(null);
+  };
+
+  const confirmUnlockPayment = async () => {
+    const payment = pendingPayment;
+    if (!payment) return;
+
+    setConfirmingPayment(true);
+    const result = await openRazorpayOrder(payment.orderResult, 'Unlock Profile Access', {
+      name: payment.profile?.name,
+    });
+    setConfirmingPayment(false);
+    setPendingPayment(null);
+
+    if (!result.success) {
+      Alert.alert('Payment', result.message || 'Payment failed');
+      return;
+    }
+
+    try {
+      await apiClient.patch(`/relationship/requests/${payment.requestId}/accept`);
+      setItems((prev) => prev.filter((x) => x.requestId !== payment.requestId));
+      Alert.alert('Accepted', 'Request accepted successfully');
+    } catch (err: any) {
+      Alert.alert(
+        'Unlocked',
+        err?.response?.data?.message ||
+          'Profile unlocked, but the request could not be accepted. Please retry.',
+      );
     }
   };
 
@@ -182,7 +344,7 @@ export default function RequestsScreen({ navigation }: any) {
 
       <View style={styles.content}>
         {loading ? (
-          <ActivityIndicator color="#D20236" style={{ marginTop: 40 }} />
+          <ActivityIndicator color="#D20236" style={styles.loader} />
         ) : (
           <FlatList
             data={items}
@@ -193,7 +355,7 @@ export default function RequestsScreen({ navigation }: any) {
               tab === 'Received' ? (
                 <RequestCard
                   profile={item}
-                  onAccept={() => accept(item.requestId)}
+                  onAccept={() => accept(item)}
                   onReject={() => reject(item.requestId)}
                   onView={() => openProfile(item.profileId)}
                 />
@@ -202,7 +364,9 @@ export default function RequestsScreen({ navigation }: any) {
                   profile={item}
                   kind={tab}
                   onWithdraw={() => withdraw(item.requestId)}
+                  onRemove={() => removeConnection(item.connectionId, item.name)}
                   onView={() => openProfile(item.profileId)}
+                  busy={actingId === item.connectionId}
                 />
               )
             }
@@ -211,6 +375,28 @@ export default function RequestsScreen({ navigation }: any) {
         )}
       </View>
 
+      <UnlockAccessModal
+        visible={Boolean(accessPrompt)}
+        variant="accept"
+        name={accessPrompt?.profile?.name}
+        price={unlockPrice}
+        access={accessPrompt?.access}
+        loading={unlockingRequestId === accessPrompt?.profile?.requestId}
+        onClose={() => setAccessPrompt(null)}
+        onUnlock={unlockPromptProfile}
+        onUpgrade={() => {
+          const profileId = accessPrompt?.profile?.profileId;
+          setAccessPrompt(null);
+          navigation.navigate('Plans', profileId ? { profileId } : undefined);
+        }}
+      />
+      <PaymentBreakupModal
+        visible={Boolean(pendingPayment)}
+        payment={pendingPayment}
+        loading={confirmingPayment}
+        onClose={closePaymentBreakup}
+        onPurchase={confirmUnlockPayment}
+      />
       <BottomNav active="InterestsTab" />
     </SafeAreaView>
   );
@@ -246,5 +432,25 @@ const styles = StyleSheet.create({
   withdrawText: { color: '#D20236', fontSize: 14, fontWeight: '700' },
   viewWrap: { alignItems: 'center', marginTop: 12 },
   viewText: { fontSize: 14, color: '#333', fontWeight: '600' },
+  acceptedActions: { flexDirection: 'row', gap: 10, marginTop: 12 },
+  profileBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  profileBtnText: { fontSize: 14, color: '#333', fontWeight: '700' },
+  removeBtn: {
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  disabledBtn: { opacity: 0.6 },
+  removeText: { color: '#D20236', fontSize: 14, fontWeight: '700' },
   content: { flex: 1 },
+  loader: { marginTop: 40 },
 });

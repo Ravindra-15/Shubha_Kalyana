@@ -1,5 +1,9 @@
 import RazorpayCheckout from 'react-native-razorpay';
-import { createProfileUnlockOrder, verifyPayment } from '../api/membershipPayment';
+import {
+  createProfileUnlockOrder,
+  recordPaymentFailure,
+  verifyPayment,
+} from '../api/membershipPayment';
 import { createMembershipOrder } from '../api/membershipPlans';
 import type { PaymentOrderResult } from './paymentBreakup';
 
@@ -9,14 +13,53 @@ type UserInfo = { name?: string; email?: string; contact?: string };
 const paymentErrorMessage = (err: any, fallback: string) =>
   err?.description || err?.response?.data?.message || err?.message || fallback;
 
+const failureMetadata = (err: any) =>
+  err?.error?.metadata || err?.metadata || err?.details?.metadata || {};
+
+const serializeFailure = (err: any) => {
+  const error = err?.error || err;
+  return {
+    code: error?.code,
+    description: error?.description || error?.message,
+    source: error?.source,
+    step: error?.step,
+    reason: error?.reason,
+    metadata: failureMetadata(err),
+  };
+};
+
+const recordCheckoutFailure = async (
+  order: PaymentOrderResult['order'],
+  err: any,
+) => {
+  const metadata = failureMetadata(err);
+  const gatewayOrderId =
+    metadata.order_id || metadata.razorpay_order_id || order?.gatewayOrderId;
+  const gatewayPaymentId =
+    metadata.payment_id || metadata.razorpay_payment_id || err?.razorpay_payment_id;
+
+  if (!gatewayOrderId || !gatewayPaymentId) return;
+
+  try {
+    await recordPaymentFailure({
+      gatewayOrderId,
+      gatewayPaymentId,
+      error: serializeFailure(err),
+    });
+  } catch (recordErr) {
+    console.log('PAYMENT FAILURE RECORD ERR:', JSON.stringify(recordErr));
+  }
+};
+
 export async function openRazorpayOrder(
   orderResult: PaymentOrderResult,
   description: string,
   userInfo?: UserInfo,
 ): Promise<PaymentResult> {
+  const order = orderResult?.order;
+  const keyId = orderResult?.keyId;
+
   try {
-    const order = orderResult?.order;
-    const keyId = orderResult?.keyId;
     if (!order?.gatewayOrderId || !keyId) {
       return { success: false, message: 'Could not create payment order' };
     }
@@ -61,6 +104,7 @@ export async function openRazorpayOrder(
       '| DATA:',
       JSON.stringify(err?.response?.data),
     );
+    await recordCheckoutFailure(order, err);
     return { success: false, message: paymentErrorMessage(err, 'Payment cancelled or failed') };
   }
 }

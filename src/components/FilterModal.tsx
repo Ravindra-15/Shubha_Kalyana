@@ -10,6 +10,7 @@ import {
 import Slider from '@react-native-community/slider';
 import SearchableDropdown from './SearchableDropdown';
 import { getCastes, Caste } from '../api/caste';
+import { INDIAN_STATE_OPTIONS } from '../constants/indianStates';
 
 export type Filters = {
   minAge: number;
@@ -17,17 +18,25 @@ export type Filters = {
   religion: string;
   caste: string;
   subCaste: string;
+  maritalStatus: string;
   education: string;
   profession: string;
-  district: string;
+  preferredLocation: string;
+  workingLocation: string;
 };
 
 const RELIGIONS = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jain', 'Buddhist', 'Parsi', 'Other'];
+const MARITAL_STATUS = [
+  { label: 'Never Married', value: 'NEVER_MARRIED' },
+  { label: 'Divorced', value: 'DIVORCED' },
+  { label: 'Widowed', value: 'WIDOWED' },
+  { label: 'Awaiting Divorce', value: 'AWAITING_DIVORCE' },
+];
 const EDUCATION = ['B.Tech', 'B.E', 'B.Sc', 'B.Com', 'B.A', 'BBA', 'BCA', 'MBBS', 'M.Tech', 'M.Sc', 'MBA', 'MCA', 'PhD', 'Diploma'];
 const PROFESSION = ['Engineer', 'Doctor', 'Teacher', 'Business', 'Government Job', 'Lawyer', 'CA', 'Software', 'Banker'];
 
 const DEFAULT: Filters = {
-  minAge: 24, maxAge: 30, religion: '', caste: '', subCaste: '', education: '', profession: '', district: '',
+  minAge: 24, maxAge: 30, religion: '', caste: '', subCaste: '', maritalStatus: '', education: '', profession: '', preferredLocation: '', workingLocation: '',
 };
 
 type Props = {
@@ -43,9 +52,11 @@ export default function FilterModal({ visible, onClose, onApply, initial }: Prop
   const [religion, setReligion] = useState(initial?.religion || '');
   const [casteId, setCasteId] = useState(initial?.caste || '');
   const [subCaste, setSubCaste] = useState(initial?.subCaste || '');
+  const [maritalStatus, setMaritalStatus] = useState(initial?.maritalStatus || '');
   const [education, setEducation] = useState(initial?.education || '');
   const [profession, setProfession] = useState(initial?.profession || '');
-  const [district, setDistrict] = useState(initial?.district || '');
+  const [preferredLocation, setPreferredLocation] = useState(initial?.preferredLocation || '');
+  const [workingLocation, setWorkingLocation] = useState(initial?.workingLocation || '');
   const [castes, setCastes] = useState<Caste[]>([]);
 
   useEffect(() => {
@@ -62,9 +73,11 @@ export default function FilterModal({ visible, onClose, onApply, initial }: Prop
       setReligion(initial?.religion || '');
       setCasteId(initial?.caste || '');
       setSubCaste(initial?.subCaste || '');
+      setMaritalStatus(initial?.maritalStatus || '');
       setEducation(initial?.education || '');
       setProfession(initial?.profession || '');
-      setDistrict(initial?.district || '');
+      setPreferredLocation(initial?.preferredLocation || '');
+      setWorkingLocation(initial?.workingLocation || '');
     }
   }, [visible, initial]);
 
@@ -72,13 +85,13 @@ export default function FilterModal({ visible, onClose, onApply, initial }: Prop
 
   const reset = () => {
     setMinAge(DEFAULT.minAge); setMaxAge(DEFAULT.maxAge);
-    setReligion(''); setCasteId(''); setSubCaste(''); setEducation(''); setProfession(''); setDistrict('');
+    setReligion(''); setCasteId(''); setSubCaste(''); setMaritalStatus(''); setEducation(''); setProfession(''); setPreferredLocation(''); setWorkingLocation('');
     onApply(null); // clear all filters → reload full list
     onClose();
   };
 
   const apply = () => {
-    onApply({ minAge, maxAge, religion, caste: casteId, subCaste, education, profession, district });
+    onApply({ minAge, maxAge, religion, caste: casteId, subCaste, maritalStatus, education, profession, preferredLocation, workingLocation });
     onClose();
   };
 
@@ -145,6 +158,14 @@ export default function FilterModal({ visible, onClose, onApply, initial }: Prop
               disabled={subCasteOptions.length === 0}
             />
 
+            <Text style={styles.label}>Marital Status</Text>
+            <SearchableDropdown
+              placeholder="Select Marital Status"
+              value={maritalStatus}
+              options={MARITAL_STATUS}
+              onSelect={setMaritalStatus}
+            />
+
             <Text style={styles.label}>Education</Text>
             <SearchableDropdown
               placeholder="Select Education"
@@ -163,13 +184,20 @@ export default function FilterModal({ visible, onClose, onApply, initial }: Prop
               allowCustom
             />
 
-            <Text style={styles.label}>Location</Text>
+            <Text style={styles.label}>Preferred Location</Text>
             <SearchableDropdown
-              placeholder="Search by location"
-              value={district}
-              options={[]}
-              onSelect={setDistrict}
-              allowCustom
+              placeholder="Select permanent state"
+              value={preferredLocation}
+              options={INDIAN_STATE_OPTIONS}
+              onSelect={setPreferredLocation}
+            />
+
+            <Text style={styles.label}>Working Location</Text>
+            <SearchableDropdown
+              placeholder="Select current state"
+              value={workingLocation}
+              options={INDIAN_STATE_OPTIONS}
+              onSelect={setWorkingLocation}
             />
           </ScrollView>
 

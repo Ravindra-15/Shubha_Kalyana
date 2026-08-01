@@ -13,6 +13,8 @@ import ProgressBar from '../../../components/ProgressBar';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
+import SearchableDropdown from '../../../components/SearchableDropdown';
+import { INDIAN_STATE_OPTIONS } from '../../../constants/indianStates';
 
 export default function AddressDetailsScreen({ navigation }: any) {
   const { data, setField } = useSignup();
@@ -153,7 +155,16 @@ export default function AddressDetailsScreen({ navigation }: any) {
       {type === 'INDIA' ? (
         <>
           <Text style={styles.label}>State <Text style={styles.star}>*</Text></Text>
-          <TextInput style={[styles.input, errors[`${prefix}State`] && styles.inputError]} placeholder="State" placeholderTextColor="#999" value={s} onChangeText={(v) => { setS(v); clearErr(`${prefix}State`); }} />
+          <SearchableDropdown
+            placeholder="Select State"
+            value={s}
+            options={INDIAN_STATE_OPTIONS}
+            onSelect={(v) => {
+              setS(v);
+              clearErr(prefix ? `${prefix}State` : 'state');
+            }}
+            error={Boolean(errors[prefix ? `${prefix}State` : 'state'])}
+          />
           <Text style={styles.label}>District <Text style={styles.star}>*</Text></Text>
           <TextInput style={[styles.input, errors[`${prefix}District`] && styles.inputError]} placeholder="District" placeholderTextColor="#999" value={d} onChangeText={(v) => { setD(v); clearErr(`${prefix}District`); }} />
           <Text style={styles.label}>Taluka</Text>

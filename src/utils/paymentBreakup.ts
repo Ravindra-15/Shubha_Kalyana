@@ -22,6 +22,13 @@ export type PaymentOrder = {
   gatewayOrderId?: string;
   metadata?: {
     billingBreakup?: Partial<PaymentBreakup>;
+    upgradePricing?: {
+      isUpgrade?: boolean;
+      currentPlanName?: string;
+      targetPlanPrice?: number;
+      creditAmount?: number;
+      payableAmount?: number;
+    };
   };
 };
 

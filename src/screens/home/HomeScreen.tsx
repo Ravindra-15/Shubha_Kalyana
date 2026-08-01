@@ -70,11 +70,14 @@ export default function HomeScreen({ navigation }: any) {
       if (filters) {
         params.minAge = filters.minAge;
         params.maxAge = filters.maxAge;
+        if (filters.religion) params.religion = filters.religion;
         if (filters.caste) params.caste = filters.caste;
         if (filters.subCaste) params.subCaste = filters.subCaste;
+        if (filters.maritalStatus) params.maritalStatus = filters.maritalStatus;
         if (filters.education) params.education = filters.education;
         if (filters.profession) params.profession = filters.profession;
-        if (filters.district) params.district = filters.district;
+        if (filters.preferredLocation) params.preferredLocation = filters.preferredLocation;
+        if (filters.workingLocation) params.workingLocation = filters.workingLocation;
       }
       console.log('Search Params:', params);
 

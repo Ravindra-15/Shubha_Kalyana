@@ -42,9 +42,11 @@ export default function AllMatchesScreen({ navigation, route }: any) {
         if (filters.religion) params.religion = filters.religion;
         if (filters.caste) params.caste = filters.caste;
         if (filters.subCaste) params.subCaste = filters.subCaste;
+        if (filters.maritalStatus) params.maritalStatus = filters.maritalStatus;
         if (filters.education) params.education = filters.education;
         if (filters.profession) params.profession = filters.profession;
-        if (filters.district) params.location = filters.district;
+        if (filters.preferredLocation) params.preferredLocation = filters.preferredLocation;
+        if (filters.workingLocation) params.workingLocation = filters.workingLocation;
       }
       return params;
     },

@@ -41,6 +41,9 @@ export default function PaymentBreakupModal({
   const order = payment.orderResult?.order || {};
   const breakup = getBillingBreakupFromOrder(order);
   const currency = order.currency || 'INR';
+  const upgradePricing = order.metadata?.upgradePricing;
+  const showUpgradeCredit =
+    !!upgradePricing?.isUpgrade && Number(upgradePricing.creditAmount || 0) > 0;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -57,6 +60,24 @@ export default function PaymentBreakupModal({
           )}
 
           <View style={styles.breakupBox}>
+            {showUpgradeCredit ? (
+              <>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Plan price</Text>
+                  <Text style={styles.value}>
+                    {formatMoney(upgradePricing.targetPlanPrice, currency)}
+                  </Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.creditLabel}>
+                    {upgradePricing.currentPlanName || 'Current plan'} credit
+                  </Text>
+                  <Text style={styles.creditValue}>
+                    -{formatMoney(upgradePricing.creditAmount, currency)}
+                  </Text>
+                </View>
+              </>
+            ) : null}
             <View style={styles.row}>
               <Text style={styles.label}>{payment.itemLabel || 'Payment amount'}</Text>
               <Text style={styles.value}>{formatMoney(breakup.taxableAmount, currency)}</Text>
@@ -137,6 +158,8 @@ const styles = StyleSheet.create({
   },
   label: { color: '#555', fontSize: 14, fontWeight: '600', flex: 1 },
   value: { color: '#111', fontSize: 14, fontWeight: '800' },
+  creditLabel: { color: '#1a7f37', fontSize: 14, fontWeight: '700', flex: 1 },
+  creditValue: { color: '#1a7f37', fontSize: 14, fontWeight: '800' },
   gstRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
