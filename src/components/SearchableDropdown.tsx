@@ -65,7 +65,7 @@ export default function SearchableDropdown({
         <Text style={[styles.fieldText, !selectedLabel && styles.placeholder]}>
           {selectedLabel || placeholder}
         </Text>
-        {selectedLabel ? (
+        {selectedLabel && !disabled ? (
           <TouchableOpacity onPress={() => onSelect('', '')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Text style={styles.clear}>✕</Text>
           </TouchableOpacity>

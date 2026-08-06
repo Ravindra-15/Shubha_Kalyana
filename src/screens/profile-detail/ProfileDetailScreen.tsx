@@ -492,7 +492,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         }}
         onViewSentRequests={() => {
           setShowSentModal(false);
-          navigation.navigate('SentRequests');
+          navigation.navigate('SentRequests', { initialTab: 'Sent' });
         }}
       />
       <UnlockAccessModal

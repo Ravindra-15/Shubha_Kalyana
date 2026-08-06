@@ -179,7 +179,7 @@ export default function ProfileViewersScreen({ navigation }: any) {
         onContinueBrowsing={() => setSentModal({ show: false })}
         onViewSentRequests={() => {
           setSentModal({ show: false });
-          navigation.navigate('SentRequests');
+          navigation.navigate('SentRequests', { initialTab: 'Sent' });
         }}
       />
 

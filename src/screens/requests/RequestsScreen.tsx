@@ -1,17 +1,18 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
   Image,
   StyleSheet,
   FlatList,
+  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, Search, BadgeCheck } from 'lucide-react-native';
+import { ArrowLeft, BadgeCheck } from 'lucide-react-native';
 import apiClient from '../../api/client';
 import BottomNav from '../../components/BottomNav';
 import RequestCard from '../../components/RequestCard';
@@ -27,8 +28,9 @@ import { openRazorpayOrder } from '../../utils/razorpayCheckout';
 import type { PaymentOrderResult } from '../../utils/paymentBreakup';
 import { getSingleProfileUnlockLimitMessage } from '../../utils/singleProfileUnlockAccess';
 
-const TABS = ['Received', 'Sent', 'Accepted'] as const;
-type Tab = typeof TABS[number];
+const TABS = ['Received', 'Sent', 'Accepted', 'Pending'] as const;
+type Tab = (typeof TABS)[number];
+type RequestDirection = 'received' | 'sent' | 'accepted';
 
 type PendingPayment = {
   orderResult: PaymentOrderResult;
@@ -50,15 +52,41 @@ const getAge = (dob?: string) => {
   return a;
 };
 
-const mapCard = (item: any) => {
+const isTab = (value: unknown): value is Tab =>
+  typeof value === 'string' && (TABS as readonly string[]).includes(value);
+
+const getInitialTab = (route?: any): Tab => {
+  if (isTab(route?.params?.initialTab)) return route.params.initialTab;
+  if (route?.name === 'SentRequests') return 'Sent';
+  return 'Received';
+};
+
+const getProfileIdFallback = (item: any, direction?: RequestDirection) => {
+  if (direction === 'sent') return item.toProfileId;
+  if (direction === 'received') return item.fromProfileId;
+  if (direction === 'accepted') return item.otherProfileId || item.profileId;
+  return item.profileId || item.otherProfileId || item.fromProfileId || item.toProfileId;
+};
+
+const mapCard = (item: any, fallbackDirection?: RequestDirection) => {
   const p = item.profile || {};
   const basic = p.basicInfo || {};
   const photo = p.photos?.find((x: any) => x.isProfilePhoto)?.url || p.photos?.[0]?.url || '';
+  const direction = (item.direction || fallbackDirection) as RequestDirection | undefined;
   return {
     requestId: item._id,
     connectionId: item._id, // for accepted (connection id)
-    profileId: p._id || item.profileId || item.otherProfileId,
-    name: [item.user?.firstName, item.user?.lastName].filter(Boolean).join(' ') || 'Profile',
+    profileId: p._id || getProfileIdFallback(item, direction),
+    direction,
+    name:
+      [
+        basic.firstName || item.user?.firstName,
+        basic.lastName || item.user?.lastName,
+      ]
+        .filter(Boolean)
+        .join(' ') ||
+      item.user?.profileCode ||
+      'Profile',
     age: getAge(basic.dob),
     caste: basic.caste?.casteName || '',
     profession: p.employment?.designation || '',
@@ -74,13 +102,15 @@ function SimpleCard({
   onRemove,
   onView,
   busy,
+  metaLabel,
 }: {
   profile: any;
-  kind: Tab;
+  kind: 'Sent' | 'Accepted';
   onWithdraw?: () => void;
   onRemove?: () => void;
   onView?: () => void;
   busy?: boolean;
+  metaLabel?: string;
 }) {
   return (
     <View style={styles.card}>
@@ -98,12 +128,21 @@ function SimpleCard({
           <Text style={styles.detail}>
             {[profile.caste, profile.profession].filter(Boolean).join('  |  ') || 'Not specified'}
           </Text>
+          {metaLabel ? <Text style={styles.directionText}>{metaLabel}</Text> : null}
         </View>
       </View>
 
       {kind === 'Sent' && (
-        <TouchableOpacity style={styles.withdrawBtn} onPress={onWithdraw} disabled={busy}>
-          <Text style={styles.withdrawText}>Withdraw</Text>
+        <TouchableOpacity
+          style={[styles.withdrawBtn, busy && styles.disabledBtn]}
+          onPress={onWithdraw}
+          disabled={busy}
+        >
+          {busy ? (
+            <ActivityIndicator color="#D20236" size="small" />
+          ) : (
+            <Text style={styles.withdrawText}>Withdraw</Text>
+          )}
         </TouchableOpacity>
       )}
 
@@ -134,16 +173,21 @@ function SimpleCard({
   );
 }
 
-export default function RequestsScreen({ navigation }: any) {
-  const [tab, setTab] = useState<Tab>('Received');
+export default function RequestsScreen({ navigation, route }: any) {
+  const [tab, setTab] = useState<Tab>(() => getInitialTab(route));
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actingId, setActingId] = useState('');
+  const [actingAction, setActingAction] = useState('');
   const [accessPrompt, setAccessPrompt] = useState<any | null>(null);
   const [unlockPrice, setUnlockPrice] = useState(99);
   const [unlockingRequestId, setUnlockingRequestId] = useState('');
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
+
+  useEffect(() => {
+    setTab(getInitialTab(route));
+  }, [route]);
 
   const load = useCallback(async (which: Tab) => {
     setLoading(true);
@@ -151,15 +195,18 @@ export default function RequestsScreen({ navigation }: any) {
       let res;
       if (which === 'Received') {
         res = await apiClient.get('/relationship/requests/received', { params: { status: 'PENDING', limit: 50 } });
-        setItems((res.data?.data?.requests || []).map((r: any) => mapCard(r)));
+        setItems((res.data?.data?.requests || []).map((r: any) => mapCard(r, 'received')));
       } else if (which === 'Sent') {
         res = await apiClient.get('/relationship/requests/sent', { params: { status: 'PENDING', limit: 50 } });
+        setItems((res.data?.data?.requests || []).map((r: any) => mapCard(r, 'sent')));
+      } else if (which === 'Pending') {
+        res = await apiClient.get('/relationship/requests/pending', { params: { limit: 50 } });
         setItems((res.data?.data?.requests || []).map((r: any) => mapCard(r)));
       } else {
-        // Accepted → connections
+        // Accepted requests are represented by active connections.
         res = await apiClient.get('/relationship/connections/me', { params: { limit: 50 } });
         const conns = res.data?.data?.connections || res.data?.data?.items || [];
-        setItems(conns.map((c: any) => mapCard(c)));
+        setItems(conns.map((c: any) => mapCard(c, 'accepted')));
       }
     } catch {
       setItems([]);
@@ -192,6 +239,8 @@ export default function RequestsScreen({ navigation }: any) {
 
   const accept = async (profile: any) => {
     try {
+      setActingId(profile.requestId);
+      setActingAction('accept');
       await apiClient.patch(`/relationship/requests/${profile.requestId}/accept`);
       setItems((prev) => prev.filter((x) => x.requestId !== profile.requestId));
     } catch (err: any) {
@@ -200,22 +249,35 @@ export default function RequestsScreen({ navigation }: any) {
         return;
       }
       Alert.alert('Error', err?.response?.data?.message || 'Could not accept');
+    } finally {
+      setActingId('');
+      setActingAction('');
     }
   };
   const reject = async (id: string) => {
     try {
+      setActingId(id);
+      setActingAction('reject');
       await apiClient.patch(`/relationship/requests/${id}/reject`);
       setItems((prev) => prev.filter((x) => x.requestId !== id));
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not reject');
+    } finally {
+      setActingId('');
+      setActingAction('');
     }
   };
   const withdraw = async (id: string) => {
     try {
+      setActingId(id);
+      setActingAction('withdraw');
       await apiClient.patch(`/relationship/requests/${id}/withdraw`);
       setItems((prev) => prev.filter((x) => x.requestId !== id));
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not withdraw');
+    } finally {
+      setActingId('');
+      setActingAction('');
     }
   };
 
@@ -231,12 +293,14 @@ export default function RequestsScreen({ navigation }: any) {
           onPress: async () => {
             try {
               setActingId(connectionId);
+              setActingAction('remove');
               await apiClient.patch(`/relationship/connections/${connectionId}/disconnect`, {});
               setItems((prev) => prev.filter((x) => x.connectionId !== connectionId));
             } catch (err: any) {
               Alert.alert('Error', err?.response?.data?.message || 'Could not remove connection');
             } finally {
               setActingId('');
+              setActingAction('');
             }
           },
         },
@@ -315,6 +379,46 @@ export default function RequestsScreen({ navigation }: any) {
   const openProfile = (profileId: string) =>
     navigation.navigate('ProfileDetail', { profileId });
 
+  const renderRequestItem = ({ item }: { item: any }) => {
+    const isPendingTab = tab === 'Pending';
+    const isReceivedRequest =
+      tab === 'Received' || (isPendingTab && item.direction === 'received');
+    const isAcceptedConnection = tab === 'Accepted';
+    const requestBusy = actingId === item.requestId;
+    const connectionBusy = actingId === item.connectionId;
+    const metaLabel = isPendingTab
+      ? item.direction === 'received'
+        ? 'Received request'
+        : 'Sent request'
+      : undefined;
+
+    if (isReceivedRequest) {
+      return (
+        <RequestCard
+          profile={item}
+          onAccept={() => accept(item)}
+          onReject={() => reject(item.requestId)}
+          onView={() => openProfile(item.profileId)}
+          accepting={requestBusy && actingAction === 'accept'}
+          rejecting={requestBusy && actingAction === 'reject'}
+          metaLabel={metaLabel}
+        />
+      );
+    }
+
+    return (
+      <SimpleCard
+        profile={item}
+        kind={isAcceptedConnection ? 'Accepted' : 'Sent'}
+        onWithdraw={() => withdraw(item.requestId)}
+        onRemove={() => removeConnection(item.connectionId, item.name)}
+        onView={() => openProfile(item.profileId)}
+        busy={isAcceptedConnection ? connectionBusy : requestBusy}
+        metaLabel={metaLabel}
+      />
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
@@ -323,11 +427,16 @@ export default function RequestsScreen({ navigation }: any) {
           <ArrowLeft color="#000" size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Requests</Text>
-        <Search color="#000" size={22} />
+        <View style={styles.headerSpacer} />
       </View>
 
       {/* Chips */}
-      <View style={styles.chipRow}>
+      <ScrollView
+        horizontal
+        style={styles.chipScroller}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chipRow}
+      >
         {TABS.map((t) => {
           const active = tab === t;
           return (
@@ -340,7 +449,7 @@ export default function RequestsScreen({ navigation }: any) {
             </TouchableOpacity>
           );
         })}
-      </View>
+      </ScrollView>
 
       <View style={styles.content}>
         {loading ? (
@@ -351,25 +460,7 @@ export default function RequestsScreen({ navigation }: any) {
             keyExtractor={(item, i) => item.requestId || item.profileId || String(i)}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
-            renderItem={({ item }) =>
-              tab === 'Received' ? (
-                <RequestCard
-                  profile={item}
-                  onAccept={() => accept(item)}
-                  onReject={() => reject(item.requestId)}
-                  onView={() => openProfile(item.profileId)}
-                />
-              ) : (
-                <SimpleCard
-                  profile={item}
-                  kind={tab}
-                  onWithdraw={() => withdraw(item.requestId)}
-                  onRemove={() => removeConnection(item.connectionId, item.name)}
-                  onView={() => openProfile(item.profileId)}
-                  busy={actingId === item.connectionId}
-                />
-              )
-            }
+            renderItem={renderRequestItem}
             ListEmptyComponent={<Text style={styles.empty}>No {tab.toLowerCase()} requests</Text>}
           />
         )}
@@ -409,7 +500,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 12,
   },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
-  chipRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 8, flexWrap: 'wrap' },
+  headerSpacer: { width: 24 },
+  chipScroller: { flexGrow: 0, marginBottom: 8 },
+  chipRow: { flexDirection: 'row', paddingHorizontal: 16, paddingRight: 24, gap: 8 },
   chip: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 30, paddingVertical: 7, paddingHorizontal: 18 },
   chipActive: { borderColor: '#D20236', backgroundColor: '#D20236' },
   chipText: { fontSize: 13, color: '#333' },
@@ -418,7 +511,7 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', color: '#999', marginTop: 40 },
   // SimpleCard
   card: {
-    borderWidth: 1, borderColor: '#f0f0f0', borderRadius: 14, padding: 14, marginBottom: 14,
+    borderWidth: 1, borderColor: '#f0f0f0', borderRadius: 8, padding: 14, marginBottom: 14,
     backgroundColor: '#fff', elevation: 1, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
   },
   topRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
@@ -428,6 +521,13 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   name: { fontSize: 16, fontWeight: '700', color: '#000' },
   detail: { fontSize: 13, color: '#888', marginTop: 3 },
+  directionText: {
+    fontSize: 11,
+    color: '#D20236',
+    fontWeight: '700',
+    marginTop: 5,
+    textTransform: 'uppercase',
+  },
   withdrawBtn: { backgroundColor: '#f0f0f0', borderRadius: 8, paddingVertical: 12, alignItems: 'center' },
   withdrawText: { color: '#D20236', fontSize: 14, fontWeight: '700' },
   viewWrap: { alignItems: 'center', marginTop: 12 },

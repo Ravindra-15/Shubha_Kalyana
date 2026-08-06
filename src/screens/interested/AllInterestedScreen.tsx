@@ -135,7 +135,7 @@ export default function AllInterestedScreen({ navigation, route }: any) {
         onContinueBrowsing={() => setSentModal({ show: false })}
         onViewSentRequests={() => {
           setSentModal({ show: false });
-          navigation.navigate('SentRequests');
+          navigation.navigate('SentRequests', { initialTab: 'Sent' });
         }}
       />
 

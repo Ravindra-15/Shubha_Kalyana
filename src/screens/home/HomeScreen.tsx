@@ -341,7 +341,7 @@ export default function HomeScreen({ navigation }: any) {
         onContinueBrowsing={() => setSentModal({ show: false })}
         onViewSentRequests={() => {
           setSentModal({ show: false });
-          navigation.navigate('SentRequests');
+          navigation.navigate('SentRequests', { initialTab: 'Sent' });
         }}
       />
 
@@ -456,7 +456,11 @@ export default function HomeScreen({ navigation }: any) {
                   Profiles matching your preferences
                 </Text>
               </View>
-              <TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('Requests', { initialTab: 'Received' })
+                }
+              >
                 <Text style={styles.viewAll}>View All</Text>
               </TouchableOpacity>
             </View>

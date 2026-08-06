@@ -1,20 +1,41 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  ActivityIndicator,
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
 import { BadgeCheck } from 'lucide-react-native';
+import { resolveImageUrl } from '../utils/imageUrl';
 
 type Props = {
   profile: any;
   onAccept?: () => void;
   onReject?: () => void;
   onView?: () => void;
+  accepting?: boolean;
+  rejecting?: boolean;
+  metaLabel?: string;
 };
 
-export default function RequestCard({ profile, onAccept, onReject, onView }: Props) {
+export default function RequestCard({
+  profile,
+  onAccept,
+  onReject,
+  onView,
+  accepting = false,
+  rejecting = false,
+  metaLabel,
+}: Props) {
+  const busy = accepting || rejecting;
+
   return (
     <View style={styles.card}>
       <View style={styles.topRow}>
         {profile.image ? (
-          <Image source={{ uri: profile.image }} style={styles.avatar} />
+          <Image source={{ uri: resolveImageUrl(profile.image) }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}
@@ -28,19 +49,38 @@ export default function RequestCard({ profile, onAccept, onReject, onView }: Pro
           <Text style={styles.detail}>
             {[profile.caste, profile.profession].filter(Boolean).join('  |  ') || 'Not specified'}
           </Text>
+          {metaLabel ? <Text style={styles.meta}>{metaLabel}</Text> : null}
         </View>
       </View>
 
       <View style={styles.btnRow}>
-        <TouchableOpacity style={styles.acceptBtn} onPress={onAccept} activeOpacity={0.85}>
-          <Text style={styles.acceptText}>Accept</Text>
+        <TouchableOpacity
+          style={[styles.acceptBtn, busy && styles.disabledBtn]}
+          onPress={onAccept}
+          activeOpacity={0.85}
+          disabled={busy}
+        >
+          {accepting ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.acceptText}>Accept</Text>
+          )}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.rejectBtn} onPress={onReject} activeOpacity={0.85}>
-          <Text style={styles.rejectText}>Reject</Text>
+        <TouchableOpacity
+          style={[styles.rejectBtn, busy && styles.disabledBtn]}
+          onPress={onReject}
+          activeOpacity={0.85}
+          disabled={busy}
+        >
+          {rejecting ? (
+            <ActivityIndicator color="#333" size="small" />
+          ) : (
+            <Text style={styles.rejectText}>Reject</Text>
+          )}
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity onPress={onView} style={styles.viewWrap}>
+      <TouchableOpacity onPress={onView} style={styles.viewWrap} disabled={busy}>
         <Text style={styles.viewText}>View Profile</Text>
       </TouchableOpacity>
     </View>
@@ -51,7 +91,7 @@ const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
     borderColor: '#f0f0f0',
-    borderRadius: 14,
+    borderRadius: 8,
     padding: 14,
     marginBottom: 14,
     backgroundColor: '#fff',
@@ -68,6 +108,13 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   name: { fontSize: 16, fontWeight: '700', color: '#000' },
   detail: { fontSize: 13, color: '#888', marginTop: 3 },
+  meta: {
+    fontSize: 11,
+    color: '#D20236',
+    fontWeight: '700',
+    marginTop: 5,
+    textTransform: 'uppercase',
+  },
   btnRow: { flexDirection: 'row', gap: 12 },
   acceptBtn: {
     flex: 1,
@@ -76,6 +123,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
   },
+  disabledBtn: { opacity: 0.65 },
   acceptText: { color: '#fff', fontSize: 14, fontWeight: '700' },
   rejectBtn: {
     flex: 1,
