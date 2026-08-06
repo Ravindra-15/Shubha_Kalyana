@@ -10,20 +10,56 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  ArrowLeft, BadgeCheck, Heart, UserPlus, CreditCard, MessageCircle, Bell, CheckCheck,
+  ArrowLeft,
+  BadgeCheck,
+  Heart,
+  UserPlus,
+  CreditCard,
+  MessageCircle,
+  Bell,
+  CheckCheck,
 } from 'lucide-react-native';
-import { getNotifications, markNotificationRead, markAllNotificationsRead } from '../../api/notification';
+import {
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from '../../api/notification';
 
 // icon + color per notification type
 const typeConfig = (type: string) => {
   const t = (type || '').toUpperCase();
-  if (t.includes('APPROVED') || t.includes('VERIFIED')) return { Icon: BadgeCheck, color: '#1a7f37' };
+  if (t.includes('APPROVED') || t.includes('VERIFIED'))
+    return { Icon: BadgeCheck, color: '#1a7f37' };
   if (t.includes('ACCEPTED')) return { Icon: BadgeCheck, color: '#1a7f37' };
   if (t.includes('REQUEST')) return { Icon: UserPlus, color: '#D20236' };
   if (t.includes('INTEREST')) return { Icon: Heart, color: '#D20236' };
-  if (t.includes('PAYMENT') || t.includes('MEMBERSHIP')) return { Icon: CreditCard, color: '#b8860b' };
-  if (t.includes('CHAT') || t.includes('MESSAGE')) return { Icon: MessageCircle, color: '#2b6cb0' };
+  if (t.includes('PAYMENT') || t.includes('MEMBERSHIP'))
+    return { Icon: CreditCard, color: '#b8860b' };
+  if (t.includes('CHAT') || t.includes('MESSAGE'))
+    return { Icon: MessageCircle, color: '#2b6cb0' };
   return { Icon: Bell, color: '#666' };
+};
+
+const PAGE_SIZE = 20;
+
+const defaultPagination = {
+  page: 1,
+  limit: PAGE_SIZE,
+  total: 0,
+  totalPages: 0,
+  hasNextPage: false,
+};
+
+const mergeNotifications = (currentItems: any[], nextItems: any[]) => {
+  const seen = new Set<string>();
+
+  return [...currentItems, ...nextItems].filter(item => {
+    const key = String(item?._id || '');
+    if (!key) return true;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 };
 
 const timeAgo = (date: string) => {
@@ -42,29 +78,54 @@ const timeAgo = (date: string) => {
 export default function NotificationScreen({ navigation }: any) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [pagination, setPagination] = useState<any>(defaultPagination);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const loadPage = useCallback(async (page = 1, replace = true) => {
+    if (replace) setLoading(true);
+    else setLoadingMore(true);
     try {
-      const data = await getNotifications(1);
-      setItems(data.notifications || []);
+      const data = await getNotifications(page, PAGE_SIZE);
+      const nextItems = data.notifications || [];
+      setItems(prev =>
+        replace ? nextItems : mergeNotifications(prev, nextItems),
+      );
+      setPagination(data.pagination || { ...defaultPagination, page });
     } catch {
-      setItems([]);
+      if (replace) {
+        setItems([]);
+        setPagination({ ...defaultPagination, page });
+      }
     } finally {
-      setLoading(false);
+      if (replace) setLoading(false);
+      else setLoadingMore(false);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      load();
-    }, [load])
+      loadPage(1, true);
+    }, [loadPage]),
   );
+
+  const hasMore =
+    typeof pagination?.hasNextPage === 'boolean'
+      ? pagination.hasNextPage
+      : Number(pagination?.page || 1) < Number(pagination?.totalPages || 0);
+
+  const loadMore = () => {
+    if (!hasMore || loadingMore) return;
+    loadPage(Number(pagination?.page || 1) + 1, false);
+  };
 
   const onTap = async (n: any) => {
     // mark read locally + backend
     if (!n.readAt) {
-      setItems((prev) => prev.map((x) => (x._id === n._id ? { ...x, readAt: new Date().toISOString() } : x)));
+      setItems(prev =>
+        prev.map(x =>
+          x._id === n._id ? { ...x, readAt: new Date().toISOString() } : x,
+        ),
+      );
       markNotificationRead(n._id);
     }
     // navigate if it references a profile
@@ -75,7 +136,9 @@ export default function NotificationScreen({ navigation }: any) {
   };
 
   const markAll = async () => {
-    setItems((prev) => prev.map((x) => ({ ...x, readAt: x.readAt || new Date().toISOString() })));
+    setItems(prev =>
+      prev.map(x => ({ ...x, readAt: x.readAt || new Date().toISOString() })),
+    );
     markAllNotificationsRead();
   };
 
@@ -96,7 +159,7 @@ export default function NotificationScreen({ navigation }: any) {
       ) : (
         <FlatList
           data={items}
-          keyExtractor={(item) => item._id}
+          keyExtractor={item => item._id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => {
@@ -109,7 +172,9 @@ export default function NotificationScreen({ navigation }: any) {
                 onPress={() => onTap(item)}
                 activeOpacity={0.7}
               >
-                <View style={[styles.iconWrap, { backgroundColor: `${color}18` }]}>
+                <View
+                  style={[styles.iconWrap, { backgroundColor: `${color}18` }]}
+                >
                   <Icon color={color} size={20} />
                 </View>
                 <View style={styles.body}>
@@ -117,14 +182,38 @@ export default function NotificationScreen({ navigation }: any) {
                   <Text style={styles.desc}>{item.body}</Text>
                   <View style={styles.metaRow}>
                     <Text style={styles.time}>{timeAgo(item.createdAt)}</Text>
-                    {hasProfile && <Text style={styles.viewLink}>View Profile</Text>}
+                    {hasProfile && (
+                      <Text style={styles.viewLink}>View Profile</Text>
+                    )}
                   </View>
                 </View>
                 {unread && <View style={styles.dot} />}
               </TouchableOpacity>
             );
           }}
-          ListEmptyComponent={<Text style={styles.empty}>No notifications yet</Text>}
+          ListEmptyComponent={
+            <Text style={styles.empty}>No notifications yet</Text>
+          }
+          ListFooterComponent={
+            hasMore ? (
+              <TouchableOpacity
+                style={[
+                  styles.loadMoreButton,
+                  loadingMore && styles.loadMoreButtonDisabled,
+                ]}
+                onPress={loadMore}
+                disabled={loadingMore}
+                activeOpacity={0.8}
+              >
+                {loadingMore ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : null}
+                <Text style={styles.loadMoreText}>
+                  {loadingMore ? 'Loading...' : 'Load more'}
+                </Text>
+              </TouchableOpacity>
+            ) : null
+          }
         />
       )}
     </SafeAreaView>
@@ -134,24 +223,66 @@ export default function NotificationScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
   list: { padding: 16, flexGrow: 1 },
   card: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    padding: 14, borderRadius: 12, marginBottom: 10,
-    borderWidth: 1, borderColor: '#f0f0f0', backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    backgroundColor: '#fff',
   },
   cardUnread: { backgroundColor: '#fdf2f5', borderColor: '#f5d9e0' },
-  iconWrap: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
+  iconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   body: { flex: 1 },
   title: { fontSize: 15, fontWeight: '700', color: '#000' },
   desc: { fontSize: 13, color: '#555', marginTop: 3, lineHeight: 18 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
   time: { fontSize: 11, color: '#999' },
   viewLink: { fontSize: 12, color: '#D20236', fontWeight: '600' },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#D20236', marginTop: 4 },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#D20236',
+    marginTop: 4,
+  },
   empty: { textAlign: 'center', color: '#999', marginTop: 40 },
+  loadMoreButton: {
+    alignSelf: 'center',
+    minWidth: 140,
+    height: 44,
+    borderRadius: 8,
+    marginTop: 14,
+    marginBottom: 24,
+    paddingHorizontal: 18,
+    backgroundColor: '#D20236',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  loadMoreButtonDisabled: { opacity: 0.7 },
+  loadMoreText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });

@@ -1,7 +1,9 @@
 import apiClient from './client';
 
-export const getNotifications = async (page = 1) => {
-  const res = await apiClient.get('/notifications', { params: { page, limit: 20 } });
+export const getNotifications = async (page = 1, limit = 20) => {
+  const res = await apiClient.get('/notifications', {
+    params: { page, limit },
+  });
   return res.data?.data || { notifications: [], pagination: {} };
 };
 
