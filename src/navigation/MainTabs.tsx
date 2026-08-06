@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, Search, Heart, MessageCircle, User } from 'lucide-react-native';
 import HomeScreen from '../screens/home/HomeScreen';
@@ -7,7 +7,6 @@ import AllInterestedScreen from '../screens/interested/AllInterestedScreen';
 import ChatListScreen from '../screens/chat/ChatListScreen';
 import { useChat } from '../context/ChatContext';
 import ProfileScreen from '../screens/profile/ProfileScreen';
-import { useAuth } from '../context/AuthContext';
 import { getMyFullProfile } from '../api/profile';
 import { getActiveMembership } from '../api/membership';
 import VerificationPromptModal from '../components/VerificationPromptModal';
@@ -16,9 +15,19 @@ import type { VerificationPromptStatus } from '../utils/verificationPrompt';
 
 const Tab = createBottomTabNavigator();
 
+type TabIconProps = {
+  color: string;
+  size: number;
+};
+
+const HomeTabIcon = ({ color, size }: TabIconProps) => <Home color={color} size={size} />;
+const SearchTabIcon = ({ color, size }: TabIconProps) => <Search color={color} size={size} />;
+const InterestsTabIcon = ({ color, size }: TabIconProps) => <Heart color={color} size={size} />;
+const ChatTabIcon = ({ color, size }: TabIconProps) => <MessageCircle color={color} size={size} />;
+const ProfileTabIcon = ({ color, size }: TabIconProps) => <User color={color} size={size} />;
+
 export default function MainTabs({ navigation }: any) {
   const { unreadCount } = useChat();
-  const { loginPromptVersion } = useAuth();
   const [verificationPrompt, setVerificationPrompt] =
     useState<VerificationPromptStatus | null>(null);
 
@@ -38,12 +47,6 @@ export default function MainTabs({ navigation }: any) {
       setVerificationPrompt(null);
     }
   }, []);
-
-  useEffect(() => {
-    if (loginPromptVersion) {
-      showVerificationPrompt();
-    }
-  }, [loginPromptVersion, showVerificationPrompt]);
 
   const closeVerificationPrompt = () => {
     setVerificationPrompt(null);
@@ -74,9 +77,14 @@ export default function MainTabs({ navigation }: any) {
         <Tab.Screen
           name="HomeTab"
           component={HomeScreen}
+          listeners={{
+            focus: () => {
+              showVerificationPrompt().catch(() => {});
+            },
+          }}
           options={{
             title: 'Home',
-            tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+            tabBarIcon: HomeTabIcon,
           }}
         />
 
@@ -85,7 +93,7 @@ export default function MainTabs({ navigation }: any) {
           component={AllMatchesScreen}
           options={{
             title: 'Search',
-            tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
+            tabBarIcon: SearchTabIcon,
           }}
         />
         <Tab.Screen
@@ -93,7 +101,7 @@ export default function MainTabs({ navigation }: any) {
           component={AllInterestedScreen}
           options={{
             title: 'Interests',
-            tabBarIcon: ({ color, size }) => <Heart color={color} size={size} />,
+            tabBarIcon: InterestsTabIcon,
           }}
         />
         <Tab.Screen
@@ -101,7 +109,7 @@ export default function MainTabs({ navigation }: any) {
           component={ChatListScreen}
           options={{
             title: 'Chat',
-            tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} />,
+            tabBarIcon: ChatTabIcon,
             tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
           }}
         />
@@ -110,7 +118,7 @@ export default function MainTabs({ navigation }: any) {
           component={ProfileScreen}
           options={{
             title: 'Profile',
-            tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
+            tabBarIcon: ProfileTabIcon,
           }}
         />
       </Tab.Navigator>

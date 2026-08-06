@@ -124,6 +124,6 @@ export const getVerificationPromptStatus = (
     profilePhotoVerified,
     aadhaarNumberVerified,
     hasMembershipPlan,
-    shouldShow: hasMembershipPlan && !(profilePhotoVerified && aadhaarNumberVerified),
+    shouldShow: hasMembershipPlan && !profilePhotoVerified,
   };
 };

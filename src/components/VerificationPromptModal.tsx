@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { BlurView } from '@react-native-community/blur';
 import { BadgeCheck, Camera, Fingerprint, X } from 'lucide-react-native';
 import type { VerificationPromptStatus } from '../utils/verificationPrompt';
 
@@ -19,6 +20,22 @@ const StatusPill = ({ verified }: { verified: boolean }) => (
   </View>
 );
 
+const blurProps =
+  Platform.OS === 'android'
+    ? {
+        blurType: 'dark' as const,
+        blurAmount: 12,
+        blurRadius: 12,
+        downsampleFactor: 8,
+        overlayColor: 'rgba(0,0,0,0.24)',
+        autoUpdate: true,
+      }
+    : {
+        blurType: 'dark' as const,
+        blurAmount: 12,
+        reducedTransparencyFallbackColor: 'rgba(0,0,0,0.45)',
+      };
+
 export default function VerificationPromptModal({
   visible,
   status,
@@ -34,6 +51,8 @@ export default function VerificationPromptModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
+        <BlurView pointerEvents="none" style={styles.blurLayer} {...blurProps} />
+        <View pointerEvents="none" style={styles.dimLayer} />
         <View style={styles.card}>
           <View style={styles.header}>
             <View style={styles.headerTextWrap}>
@@ -115,10 +134,24 @@ export default function VerificationPromptModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 18,
+  },
+  blurLayer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  dimLayer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: 'rgba(0,0,0,0.28)',
   },
   card: {
     width: '100%',
@@ -126,6 +159,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#fff',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 14,
   },
   header: {
     flexDirection: 'row',

@@ -103,6 +103,7 @@ export default function ProfilePhotoScreen({ navigation }: any) {
         <Text style={styles.congrats}>Congratulations !</Text>
         <Text style={styles.title}>Profile has been created</Text>
         <Text style={styles.subtitle}>Upload photo and get better matches</Text>
+        <Text style={styles.recentPhotoMessage}>Please upload your most recent photo</Text>
 
         <TouchableOpacity style={styles.avatarWrap} onPress={pickImage} activeOpacity={0.8}>
           {photo ? (
@@ -141,7 +142,15 @@ const styles = StyleSheet.create({
   back: { fontSize: 24, color: '#000', marginTop: 8 },
   congrats: { fontSize: 22, fontWeight: '700', color: '#D20236', textAlign: 'center', marginTop: 10 },
   title: { fontSize: 20, fontWeight: '700', color: '#000', textAlign: 'center', marginTop: 4 },
-  subtitle: { fontSize: 13, color: '#666', textAlign: 'center', marginTop: 8, marginBottom: 30 },
+  subtitle: { fontSize: 13, color: '#666', textAlign: 'center', marginTop: 8 },
+  recentPhotoMessage: {
+    fontSize: 13,
+    color: '#D20236',
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 30,
+  },
   avatarWrap: { alignSelf: 'center', marginBottom: 24 },
   avatar: { width: 130, height: 130, borderRadius: 65 },
   avatarPlaceholder: { width: 130, height: 130, borderRadius: 65, backgroundColor: '#eee' },
