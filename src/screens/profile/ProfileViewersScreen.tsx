@@ -14,7 +14,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import ProfileCard from '../../components/ProfileCard';
 import RequestSentModal from '../../components/RequestSentModal';
 import apiClient from '../../api/client';
-import { getProfileViewers } from '../../api/profile';
+import { getProfileViewers, isProfileFullyVerified } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 
 const getAge = (dob?: string) => {
@@ -71,7 +71,7 @@ const mapProfileViewer = (item: any) => {
     image: photo ? resolveImageUrl(photo) : '',
     matchPercentage,
     matchPercent: matchPercentage,
-    verified: p.documents?.verificationStatus === 'VERIFIED',
+    verified: Boolean(p.verified || isProfileFullyVerified(p)),
     viewedAt: item.viewedAt,
     viewCount: Number(item.viewCount || 0),
   };

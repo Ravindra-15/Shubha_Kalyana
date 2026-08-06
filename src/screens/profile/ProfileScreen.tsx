@@ -9,7 +9,7 @@ import {
 } from 'lucide-react-native';
 import apiClient from '../../api/client';
 import { getActiveMembership } from '../../api/membership';
-import { getProfileViewersSummary } from '../../api/profile';
+import { getProfileViewersSummary, isProfileFullyVerified } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 
 
@@ -96,7 +96,7 @@ export default function ProfileScreen({ navigation }: any) {
     .filter(Boolean).join(' ');
   const age = getAge(basic.dob);
   const photo = profile?.photos?.find((p: any) => p.isProfilePhoto)?.url || profile?.photos?.[0]?.url || '';
-  const verified = profile?.documents?.verificationStatus === 'VERIFIED';
+  const verified = isProfileFullyVerified(profile);
   const location = [profile?.address?.current?.city, profile?.address?.current?.state]
     .filter(Boolean).join(', ');
   const completion = profile?.completionPercentage || 0;

@@ -15,6 +15,7 @@ import apiClient from '../../api/client';
 import ProfileCard from '../../components/ProfileCard';
 import BottomNav from '../../components/BottomNav';
 import RequestSentModal from '../../components/RequestSentModal';
+import { isProfileFullyVerified } from '../../api/profile';
 
 const getAge = (dob?: string) => {
   if (!dob) return null;
@@ -49,7 +50,7 @@ const mapInterest = (item: any) => {
     image: photo,
     matchPercentage,
     matchPercent: matchPercentage,
-    verified: p.documents?.verificationStatus === 'VERIFIED',
+    verified: Boolean(p.verified || isProfileFullyVerified(p)),
   };
 };
 

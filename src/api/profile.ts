@@ -64,9 +64,11 @@ export const isProfilePictureVerified = (profile: any) => {
 
 export const isAadhaarNumberVerified = (profile: any) => {
   const aadhaarStatus = String(profile?.aadhaarVerification?.status || '').toUpperCase();
-  const documentStatus = String(profile?.documents?.verificationStatus || '').toUpperCase();
-  return aadhaarStatus === 'VERIFIED' || documentStatus === 'VERIFIED';
+  return aadhaarStatus === 'VERIFIED';
 };
+
+export const isProfileFullyVerified = (profile: any) =>
+  isProfilePictureVerified(profile) && isAadhaarNumberVerified(profile);
 
 export const createProfilePictureVerificationSession = async () => {
   const res = await apiClient.post('/facetec/profile-picture/start');

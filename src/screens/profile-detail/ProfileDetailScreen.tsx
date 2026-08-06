@@ -24,7 +24,7 @@ import {
   MessageCircle,
   Bookmark,
 } from 'lucide-react-native';
-import { getPartnerProfile } from '../../api/profile';
+import { getPartnerProfile, isProfileFullyVerified } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import apiClient from '../../api/client';
 import { LayoutAnimation, Platform, UIManager } from 'react-native';
@@ -455,7 +455,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
     profile.photos?.find((p: any) => p.isProfilePhoto)?.url ||
     profile.photos?.[0]?.url ||
     '';
-  const verified = profile.documents?.verificationStatus === 'VERIFIED';
+  const verified = Boolean(profile.verified || isProfileFullyVerified(profile));
   const caste = basic.caste?.casteName || basic.caste?.name || '';
   const location = [addr.current?.city, addr.current?.state]
     .filter(x => x && !isBlur(x))

@@ -14,6 +14,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import ProfileCard from '../../components/ProfileCard';
 import RequestSentModal from '../../components/RequestSentModal';
 import apiClient from '../../api/client';
+import { isProfileFullyVerified } from '../../api/profile';
 import {
   getSavedProfiles,
   removeSavedProfile,
@@ -56,7 +57,7 @@ const mapSavedProfile = (item: any) => {
     image: photo,
     matchPercentage,
     matchPercent: matchPercentage,
-    verified: p.documents?.verificationStatus === 'VERIFIED',
+    verified: Boolean(p.verified || isProfileFullyVerified(p)),
     savedAt: item.savedAt,
   };
 };

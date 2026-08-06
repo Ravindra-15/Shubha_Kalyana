@@ -107,10 +107,12 @@ export const isAadhaarNumberVerifiedForPrompt = (value: any) => {
 
   const profile = getProfile(value);
   const aadhaarStatus = String(profile?.aadhaarVerification?.status || '').toUpperCase();
-  const documentStatus = String(profile?.documents?.verificationStatus || '').toUpperCase();
 
-  return aadhaarStatus === 'VERIFIED' || documentStatus === 'VERIFIED';
+  return aadhaarStatus === 'VERIFIED';
 };
+
+export const isProfileFullyVerifiedForPrompt = (value: any) =>
+  isProfilePictureVerifiedForPrompt(value) && isAadhaarNumberVerifiedForPrompt(value);
 
 export const getVerificationPromptStatus = (
   value: any,
@@ -124,6 +126,6 @@ export const getVerificationPromptStatus = (
     profilePhotoVerified,
     aadhaarNumberVerified,
     hasMembershipPlan,
-    shouldShow: hasMembershipPlan && !profilePhotoVerified,
+    shouldShow: hasMembershipPlan && (!profilePhotoVerified || !aadhaarNumberVerified),
   };
 };

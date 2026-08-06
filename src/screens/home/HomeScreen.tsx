@@ -27,6 +27,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import RequestSentModal from '../../components/RequestSentModal';
 import { getUnreadCount } from '../../api/notification';
 import { sortProfilesByMatchPercent } from '../../utils/matchSorting';
+import { isProfileFullyVerified } from '../../api/profile';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
@@ -183,7 +184,7 @@ export default function HomeScreen({ navigation }: any) {
       image: photo,
       matchPercentage,
       matchPercent: matchPercentage,
-      verified: item.profile?.documents?.verificationStatus === 'VERIFIED',
+      verified: Boolean(item.profile?.verified || isProfileFullyVerified(item.profile)),
     };
   };
 

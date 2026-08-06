@@ -19,6 +19,7 @@ import { formatMoney, type PaymentOrderResult } from '../../utils/paymentBreakup
 import PaymentBreakupModal from '../../components/PaymentBreakupModal';
 import BottomNav from '../../components/BottomNav';
 import VerificationPromptModal from '../../components/VerificationPromptModal';
+import AadhaarVerificationModal from '../../components/AadhaarVerificationModal';
 import { getVerificationPromptStatus } from '../../utils/verificationPrompt';
 import type { VerificationPromptStatus } from '../../utils/verificationPrompt';
 
@@ -73,6 +74,8 @@ export default function PlansScreen({ navigation, route }: any) {
   const [confirmingPayment, setConfirmingPayment] = useState(false);
   const [verificationPrompt, setVerificationPrompt] =
     useState<VerificationPromptStatus | null>(null);
+  const [aadhaarPromptVisible, setAadhaarPromptVisible] = useState(false);
+  const [aadhaarPhotoVerified, setAadhaarPhotoVerified] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -167,6 +170,18 @@ export default function PlansScreen({ navigation, route }: any) {
     } else {
       Alert.alert('Payment', result.message || 'Payment failed');
     }
+  };
+
+  const verifyPhoto = () => {
+    setVerificationPrompt(null);
+    setAadhaarPromptVisible(false);
+    navigation.navigate('FaceTecTest');
+  };
+
+  const verifyAadhaar = () => {
+    setAadhaarPhotoVerified(Boolean(verificationPrompt?.profilePhotoVerified));
+    setVerificationPrompt(null);
+    setAadhaarPromptVisible(true);
   };
 
   return (
@@ -274,11 +289,17 @@ export default function PlansScreen({ navigation, route }: any) {
         visible={Boolean(verificationPrompt)}
         status={verificationPrompt}
         onClose={() => setVerificationPrompt(null)}
-        onVerifyPhoto={() => {
-          setVerificationPrompt(null);
-          navigation.navigate('FaceTecTest');
+        onVerifyPhoto={verifyPhoto}
+        onVerifyAadhaar={verifyAadhaar}
+      />
+      <AadhaarVerificationModal
+        visible={aadhaarPromptVisible}
+        photoVerified={aadhaarPhotoVerified}
+        onClose={() => setAadhaarPromptVisible(false)}
+        onVerified={async () => {
+          await getMyFullProfile().catch(() => null);
         }}
-        onVerifyAadhaar={() => undefined}
+        onVerifyPhoto={verifyPhoto}
       />
     </SafeAreaView>
   );

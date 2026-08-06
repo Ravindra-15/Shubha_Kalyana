@@ -10,6 +10,7 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 import { getMyFullProfile } from '../api/profile';
 import { getActiveMembership } from '../api/membership';
 import VerificationPromptModal from '../components/VerificationPromptModal';
+import AadhaarVerificationModal from '../components/AadhaarVerificationModal';
 import { getVerificationPromptStatus } from '../utils/verificationPrompt';
 import type { VerificationPromptStatus } from '../utils/verificationPrompt';
 
@@ -30,6 +31,8 @@ export default function MainTabs({ navigation }: any) {
   const { unreadCount } = useChat();
   const [verificationPrompt, setVerificationPrompt] =
     useState<VerificationPromptStatus | null>(null);
+  const [aadhaarPromptVisible, setAadhaarPromptVisible] = useState(false);
+  const [aadhaarPhotoVerified, setAadhaarPhotoVerified] = useState(false);
 
   const showVerificationPrompt = useCallback(async () => {
     try {
@@ -54,7 +57,14 @@ export default function MainTabs({ navigation }: any) {
 
   const verifyPhoto = () => {
     setVerificationPrompt(null);
+    setAadhaarPromptVisible(false);
     navigation.navigate('FaceTecTest');
+  };
+
+  const verifyAadhaar = () => {
+    setAadhaarPhotoVerified(Boolean(verificationPrompt?.profilePhotoVerified));
+    setVerificationPrompt(null);
+    setAadhaarPromptVisible(true);
   };
 
   return (
@@ -127,7 +137,16 @@ export default function MainTabs({ navigation }: any) {
         status={verificationPrompt}
         onClose={closeVerificationPrompt}
         onVerifyPhoto={verifyPhoto}
-        onVerifyAadhaar={() => undefined}
+        onVerifyAadhaar={verifyAadhaar}
+      />
+      <AadhaarVerificationModal
+        visible={aadhaarPromptVisible}
+        photoVerified={aadhaarPhotoVerified}
+        onClose={() => setAadhaarPromptVisible(false)}
+        onVerified={async () => {
+          await getMyFullProfile().catch(() => null);
+        }}
+        onVerifyPhoto={verifyPhoto}
       />
     </>
   );
