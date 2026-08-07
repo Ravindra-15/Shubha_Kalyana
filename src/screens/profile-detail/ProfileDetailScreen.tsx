@@ -335,7 +335,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
   const openChat = async () => {
     if (!canChat) {
-      navigation.navigate('Plans', { profileId });
+      navigation.navigate('Plans', { profileId, profileName: name });
       return;
     }
     const otherUserId = data?.profile?.userId;
@@ -505,7 +505,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         onUnlock={handleUnlock}
         onUpgrade={() => {
           setShowUnlock(false);
-          navigation.navigate('Plans');
+          navigation.navigate('Plans', { profileId, profileName: name });
         }}
       />
       <PaymentBreakupModal

@@ -477,8 +477,9 @@ export default function RequestsScreen({ navigation, route }: any) {
         onUnlock={unlockPromptProfile}
         onUpgrade={() => {
           const profileId = accessPrompt?.profile?.profileId;
+          const profileName = accessPrompt?.profile?.name;
           setAccessPrompt(null);
-          navigation.navigate('Plans', profileId ? { profileId } : undefined);
+          navigation.navigate('Plans', profileId ? { profileId, profileName } : undefined);
         }}
       />
       <PaymentBreakupModal

@@ -17,11 +17,21 @@ import { getMyFullProfile } from '../../api/profile';
 import { openRazorpayOrder } from '../../utils/razorpayCheckout';
 import { formatMoney, type PaymentOrderResult } from '../../utils/paymentBreakup';
 import PaymentBreakupModal from '../../components/PaymentBreakupModal';
+import UnlockAccessModal from '../../components/UnlockAccessModal';
 import BottomNav from '../../components/BottomNav';
 import VerificationPromptModal from '../../components/VerificationPromptModal';
 import AadhaarVerificationModal from '../../components/AadhaarVerificationModal';
 import { getVerificationPromptStatus } from '../../utils/verificationPrompt';
 import type { VerificationPromptStatus } from '../../utils/verificationPrompt';
+import {
+  createProfileUnlockOrder,
+  getProfileAccess,
+  getUnlockPrice,
+} from '../../api/membershipPayment';
+import {
+  getSingleProfileUnlockLimitMessage,
+  isFreePlanSingleUnlockLimitReached,
+} from '../../utils/singleProfileUnlockAccess';
 
 // human-readable benefit lines from the toggles
 const benefitLines = (plan: Plan): string[] => {
@@ -63,8 +73,16 @@ type PendingPayment = {
   itemLabel: string;
 };
 
+type PendingProfileUnlockPayment = {
+  orderResult: PaymentOrderResult;
+  title: string;
+  description: string;
+  itemLabel: string;
+};
+
 export default function PlansScreen({ navigation, route }: any) {
-  const targetProfileId = route?.params?.profileId; // optional (opened from a profile)
+  const targetProfileId = route?.params?.profileId ? String(route.params.profileId) : ''; // optional (opened from a profile)
+  const targetProfileName = route?.params?.profileName || route?.params?.name || '';
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
@@ -72,6 +90,14 @@ export default function PlansScreen({ navigation, route }: any) {
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
+  const [showProfileUnlock, setShowProfileUnlock] = useState(false);
+  const [profileUnlockPrice, setProfileUnlockPrice] = useState(99);
+  const [profileUnlockAccess, setProfileUnlockAccess] = useState<any>(null);
+  const [unlockingProfile, setUnlockingProfile] = useState(false);
+  const [pendingProfileUnlockPayment, setPendingProfileUnlockPayment] =
+    useState<PendingProfileUnlockPayment | null>(null);
+  const [confirmingProfileUnlockPayment, setConfirmingProfileUnlockPayment] =
+    useState(false);
   const [verificationPrompt, setVerificationPrompt] =
     useState<VerificationPromptStatus | null>(null);
   const [aadhaarPromptVisible, setAadhaarPromptVisible] = useState(false);
@@ -95,10 +121,35 @@ export default function PlansScreen({ navigation, route }: any) {
     }
   }, []);
 
+  const loadProfileUnlockOffer = useCallback(async () => {
+    if (!targetProfileId) {
+      setProfileUnlockAccess(null);
+      return;
+    }
+
+    const [priceResult, accessResult] = await Promise.allSettled([
+      getUnlockPrice(),
+      getProfileAccess(targetProfileId),
+    ]);
+
+    if (priceResult.status === 'fulfilled') {
+      setProfileUnlockPrice(priceResult.value?.amount || 99);
+    }
+    if (accessResult.status === 'fulfilled') {
+      setProfileUnlockAccess(accessResult.value);
+    }
+  }, [targetProfileId]);
+
   useFocusEffect(
     useCallback(() => {
       load();
     }, [load])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      loadProfileUnlockOffer();
+    }, [loadProfileUnlockOffer])
   );
 
   const showVerificationPrompt = useCallback(async () => {
@@ -172,6 +223,72 @@ export default function PlansScreen({ navigation, route }: any) {
     }
   };
 
+  const openProfileUnlockPrompt = () => {
+    if (!targetProfileId) return;
+    setShowProfileUnlock(true);
+    loadProfileUnlockOffer();
+  };
+
+  const unlockProfileIndividually = async () => {
+    if (!targetProfileId) return;
+
+    if (isFreePlanSingleUnlockLimitReached(profileUnlockAccess)) {
+      Alert.alert('Payment', getSingleProfileUnlockLimitMessage(profileUnlockAccess));
+      return;
+    }
+
+    setUnlockingProfile(true);
+    try {
+      const orderResult = await createProfileUnlockOrder(targetProfileId);
+      if (!orderResult?.order?.gatewayOrderId || !orderResult?.keyId) {
+        Alert.alert('Payment', 'Could not create payment order');
+        return;
+      }
+
+      setShowProfileUnlock(false);
+      setPendingProfileUnlockPayment({
+        orderResult,
+        title: 'Profile Unlock',
+        description: `Review the GST breakup before unlocking ${targetProfileName || 'this profile'}.`,
+        itemLabel: 'Profile unlock fee',
+      });
+    } catch (err: any) {
+      const payload = err?.response?.data;
+      Alert.alert(
+        'Payment',
+        payload?.code === 'SINGLE_PROFILE_UNLOCK_LIMIT_REACHED'
+          ? getSingleProfileUnlockLimitMessage(payload)
+          : payload?.message || 'Could not create payment order',
+      );
+    } finally {
+      setUnlockingProfile(false);
+    }
+  };
+
+  const closeProfileUnlockPaymentBreakup = () => {
+    if (confirmingProfileUnlockPayment) return;
+    setPendingProfileUnlockPayment(null);
+  };
+
+  const confirmProfileUnlockPayment = async () => {
+    const payment = pendingProfileUnlockPayment;
+    if (!payment) return;
+
+    setConfirmingProfileUnlockPayment(true);
+    const result = await openRazorpayOrder(payment.orderResult, 'Unlock Profile Access', {
+      name: targetProfileName,
+    });
+    setConfirmingProfileUnlockPayment(false);
+    setPendingProfileUnlockPayment(null);
+
+    if (result.success) {
+      await loadProfileUnlockOffer();
+      Alert.alert('Unlocked', 'Profile access unlocked successfully');
+    } else {
+      Alert.alert('Payment', result.message || 'Payment failed');
+    }
+  };
+
   const verifyPhoto = () => {
     setVerificationPrompt(null);
     setAadhaarPromptVisible(false);
@@ -204,7 +321,7 @@ export default function PlansScreen({ navigation, route }: any) {
               <>
                 <TouchableOpacity
                   style={styles.unlockBanner}
-                  onPress={() => navigation.goBack()}
+                  onPress={openProfileUnlockPrompt}
                 >
                   <Text style={styles.unlockBannerText}>Unlock this profile individually</Text>
                 </TouchableOpacity>
@@ -284,6 +401,23 @@ export default function PlansScreen({ navigation, route }: any) {
         loading={confirmingPayment}
         onClose={closePaymentBreakup}
         onPurchase={confirmPayment}
+      />
+      <UnlockAccessModal
+        visible={showProfileUnlock}
+        name={targetProfileName}
+        price={profileUnlockPrice}
+        access={profileUnlockAccess}
+        loading={unlockingProfile}
+        onClose={() => setShowProfileUnlock(false)}
+        onUnlock={unlockProfileIndividually}
+        onUpgrade={() => setShowProfileUnlock(false)}
+      />
+      <PaymentBreakupModal
+        visible={Boolean(pendingProfileUnlockPayment)}
+        payment={pendingProfileUnlockPayment}
+        loading={confirmingProfileUnlockPayment}
+        onClose={closeProfileUnlockPaymentBreakup}
+        onPurchase={confirmProfileUnlockPayment}
       />
       <VerificationPromptModal
         visible={Boolean(verificationPrompt)}
