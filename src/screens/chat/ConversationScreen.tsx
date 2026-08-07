@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import {
   Smile,
   Check,
   CheckCheck,
+  Lock,
 } from 'lucide-react-native';
 import { useAuth } from '../../context/AuthContext';
 import { getMessages, sendMessageApi, markChatRead } from '../../api/chat';
@@ -27,7 +28,6 @@ import {
   connectSocket,
   getSocket,
   joinChat,
-  sendSocketMessage,
   emitTyping,
   emitStopTyping,
   emitMarkRead,
@@ -73,6 +73,9 @@ export default function ConversationScreen({ route, navigation }: any) {
   const [blocking, setBlocking] = useState(false);
   const [chatBlocked, setChatBlocked] = useState(false);
   const [blockedByMe, setBlockedByMe] = useState(false);
+  const [canSendMessage, setCanSendMessage] = useState(true);
+  const [sendRestrictionReason, setSendRestrictionReason] = useState('');
+  const [chatProfileId, setChatProfileId] = useState(profileId || '');
 
   // load history + set up socket
   useEffect(() => {
@@ -89,6 +92,9 @@ export default function ConversationScreen({ route, navigation }: any) {
           setMessages(msgs);
           setChatBlocked(Boolean(data.chat?.isRestricted));
           setBlockedByMe(Boolean(data.chat?.blockedByMe));
+          setCanSendMessage(data.chat?.canSendMessage !== false);
+          setSendRestrictionReason(data.chat?.sendRestrictionReason || '');
+          setChatProfileId(data.chat?.oppositeProfileId || profileId || '');
         }
       } catch {
       } finally {
@@ -108,7 +114,7 @@ export default function ConversationScreen({ route, navigation }: any) {
     return () => {
       mounted = false;
     };
-  }, [chatId]);
+  }, [chatId, profileId, refreshUnreadCount]);
 
   // socket listeners
   useEffect(() => {
@@ -214,7 +220,7 @@ export default function ConversationScreen({ route, navigation }: any) {
 
   const send = async () => {
     const text = input.trim();
-    if (!text) return;
+    if (!text || !canSendMessage || chatBlocked) return;
     const clientMessageId = genClientId();
 
     // optimistic message
@@ -255,6 +261,11 @@ export default function ConversationScreen({ route, navigation }: any) {
         err?.response?.status,
         err?.response?.data?.message || err?.message,
       );
+      const message = err?.response?.data?.message || err?.message || '';
+      if (/unlock this profile to send messages/i.test(message)) {
+        setCanSendMessage(false);
+        setSendRestrictionReason(message);
+      }
       setMessages(prev =>
         prev.map(m =>
           m.clientMessageId === clientMessageId ? { ...m, _failed: true } : m,
@@ -364,6 +375,14 @@ export default function ConversationScreen({ route, navigation }: any) {
     }
   };
 
+  const openUnlockProfile = () => {
+    if (!chatProfileId) {
+      Alert.alert('Unavailable', 'This profile is no longer available.');
+      return;
+    }
+    navigation.navigate('ProfileDetail', { profileId: chatProfileId });
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ChatOptionsModal
@@ -449,30 +468,51 @@ export default function ConversationScreen({ route, navigation }: any) {
         </View>
 
         {/* Input bar */}
-        <View style={styles.inputBar}>
-          <TouchableOpacity style={styles.emojiBtn}>
-            <Smile color="#999" size={24} />
-          </TouchableOpacity>
-          <TextInput
-            style={styles.input}
-            placeholder={chatBlocked ? 'You cannot message this user' : 'Type your message...'}
-            placeholderTextColor="#999"
-            value={input}
-            onChangeText={handleInput}
-            multiline
-            editable={!chatBlocked}
-          />
-          <TouchableOpacity
-            style={[
-              styles.sendBtn,
-              input.trim() && !chatBlocked ? styles.sendBtnActive : styles.sendBtnInactive,
-            ]}
-            onPress={send}
-            disabled={!input.trim() || chatBlocked}
-          >
-            <Send color="#fff" size={18} />
-          </TouchableOpacity>
-        </View>
+        {chatBlocked ? (
+          <View style={styles.lockedComposer}>
+            <Text style={styles.lockedComposerText}>
+              {blockedByMe
+                ? 'You blocked this user. Unblock them from the menu to continue.'
+                : 'This conversation has been blocked.'}
+            </Text>
+          </View>
+        ) : !canSendMessage ? (
+          <View style={styles.unlockComposer}>
+            <View style={styles.unlockComposerCopy}>
+              <Lock color="#D20236" size={18} />
+              <Text style={styles.unlockComposerText}>
+                {sendRestrictionReason || 'Unlock this profile to send messages.'}
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.unlockComposerBtn} onPress={openUnlockProfile}>
+              <Text style={styles.unlockComposerBtnText}>Unlock Profile</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.inputBar}>
+            <TouchableOpacity style={styles.emojiBtn}>
+              <Smile color="#999" size={24} />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.input}
+              placeholder="Type your message..."
+              placeholderTextColor="#999"
+              value={input}
+              onChangeText={handleInput}
+              multiline
+            />
+            <TouchableOpacity
+              style={[
+                styles.sendBtn,
+                input.trim() ? styles.sendBtnActive : styles.sendBtnInactive,
+              ]}
+              onPress={send}
+              disabled={!input.trim()}
+            >
+              <Send color="#fff" size={18} />
+            </TouchableOpacity>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -544,4 +584,48 @@ const styles = StyleSheet.create({
   sendBtnActive: { backgroundColor: '#D20236' },
   sendBtnInactive: { backgroundColor: '#ccc' },
   messagesArea: { flex: 1 },
+  lockedComposer: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    backgroundColor: '#f5f5f5',
+  },
+  lockedComposerText: {
+    color: '#666',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  unlockComposer: {
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f6d5dd',
+    backgroundColor: '#fff5f7',
+  },
+  unlockComposerCopy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  unlockComposerText: {
+    flex: 1,
+    color: '#8a1430',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  unlockComposerBtn: {
+    alignSelf: 'flex-start',
+    borderRadius: 20,
+    backgroundColor: '#D20236',
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+  },
+  unlockComposerBtnText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
 });

@@ -37,7 +37,6 @@ import {
   getUnlockPrice,
   getProfileAccess,
   revealContact,
-  getAccessSummary,
 } from '../../api/membershipPayment';
 import {
   getSingleProfileUnlockLimitMessage,
@@ -247,8 +246,14 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           ]);
           setUnlockPrice(price.amount || 99);
           setAccess(acc);
-          const summary = await getAccessSummary();
-          setCanChat(summary?.canUseChat === true);
+          setCanChat(
+            Boolean(
+              acc?.shouldBlurSensitiveFields === false ||
+                acc?.canViewContactNumber ||
+                acc?.isProfileSingleUnlocked ||
+                acc?.isMembershipProfileUnlocked,
+            ),
+          );
           if (acc && acc.shouldBlurSensitiveFields === false) {
             const c = await revealContact(profileId);
             setContact(c);
@@ -335,7 +340,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
   const openChat = async () => {
     if (!canChat) {
-      navigation.navigate('Plans', { profileId, profileName: name });
+      setShowUnlock(true);
       return;
     }
     const otherUserId = data?.profile?.userId;
@@ -416,6 +421,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         setData(fresh);
         setAccess(acc);
         setContact(c);
+        setCanChat(true);
       } catch {}
       Alert.alert('Unlocked', 'Profile access unlocked successfully');
     } else {
@@ -595,7 +601,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               style={[styles.sendBtn, !canChat && styles.sendBtnDisabled]}
               onPress={openChat}
             >
-              <Text style={styles.sendText}>Chat Now</Text>
+              <Text style={styles.sendText}>{canChat ? 'Chat Now' : 'Unlock to Chat'}</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
