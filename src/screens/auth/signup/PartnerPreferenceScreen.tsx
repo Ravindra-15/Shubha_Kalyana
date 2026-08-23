@@ -13,7 +13,7 @@ import ProgressBar from '../../../components/ProgressBar';
 import SearchableDropdown from '../../../components/SearchableDropdown';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
-import { getCastes, Caste } from '../../../api/caste';
+import { getCastes, getReligionOptions, Caste } from '../../../api/caste';
 import { useSignup } from '../../../context/SignupContext';
 import { getResumeScreen } from '../../../utils/resumeOnboarding';
 
@@ -23,7 +23,7 @@ const MARITAL = [
   { label: 'Widowed', value: 'WIDOWED' },
   { label: 'Awaiting Divorce', value: 'AWAITING_DIVORCE' },
 ];
-const RELIGIONS = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jain', 'Buddhist', 'Parsi', 'Other'];
+// const RELIGIONS = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jain', 'Buddhist', 'Parsi', 'Other'];
 const EDUCATION = ['B.Tech', 'B.E', 'B.Sc', 'B.Com', 'B.A', 'BBA', 'BCA', 'MBBS', 'M.Tech', 'M.Sc', 'MBA', 'MCA', 'PhD', 'Diploma', 'Other'];
 const PROFESSION = ['Engineer', 'Doctor', 'Teacher', 'Business', 'Government Job', 'Lawyer', 'CA', 'Software', 'Banker', 'Other'];
 const RESIDENT = [
@@ -72,14 +72,16 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
   const [resident, setResident] = useState<string[]>(pp.resident || []);
 
   const [castes, setCastes] = useState<Caste[]>([]);
+  const [religions, setReligions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ age?: boolean }>({});
 
   useEffect(() => {
     (async () => {
       try {
-        const list = await getCastes();
-        setCastes(list);
+        const [casteList, religionList] = await Promise.all([getCastes(), getReligionOptions()]);
+        setCastes(casteList);
+        setReligions(religionList);
       } catch {}
     })();
   }, []);
@@ -171,12 +173,12 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
             />
           </View>
 
-          <Text style={styles.label}>Marital Status</Text>
+          <Text style={styles.label}>Preferred Marital Status</Text>
           <Chips options={MARITAL} selected={maritalStatus} onToggle={(v) => toggle(maritalStatus, setMaritalStatus, v)} />
 
-          <Text style={styles.label}>Religion</Text>
+          <Text style={styles.label}>Preferred Religion</Text>
           <Chips
-            options={RELIGIONS.map((r) => ({ label: r, value: r }))}
+            options={religions.map((r) => ({ label: r, value: r }))}
             selected={religion}
             onToggle={(v) => toggle(religion, setReligion, v)}
           />
@@ -202,7 +204,7 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
             onToggle={(v) => toggle(profession, setProfession, v)}
           />
 
-          <Text style={styles.label}>Resident</Text>
+          <Text style={styles.label}>Preferred Resident</Text>
           <Chips options={RESIDENT} selected={resident} onToggle={(v) => toggle(resident, setResident, v)} />
 
           <View style={{ height: 20 }} />

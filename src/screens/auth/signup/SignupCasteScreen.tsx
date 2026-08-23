@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   Image,
@@ -49,6 +50,7 @@ export default function SignupCasteScreen({ navigation }: any) {
   const [casteId, setCasteId] = useState(data.caste || '');
   const [subCaste, setSubCaste] = useState(data.subCaste || '');
   const [motherTongue, setMotherTongue] = useState(data.motherTongue || '');
+  const [livingIn, setLivingIn] = useState(data.livingIn || '');
 
   const [castes, setCastes] = useState<Caste[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +68,9 @@ export default function SignupCasteScreen({ navigation }: any) {
     })();
   }, []);
 
+const visibleCastes = religion
+    ? castes.filter(c => c.religion === religion)
+    : castes;
   const selectedCaste = castes.find(c => c._id === casteId);
   const subCasteOptions = selectedCaste?.subCastes || [];
 
@@ -74,12 +79,15 @@ export default function SignupCasteScreen({ navigation }: any) {
       return Alert.alert('Required', 'Please enter religion');
     if (!casteId) return Alert.alert('Required', 'Please select caste');
     if (!subCaste) return Alert.alert('Required', 'Please select sub caste');
+    if (!livingIn.trim())
+      return Alert.alert('Required', 'Please enter where you are living');
     if (!motherTongue.trim())
       return Alert.alert('Required', 'Please enter mother tongue');
 
     setField('religion', religion.trim());
     setField('caste', casteId);
     setField('subCaste', subCaste);
+    setField('livingIn', livingIn.trim());
     setField('motherTongue', motherTongue.trim());
     navigation.navigate('SignupContact');
   };
@@ -94,7 +102,7 @@ export default function SignupCasteScreen({ navigation }: any) {
 
         <View style={styles.iconCircle}>
           <Image
-            source={require('../../../assets/images/logo-red.png')}
+            source={require('../../../assets/images/user-icon.png')}
             style={styles.icon}
             resizeMode="contain"
           />
@@ -109,7 +117,11 @@ export default function SignupCasteScreen({ navigation }: any) {
           placeholder="Select Religion"
           value={religion}
           options={RELIGIONS.map(r => ({ label: r, value: r }))}
-          onSelect={val => setReligion(val)}
+          onSelect={val => {
+            setReligion(val);
+            setCasteId('');
+            setSubCaste('');
+          }}
           allowCustom
         />
 
@@ -122,7 +134,7 @@ export default function SignupCasteScreen({ navigation }: any) {
           <SearchableDropdown
             placeholder="Caste"
             value={casteId}
-            options={castes.map(c => ({ label: c.casteName, value: c._id }))}
+            options={visibleCastes.map(c => ({ label: c.casteName, value: c._id }))}
             onSelect={val => {
               setCasteId(val);
               setSubCaste('');
@@ -136,6 +148,17 @@ export default function SignupCasteScreen({ navigation }: any) {
           onSelect={val => setSubCaste(val)}
           allowCustom
           disabled={subCasteOptions.length === 0}
+        />
+
+        <Text style={styles.label}>
+          Living In <Text style={styles.star}>*</Text>
+        </Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter city / place"
+          placeholderTextColor="#999"
+          value={livingIn}
+          onChangeText={setLivingIn}
         />
 
         <Text style={styles.label}>
@@ -166,14 +189,15 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
+    backgroundColor: '#fbfbfb',
     borderWidth: 1,
-    borderColor: '#f0d0d8',
+    borderColor: '#e5e5e5',
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
-  icon: { width: 44, height: 44 },
+  icon: { width: 34, height: 34 },
   title: {
     fontSize: 24,
     fontWeight: '700',
@@ -190,6 +214,16 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   star: { color: '#D20236' },
+  input: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    marginBottom: 14,
+    color: '#000',
+  },
   continueBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,

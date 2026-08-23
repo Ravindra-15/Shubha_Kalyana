@@ -155,14 +155,11 @@ export default function ProfilePhotoScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.back}>←</Text>
-          </TouchableOpacity>
-
           <ProgressBar step={9} total={9} />
 
-          <Text style={styles.congrats}>Congratulations !</Text>
-          <Text style={styles.title}>Profile has been created</Text>
+          <Text style={styles.title}>
+            Almost there! Let's add your <Text style={styles.titleRed}>photo</Text>
+          </Text>
           <Text style={styles.subtitle}>
             Upload photo and get better matches
           </Text>
@@ -285,6 +282,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
   },
+  titleRed: { color: '#D20236' },
   subtitle: { fontSize: 13, color: '#666', textAlign: 'center', marginTop: 8 },
   recentPhotoMessage: {
     fontSize: 13,

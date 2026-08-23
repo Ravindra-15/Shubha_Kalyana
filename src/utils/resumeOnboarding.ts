@@ -3,8 +3,8 @@ import apiClient from '../api/client';
 const STEP_TO_SCREEN: Record<string, string> = {
   BASIC_DONE: 'Qualification',
   DETAILS_DONE: 'PartnerPreference',
-  PARTNER_PREFERENCE_DONE: 'VerifyMobile',
-  OTP_SENT: 'VerifyMobile',
+  PARTNER_PREFERENCE_DONE: 'SetupMpin',
+  OTP_SENT: 'SetupMpin',
   OTP_VERIFIED: 'SetupMpin',
   MPIN_CREATED: 'ProfilePhoto',
   PROFILE_PHOTO_UPLOADED: 'UploadAadhaar',

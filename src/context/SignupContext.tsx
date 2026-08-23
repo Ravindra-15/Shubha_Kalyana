@@ -10,6 +10,7 @@ type SignupData = {
   religion?: string;
   caste?: string;
   subCaste?: string;
+  isCustomCaste?: boolean;
   livingIn?: string;
   mobile?: string;
   email?: string;

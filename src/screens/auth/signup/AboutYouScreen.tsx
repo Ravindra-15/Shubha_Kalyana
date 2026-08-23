@@ -103,7 +103,7 @@ export default function AboutYouScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   inner: { paddingHorizontal: 24, paddingBottom: 30, flexGrow: 1 },
-  back: { fontSize: 24, color: '#000', marginTop: 8 },
+  back: { fontSize: 24, color: '#000', marginTop: 20 },
   title: { fontSize: 26, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 30 },
   titleRed: { color: '#D20236' },
   label: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 10 },

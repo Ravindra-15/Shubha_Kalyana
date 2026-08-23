@@ -26,12 +26,25 @@ const MARITAL_STATUS = [
 const DIET = [
   { label: 'Veg', value: 'VEG' },
   { label: 'Non Veg', value: 'NON_VEG' },
+  { label: 'Eggitarian', value: 'EGGITARIAN' },
   { label: 'Vegan', value: 'VEGAN' },
 ];
 
 const HEALTH_CONDITION = [
   { label: 'No', value: 'NO' },
   { label: 'Yes', value: 'YES' },
+];
+
+const SMOKING = [
+  { label: 'No', value: 'NO' },
+  { label: 'Yes', value: 'YES' },
+  { label: 'Occasionally', value: 'OCCASIONALLY' },
+];
+
+const DRINKING = [
+  { label: 'No', value: 'NO' },
+  { label: 'Yes', value: 'YES' },
+  { label: 'Occasionally', value: 'OCCASIONALLY' },
 ];
 
 const HEALTH_DETAILS_MAX = 500;
@@ -51,11 +64,16 @@ export default function BasicLifestyleScreen({ navigation }: any) {
   const [inches, setInches] = useState(bl.inches || '');
   const [weight, setWeight] = useState(bl.weight || '');
   const [diet, setDiet] = useState(bl.diet || '');
+  const [smoking, setSmoking] = useState(bl.smoking || '');
+  const [drinking, setDrinking] = useState(bl.drinking || '');
   const [healthCondition, setHealthCondition] = useState(initialHealthCondition);
   const [healthConditionDetails, setHealthConditionDetails] = useState(
     bl.healthConditionDetails || bl.healthDisclosure?.details || ''
   );
   const [healthConditionDetailsError, setHealthConditionDetailsError] = useState(false);
+  const [feetError, setFeetError] = useState('');
+  const [inchesError, setInchesError] = useState('');
+  const [weightError, setWeightError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const submit = async (skip = false) => {
@@ -63,6 +81,29 @@ export default function BasicLifestyleScreen({ navigation }: any) {
       navigation.navigate('Horoscope');
       return;
     }
+
+    setFeetError('');
+    setInchesError('');
+    setWeightError('');
+
+    let hasError = false;
+
+    if (feet.trim() && (Number(feet) < 3 || Number(feet) > 8)) {
+      setFeetError('Feet must be between 3 and 8');
+      hasError = true;
+    }
+
+    if (inches.trim() && (Number(inches) < 0 || Number(inches) > 11)) {
+      setInchesError('Inches must be between 0 and 11');
+      hasError = true;
+    }
+
+    if (weight.trim() && (Number(weight) < 30 || Number(weight) > 200)) {
+      setWeightError('Weight must be between 30 and 200 kg');
+      hasError = true;
+    }
+
+    if (hasError) return;
 
     const cleanedHealthDetails =
       healthCondition === 'YES' ? healthConditionDetails.trim() : '';
@@ -81,8 +122,12 @@ export default function BasicLifestyleScreen({ navigation }: any) {
     if (weight.trim()) {
       payload.weight = { value: Number(weight), units: 'KG' };
     }
-    if (diet) {
-      payload.lifestyle = { diet };
+    if (diet || smoking || drinking) {
+      payload.lifestyle = {
+        ...(diet ? { diet } : {}),
+        ...(smoking ? { smoking } : {}),
+        ...(drinking ? { drinking } : {}),
+      };
     }
     if (healthCondition) {
       payload.healthDisclosure = {
@@ -100,6 +145,8 @@ export default function BasicLifestyleScreen({ navigation }: any) {
         inches,
         weight,
         diet,
+        smoking,
+        drinking,
         healthCondition,
         healthConditionDetails: cleanedHealthDetails,
       };
@@ -141,41 +188,59 @@ export default function BasicLifestyleScreen({ navigation }: any) {
         <Text style={styles.label}>Height</Text>
         <View style={styles.row}>
           <View style={styles.half}>
-            <TextInput
-              style={styles.input}
-              placeholder="Ft"
-              placeholderTextColor="#999"
-              value={feet}
-              onChangeText={setFeet}
-              keyboardType="number-pad"
-              maxLength={1}
-            />
+            <View style={[styles.unitInputWrap, !!feetError && styles.inputError]}>
+              <TextInput
+                style={styles.unitInput}
+                placeholder="Ft"
+                placeholderTextColor="#999"
+                value={feet}
+                onChangeText={(text) => {
+                  setFeet(text);
+                  setFeetError('');
+                }}
+                keyboardType="number-pad"
+                maxLength={1}
+              />
+              <Text style={styles.unitLabel}>ft</Text>
+            </View>
+            {!!feetError && <Text style={styles.fieldErrorText}>{feetError}</Text>}
           </View>
           <View style={styles.half}>
-            <TextInput
-              style={styles.input}
-              placeholder="Inches"
-              placeholderTextColor="#999"
-              value={inches}
-              onChangeText={setInches}
-              keyboardType="number-pad"
-              maxLength={2}
-            />
+            <View style={[styles.unitInputWrap, !!inchesError && styles.inputError]}>
+              <TextInput
+                style={styles.unitInput}
+                placeholder="Inches"
+                placeholderTextColor="#999"
+                value={inches}
+                onChangeText={(text) => {
+                  setInches(text);
+                  setInchesError('');
+                }}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+              <Text style={styles.unitLabel}>in</Text>
+            </View>
+            {!!inchesError && <Text style={styles.fieldErrorText}>{inchesError}</Text>}
           </View>
         </View>
 
         <Text style={styles.label}>Weight</Text>
-        <View style={styles.weightRow}>
+        <View style={[styles.unitInputWrap, !!weightError && styles.inputError]}>
           <TextInput
-            style={[styles.input, styles.weightInput]}
+            style={styles.unitInput}
             placeholder="Enter Weight"
             placeholderTextColor="#999"
             value={weight}
-            onChangeText={setWeight}
+            onChangeText={(text) => {
+              setWeight(text);
+              setWeightError('');
+            }}
             keyboardType="number-pad"
           />
-          <Text style={styles.kg}>kg</Text>
+          <Text style={styles.unitLabel}>kg</Text>
         </View>
+        {!!weightError && <Text style={styles.fieldErrorText}>{weightError}</Text>}
 
         <Text style={styles.label}>Diet</Text>
         <View style={styles.dietRow}>
@@ -191,6 +256,22 @@ export default function BasicLifestyleScreen({ navigation }: any) {
             </TouchableOpacity>
           ))}
         </View>
+
+        <Text style={styles.label}>Smoking</Text>
+        <SearchableDropdown
+          placeholder="Select smoking habit"
+          value={smoking}
+          options={SMOKING}
+          onSelect={(val) => setSmoking(val)}
+        />
+
+        <Text style={styles.label}>Drinking</Text>
+        <SearchableDropdown
+          placeholder="Select drinking habit"
+          value={drinking}
+          options={DRINKING}
+          onSelect={(val) => setDrinking(val)}
+        />
 
         <Text style={styles.label}>
           Is there any ongoing health condition you'd like us to be aware of?
@@ -283,21 +364,42 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   half: { width: '48%' },
+  unitInputWrap: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 14,
+  },
+  unitLabel: { color: '#666', fontSize: 15, marginRight: 6 },
+  unitInput: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingRight: 14,
+    fontSize: 15,
+    color: '#000',
+  },
   weightRow: { flexDirection: 'row', alignItems: 'center' },
   weightInput: { flex: 1 },
   kg: { marginLeft: -36, marginBottom: 16, color: '#666', fontSize: 15 },
-  dietRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  dietRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
   dietPill: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
     borderRadius: 30,
     paddingVertical: 12,
-    paddingHorizontal: 24,
-    marginRight: 12,
+    width: '48%',
     marginBottom: 12,
+    alignItems: 'center',
   },
   dietPillActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
-  dietText: { fontSize: 15, color: '#333' },
+  dietText: { fontSize: 15, color: '#333', textAlign: 'center' },
   dietTextActive: { color: '#D20236', fontWeight: '600' },
   healthRow: { flexDirection: 'row', marginBottom: 16 },
   healthPill: {

@@ -7,10 +7,55 @@ import {
   StyleSheet,
   Image,
   Alert,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import { useSignup } from '../../../context/SignupContext';
+
+const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
+const MONTH_OPTIONS = [
+  { label: 'Jan', value: '01' },
+  { label: 'Feb', value: '02' },
+  { label: 'Mar', value: '03' },
+  { label: 'Apr', value: '04' },
+  { label: 'May', value: '05' },
+  { label: 'June', value: '06' },
+  { label: 'July', value: '07' },
+  { label: 'Aug', value: '08' },
+  { label: 'Sept', value: '09' },
+  { label: 'Oct', value: '10' },
+  { label: 'Nov', value: '11' },
+  { label: 'Dec', value: '12' },
+];
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1900 + 1 }, (_, i) => String(CURRENT_YEAR - i));
+
+const getCurrentAge = (dobString: string) => {
+  if (!dobString) return null;
+  const dob = new Date(dobString);
+  const today = new Date();
+  if (Number.isNaN(dob.getTime()) || dob > today) return null;
+
+  let years = today.getFullYear() - dob.getFullYear();
+  let months = today.getMonth() - dob.getMonth();
+  let days = today.getDate() - dob.getDate();
+
+  if (days < 0) {
+    months -= 1;
+    const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  return { years, months, days };
+};
+
+type DobPickerType = 'day' | 'month' | 'year' | null;
 
 export default function SignupAboutScreen({ navigation }: any) {
   const { data, setField } = useSignup();
@@ -20,13 +65,13 @@ export default function SignupAboutScreen({ navigation }: any) {
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
   const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
-
-  const monthRef = useRef<any>(null);
-  const yearRef = useRef<any>(null);
+  const [activePicker, setActivePicker] = useState<DobPickerType>(null);
 
   // dynamic label: male profile = Groom, female = Bride
   const personLabel = data.gender === 'MALE' ? 'Groom' : 'Bride';
-  console.log('GENDER VALUE:', data.gender);
+
+  const liveDob = day && month && year ? `${year}-${month}-${day}` : '';
+  const currentAge = getCurrentAge(liveDob);
 
   const handleContinue = () => {
     const newErrors: { [k: string]: boolean } = {};
@@ -101,12 +146,11 @@ const dd = parseInt(day, 10);
 
         <View style={styles.iconCircle}>
           <Image
-            source={require('../../../assets/images/logo-red.png')}
+            source={require('../../../assets/images/user-icon.png')}
             style={styles.icon}
             resizeMode="contain"
           />
         </View>
-
         <Text style={styles.title}>
           About <Text style={styles.titleRed}>Yourself</Text>
         </Text>
@@ -137,59 +181,92 @@ const dd = parseInt(day, 10);
 
         <Text style={styles.label}>Date of Birth</Text>
         <View style={styles.dobRow}>
-          <TextInput
-            style={[
-              styles.input,
-              styles.dobInput,
-              errors.day && styles.inputError,
-            ]}
-            placeholder="Day"
-            placeholderTextColor="#999"
-            value={day}
-            onChangeText={t => {
-              setDay(t);
-              setErrors(e => ({ ...e, day: false }));
-              if (t.length === 2) monthRef.current?.focus();
-            }}
-            keyboardType="number-pad"
-            maxLength={2}
-          />
-          <TextInput
-            ref={monthRef}
-            style={[
-              styles.input,
-              styles.dobInput,
-              errors.month && styles.inputError,
-            ]}
-            placeholder="Month"
-            placeholderTextColor="#999"
-            value={month}
-            onChangeText={t => {
-              setMonth(t);
-              setErrors(e => ({ ...e, month: false }));
-              if (t.length === 2) yearRef.current?.focus();
-            }}
-            keyboardType="number-pad"
-            maxLength={2}
-          />
-          <TextInput
-            ref={yearRef}
-            style={[
-              styles.input,
-              styles.dobInput,
-              errors.year && styles.inputError,
-            ]}
-            placeholder="Year"
-            placeholderTextColor="#999"
-            value={year}
-            onChangeText={t => {
-              setYear(t);
-              setErrors(e => ({ ...e, year: false }));
-            }}
-            keyboardType="number-pad"
-            maxLength={4}
-          />
+          <TouchableOpacity
+            style={[styles.dobPicker, errors.day && styles.inputError]}
+            onPress={() => setActivePicker('day')}
+          >
+            <Text style={day ? styles.dobPickerText : styles.dobPickerPlaceholder}>
+              {day || 'Day'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.dobPicker, errors.month && styles.inputError]}
+            onPress={() => setActivePicker('month')}
+          >
+            <Text style={month ? styles.dobPickerText : styles.dobPickerPlaceholder}>
+              {month ? MONTH_OPTIONS.find(m => m.value === month)?.label : 'Month'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.dobPicker, errors.year && styles.inputError]}
+            onPress={() => setActivePicker('year')}
+          >
+            <Text style={year ? styles.dobPickerText : styles.dobPickerPlaceholder}>
+              {year || 'Year'}
+            </Text>
+          </TouchableOpacity>
         </View>
+
+        <Text style={styles.label}>Current Age</Text>
+        <View style={styles.ageBox}>
+          <Text style={styles.ageText}>
+            {currentAge
+              ? `${currentAge.years} years, ${currentAge.months} months, ${currentAge.days} days`
+              : '-'}
+          </Text>
+        </View>
+
+        <Modal
+          visible={activePicker !== null}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setActivePicker(null)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setActivePicker(null)}
+          >
+            <View style={styles.modalContent}>
+              <FlatList
+                data={
+                  activePicker === 'day'
+                    ? DAY_OPTIONS
+                    : activePicker === 'month'
+                    ? MONTH_OPTIONS.map(m => m.value)
+                    : YEAR_OPTIONS
+                }
+                keyExtractor={item => item}
+                renderItem={({ item }) => {
+                  const label =
+                    activePicker === 'month'
+                      ? MONTH_OPTIONS.find(m => m.value === item)?.label
+                      : item;
+                  return (
+                    <TouchableOpacity
+                      style={styles.modalOption}
+                      onPress={() => {
+                        if (activePicker === 'day') {
+                          setDay(item);
+                          setErrors(e => ({ ...e, day: false }));
+                        } else if (activePicker === 'month') {
+                          setMonth(item);
+                          setErrors(e => ({ ...e, month: false }));
+                        } else if (activePicker === 'year') {
+                          setYear(item);
+                          setErrors(e => ({ ...e, year: false }));
+                        }
+                        setActivePicker(null);
+                      }}
+                    >
+                      <Text style={styles.modalOptionText}>{label}</Text>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+            </View>
+          </TouchableOpacity>
+        </Modal>
 
         <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
           <Text style={styles.continueText}>Continue →</Text>
@@ -208,14 +285,15 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
+    backgroundColor: '#fbfbfb',
     borderWidth: 1,
-    borderColor: '#f0d0d8',
+    borderColor: '#e5e5e5',
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
-  icon: { width: 44, height: 44 },
+  icon: { width: 34, height: 34 },
   title: {
     fontSize: 24,
     fontWeight: '700',
@@ -236,8 +314,47 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: '#000',
   },
-  dobRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  dobInput: { width: '31%' },
+  dobRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
+  dobPicker: {
+    width: '31%',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    justifyContent: 'center',
+  },
+  dobPickerText: { fontSize: 15, color: '#000' },
+  dobPickerPlaceholder: { fontSize: 15, color: '#999' },
+  ageBox: {
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginBottom: 16,
+  },
+  ageText: { fontSize: 15, color: '#333', fontWeight: '600' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    maxHeight: 350,
+    paddingVertical: 8,
+  },
+  modalOption: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  modalOptionText: { fontSize: 16, color: '#333', textAlign: 'center' },
   continueBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,

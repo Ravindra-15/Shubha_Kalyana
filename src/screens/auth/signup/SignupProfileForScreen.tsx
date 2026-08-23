@@ -27,17 +27,30 @@ const GENDER_OPTIONS = [
 ];
 
 const getLookingForFromGender = (selectedGender: string) => {
-  if (selectedGender === 'MALE') return 'Bride';
-  if (selectedGender === 'FEMALE') return 'Groom';
+  if (selectedGender === 'MALE') return 'Groom';
+  if (selectedGender === 'FEMALE') return 'Bride';
+  return '';
+};
+
+const getDefaultGenderForRelation = (relation: string) => {
+  const maleRelations = ['My Son', 'My Brother', 'My Nephew', 'My Grandfather', 'My Uncle'];
+  const femaleRelations = ['My Daughter', 'My Sister', 'My Niece', 'My Grandmother', 'My Aunt'];
+
+  if (maleRelations.includes(relation)) return 'MALE';
+  if (femaleRelations.includes(relation)) return 'FEMALE';
   return '';
 };
 
 const OTHER_RELATIONS = [
-  'Cousin',
-  'Nephew',
-  'Niece',
-  'Grandson',
-  'Granddaughter',
+  'My Relative',
+  'My Uncle',
+  'My Aunt',
+  'My Niece',
+  'My Nephew',
+  'My Cousin',
+  'My Grandfather',
+  'My Grandmother',
+  'My Guardian',
 ];
 
 export default function SignupProfileForScreen({ navigation }: any) {
@@ -58,8 +71,6 @@ export default function SignupProfileForScreen({ navigation }: any) {
     navigation.navigate('SignupAbout');
   };
 
-  const lookingFor = getLookingForFromGender(gender);
-
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardWrapper>
@@ -70,7 +81,7 @@ export default function SignupProfileForScreen({ navigation }: any) {
 
         <View style={styles.iconCircle}>
           <Image
-            source={require('../../../assets/images/logo-red.png')}
+            source={require('../../../assets/images/user-icon.png')}
             style={styles.icon}
             resizeMode="contain"
           />
@@ -88,7 +99,17 @@ export default function SignupProfileForScreen({ navigation }: any) {
                 styles.pill,
                 profileFor === opt.value && styles.pillActive,
               ]}
-              onPress={() => setProfileFor(opt.value)}
+              onPress={() => {
+                if (profileFor === opt.value) {
+                  setProfileFor('');
+                  return;
+                }
+                setProfileFor(opt.value);
+                setOtherRelation('');
+                setShowOther(false);
+                const defaultGender = getDefaultGenderForRelation(opt.value);
+                if (defaultGender) setGender(defaultGender);
+              }}
             >
               <View
                 style={[
@@ -111,15 +132,51 @@ export default function SignupProfileForScreen({ navigation }: any) {
           style={[
             styles.pill,
             styles.otherPill,
-            showOther && styles.pillActive,
+            (showOther || Boolean(otherRelation)) && styles.pillActive,
           ]}
           onPress={() => setShowOther(!showOther)}
         >
-          <View style={[styles.radio, showOther && styles.radioActive]} />
-          <Text style={[styles.pillText, showOther && styles.pillTextActive]}>
-            Add other Relation
+          <View style={[styles.radio, Boolean(otherRelation) && styles.radioActive]} />
+          <Text style={[styles.pillText, Boolean(otherRelation) && styles.pillTextActive]}>
+            {otherRelation || 'Add other Relation'}
           </Text>
         </TouchableOpacity>
+
+        {showOther && (
+          <>
+            <View style={styles.pickerWrap}>
+              {OTHER_RELATIONS.map(rel => (
+                <TouchableOpacity
+                  key={rel}
+                  style={styles.relOption}
+                  onPress={() => {
+                    setOtherRelation(rel);
+                    setProfileFor('');
+                    setShowOther(false);
+                    const defaultGender = getDefaultGenderForRelation(rel);
+                    if (defaultGender) setGender(defaultGender);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.relText,
+                      otherRelation === rel && styles.relTextActive,
+                    ]}
+                  >
+                    {rel}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="Or type relation"
+              placeholderTextColor="#999"
+              value={otherRelation}
+              onChangeText={setOtherRelation}
+            />
+          </>
+        )}
 
         <Text style={styles.genderTitle}>Gender</Text>
         <View style={styles.genderRow}>
@@ -151,43 +208,6 @@ export default function SignupProfileForScreen({ navigation }: any) {
           ))}
         </View>
 
-        <View style={styles.lookingForBox}>
-          <Text style={styles.lookingForLabel}>Looking For</Text>
-          <Text style={[styles.lookingForValue, !lookingFor && styles.lookingForPlaceholder]}>
-            {lookingFor || 'Select gender first'}
-          </Text>
-        </View>
-
-        {showOther && (
-          <>
-            <View style={styles.pickerWrap}>
-              {OTHER_RELATIONS.map(rel => (
-                <TouchableOpacity
-                  key={rel}
-                  style={styles.relOption}
-                  onPress={() => setOtherRelation(rel)}
-                >
-                  <Text
-                    style={[
-                      styles.relText,
-                      otherRelation === rel && styles.relTextActive,
-                    ]}
-                  >
-                    {rel}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <TextInput
-              style={styles.input}
-              placeholder="Or type relation"
-              placeholderTextColor="#999"
-              value={otherRelation}
-              onChangeText={setOtherRelation}
-            />
-          </>
-        )}
-
         <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
           <Text style={styles.continueText}>Continue →</Text>
         </TouchableOpacity>
@@ -211,14 +231,15 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
+    backgroundColor: '#fbfbfb',
     borderWidth: 1,
-    borderColor: '#f0d0d8',
+    borderColor: '#e5e5e5',
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
-  icon: { width: 44, height: 44 },
+  icon: { width: 34, height: 34 },
   title: {
     fontSize: 24,
     fontWeight: '700',
