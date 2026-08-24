@@ -1,8 +1,9 @@
-import React from 'react';
-import { Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Modal, Platform, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
-import { BadgeCheck, Camera, Fingerprint, X } from 'lucide-react-native';
+import { BadgeCheck, Camera, Fingerprint, Share2, X } from 'lucide-react-native';
 import type { VerificationPromptStatus } from '../utils/verificationPrompt';
+import { createVerificationShareLink } from '../api/profile';
 
 type Props = {
   visible: boolean;
@@ -43,10 +44,27 @@ export default function VerificationPromptModal({
   onVerifyPhoto,
   onVerifyAadhaar,
 }: Props) {
+  const [sharing, setSharing] = useState(false);
+
   if (!status?.shouldShow) return null;
 
   const photoVerified = status.profilePhotoVerified;
   const aadhaarVerified = status.aadhaarNumberVerified;
+
+  const handleShare = async () => {
+    try {
+      setSharing(true);
+      const result = await createVerificationShareLink();
+      const shareUrl = `https://matrimony-user.onrender.com/verify-relative/${result?.token}`;
+      await Share.share({
+        message: `Please complete verification for this ShubhaKalyana profile: ${shareUrl}`,
+      });
+    } catch (error) {
+      // Sharing failure is non-critical; user can retry.
+    } finally {
+      setSharing(false);
+    }
+  };
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -120,6 +138,19 @@ export default function VerificationPromptModal({
                 {aadhaarVerified ? 'Aadhaar Verified' : 'Verify Aadhaar'}
               </Text>
             </TouchableOpacity>
+
+            {!(photoVerified && aadhaarVerified) ? (
+              <TouchableOpacity
+                style={styles.shareBtn}
+                onPress={handleShare}
+                disabled={sharing}
+              >
+                <Share2 color="#333" size={16} />
+                <Text style={styles.shareText}>
+                  {sharing ? 'Preparing link...' : 'Share verification link'}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
 
             <TouchableOpacity style={styles.laterBtn} onPress={onClose}>
               <Text style={styles.laterText}>Maybe later</Text>
@@ -271,6 +302,18 @@ const styles = StyleSheet.create({
   secondaryDisabledBtn: { backgroundColor: '#f3f3f3' },
   secondaryText: { color: '#333', fontSize: 15, fontWeight: '800' },
   secondaryDisabledText: { color: '#aaa' },
+  shareBtn: {
+    minHeight: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#eee',
+    backgroundColor: '#fafafa',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  shareText: { color: '#555', fontSize: 13, fontWeight: '700' },
   laterBtn: {
     minHeight: 40,
     alignItems: 'center',
