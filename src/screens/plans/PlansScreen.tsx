@@ -292,7 +292,7 @@ export default function PlansScreen({ navigation, route }: any) {
   const verifyPhoto = () => {
     setVerificationPrompt(null);
     setAadhaarPromptVisible(false);
-    navigation.navigate('FaceTecTest');
+    navigation.navigate('PhotoCompare');
   };
 
   const verifyAadhaar = () => {

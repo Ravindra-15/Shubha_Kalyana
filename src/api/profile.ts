@@ -70,14 +70,24 @@ export const isAadhaarNumberVerified = (profile: any) => {
 export const isProfileFullyVerified = (profile: any) =>
   isProfilePictureVerified(profile) && isAadhaarNumberVerified(profile);
 
-export const createProfilePictureVerificationSession = async () => {
-  const res = await apiClient.post('/facetec/profile-picture/start');
+export const startFaceLivenessSession = async () => {
+  const res = await apiClient.post('/face-verification/liveness/start');
   return res.data?.data || null;
 };
 
-export const completeProfilePictureVerification = async (externalDatabaseRefID: string) => {
-  const res = await apiClient.post('/facetec/profile-picture/complete', {
-    externalDatabaseRefID,
-  });
+export const getFaceLivenessResult = async (sessionId: string) => {
+  const res = await apiClient.get(`/face-verification/liveness/result/${sessionId}`);
+  return res.data?.data || null;
+};
+
+export const createVerificationShareLink = async () => {
+  const res = await apiClient.post('/face-verification/share-link');
+  return res.data?.data || null;
+};
+
+export const compareFacePhoto = async (photo: {uri: string; type: string; name: string}) => {
+  const formData = new FormData();
+  formData.append('selfie', photo as any);
+  const res = await apiClient.post('/face-verification/photo-compare', formData);
   return res.data?.data || null;
 };

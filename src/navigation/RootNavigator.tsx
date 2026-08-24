@@ -48,6 +48,7 @@ import TermsAndConditionsScreen from '../screens/profile/TermsAndConditionsScree
 import PrivacyPolicyScreen from '../screens/profile/PrivacyPolicyScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import FaceTecTestScreen from '../screens/profile/FaceTecTestScreen';
+import PhotoCompareScreen from '../screens/profile/PhotoCompareScreen';
 import ChooseLanguageScreen from '../screens/profile/ChooseLanguageScreen';
 import PrivacySettingsScreen from '../screens/profile/PrivacySettingsScreen';
 import VendorListScreen from '../screens/vendor/VendorListScreen';
@@ -99,6 +100,7 @@ export default function RootNavigator() {
             <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="FaceTecTest" component={FaceTecTestScreen} />
+            <Stack.Screen name="PhotoCompare" component={PhotoCompareScreen} />
             <Stack.Screen name="ChooseLanguage" component={ChooseLanguageScreen} />
             <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
             <Stack.Screen name="VendorList" component={VendorListScreen} />
