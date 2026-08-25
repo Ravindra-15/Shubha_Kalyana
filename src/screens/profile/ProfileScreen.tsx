@@ -94,6 +94,7 @@ export default function ProfileScreen({ navigation }: any) {
   const basic = profile?.basicInfo || {};
   const name = [basic.firstName || user?.firstName, basic.lastName || user?.lastName]
     .filter(Boolean).join(' ');
+  const profileCode = user?.profileCode || '';
   const age = getAge(basic.dob);
   const photo = profile?.photos?.find((p: any) => p.isProfilePhoto)?.url || profile?.photos?.[0]?.url || '';
   const verified = isProfileFullyVerified(profile);
@@ -159,6 +160,7 @@ export default function ProfileScreen({ navigation }: any) {
                 <Text style={styles.name}>{name}{age ? `, ${age}` : ''}</Text>
                 {verified && <BadgeCheck color="#ffffff" size={16} fill="#D20236" style={{ marginLeft: 4 }} />}
               </View>
+              {!!profileCode && <Text style={styles.profileCode}>Profile ID: {profileCode}</Text>}
               <Text style={styles.meta}>{profile?.employment?.designation || 'Profession not added'}</Text>
               {!!location && <Text style={styles.meta}>{location}</Text>}
               {!!user?.mobile && <Text style={styles.meta}>+91 {user.mobile}</Text>}
@@ -267,6 +269,7 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center' },
   name: { fontSize: 17, fontWeight: '700', color: '#000' },
   meta: { fontSize: 13, color: '#777', marginTop: 2 },
+  profileCode: { fontSize: 13, color: '#D20236', fontWeight: '700', marginTop: 2 },
   summaryBox: {
     flexDirection: 'row',
     flexWrap: 'wrap',
