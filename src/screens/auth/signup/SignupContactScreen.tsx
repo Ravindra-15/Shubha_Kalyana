@@ -102,7 +102,7 @@ export default function SignupContactScreen({ navigation }: any) {
       if (resData.hasExistingProgress) {
         Alert.alert('Welcome back', 'Resuming your previous progress.');
         // Navigate to wherever your app's resume logic points, e.g.:
-        navigation.navigate('Qualification');
+        navigation.navigate('BasicLifestyle');
         return;
       }
 
@@ -146,7 +146,7 @@ export default function SignupContactScreen({ navigation }: any) {
 
       if (resData.hasExistingProgress) {
         Alert.alert('Welcome back', 'Resuming your previous progress.');
-        navigation.navigate('Qualification');
+        navigation.navigate('BasicLifestyle');
         return;
       }
 
@@ -188,7 +188,7 @@ export default function SignupContactScreen({ navigation }: any) {
         await AsyncStorage.setItem('onboardingToken', onboardingToken);
         setField('mobile', mobile.trim());
         setField('email', email.trim());
-        navigation.navigate('Qualification');
+        navigation.navigate('BasicLifestyle');
       } else {
         Alert.alert('Error', 'No onboarding token received');
       }

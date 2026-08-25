@@ -29,7 +29,7 @@ export default function QualificationScreen({ navigation }: any) {
 
   const submit = async (skip = false) => {
     if (skip) {
-      navigation.navigate('Employment');
+      navigation.navigate('FamilyDetails');
       return;
     }
     if (!qualification.trim()) {
@@ -47,11 +47,11 @@ export default function QualificationScreen({ navigation }: any) {
       // skip API if unchanged (prevents backend step rewind on back-navigation)
       const prev = data.education || {};
       if (prev.highestQualification === education.highestQualification && prev.college === education.college) {
-        return navigation.navigate('Employment');
+        return navigation.navigate('FamilyDetails');
       }
       await apiClient.patch('/onboarding/profile', { education });
       setField('education', education);
-      navigation.navigate('Employment');
+      navigation.navigate('FamilyDetails');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');
     } finally {

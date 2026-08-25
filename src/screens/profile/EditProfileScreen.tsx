@@ -1118,7 +1118,7 @@ export default function EditProfileScreen({ navigation }: any) {
             <TouchableOpacity onPress={pickPhoto} disabled={uploadingPhoto}>
               <Text style={styles.changePhotoText}>Change Photo</Text>
             </TouchableOpacity>
-            {canVerifyProfilePhoto && (
+            {/* {canVerifyProfilePhoto && (
               <TouchableOpacity
                 style={[
                   styles.verifyProfileBtn,
@@ -1129,7 +1129,7 @@ export default function EditProfileScreen({ navigation }: any) {
               >
                 <Text style={styles.verifyProfileText}>Verify Profile Photo</Text>
               </TouchableOpacity>
-            )}
+            )} */}
             <View style={styles.profileNameRow}>
               <Text style={styles.profileName} numberOfLines={1}>{displayName}</Text>
               {profilePictureVerified && (

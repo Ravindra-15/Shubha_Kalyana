@@ -62,6 +62,7 @@ const dontGuidelines = [
 export default function ProfilePhotoScreen({ navigation }: any) {
   const [photo, setPhoto] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [picking, setPicking] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem('onboardingToken').then(token => {
@@ -78,11 +79,13 @@ export default function ProfilePhotoScreen({ navigation }: any) {
   };
 
   const openCamera = async () => {
+    setPicking(true);
     const result = await launchCamera({ mediaType: 'photo', quality: 0.8 });
     handleResult(result);
   };
 
   const openGallery = async () => {
+    setPicking(true);
     const result = await launchImageLibrary({
       mediaType: 'photo',
       quality: 0.8,
@@ -91,6 +94,7 @@ export default function ProfilePhotoScreen({ navigation }: any) {
   };
 
   const handleResult = (result: any) => {
+    setPicking(false);
     if (result.didCancel) return;
     if (result.errorCode) {
       return Alert.alert(
@@ -135,17 +139,17 @@ export default function ProfilePhotoScreen({ navigation }: any) {
     }
   };
 
-  const skipPhoto = async () => {
-    try {
-      setLoading(true);
-      await apiClient.post('/onboarding/profile-photo/skip');
-      navigation.navigate('Hobbies');
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not skip');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const skipPhoto = async () => {
+  //   try {
+  //     setLoading(true);
+  //     await apiClient.post('/onboarding/profile-photo/skip');
+  //     navigation.navigate('Hobbies');
+  //   } catch (err: any) {
+  //     Alert.alert('Error', err?.response?.data?.message || 'Could not skip');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -171,19 +175,31 @@ export default function ProfilePhotoScreen({ navigation }: any) {
             style={styles.avatarWrap}
             onPress={pickImage}
             activeOpacity={0.8}
+            disabled={picking || loading}
           >
             {photo ? (
               <Image source={{ uri: photo.uri }} style={styles.avatar} />
             ) : (
               <View style={styles.avatarPlaceholder} />
             )}
+            {(picking || loading) && (
+              <View style={styles.avatarOverlay}>
+                <ActivityIndicator color="#fff" />
+              </View>
+            )}
             <View style={styles.plusBadge}>
               <Text style={styles.plus}>+</Text>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.uploadBtn} onPress={pickImage}>
-            <Text style={styles.uploadText}>Upload photo</Text>
+          <TouchableOpacity
+            style={styles.uploadBtn}
+            onPress={pickImage}
+            disabled={picking || loading}
+          >
+            <Text style={styles.uploadText}>
+              {loading ? 'Uploading...' : picking ? 'Opening...' : 'Upload photo'}
+            </Text>
           </TouchableOpacity>
 
           <View style={styles.guidelinesSection}>
@@ -238,23 +254,15 @@ export default function ProfilePhotoScreen({ navigation }: any) {
 
         <View style={styles.footer}>
           <TouchableOpacity
-            style={styles.nextBtn}
+            style={[styles.nextBtn, (!photo || loading || picking) && styles.nextBtnDisabled]}
             onPress={uploadPhoto}
-            disabled={loading}
+            disabled={!photo || loading || picking}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.nextText}>Next →</Text>
             )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.skipBtn}
-            onPress={skipPhoto}
-            disabled={loading}
-          >
-            <Text style={styles.skipText}>Skip</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -299,6 +307,17 @@ const styles = StyleSheet.create({
     height: 130,
     borderRadius: 65,
     backgroundColor: '#eee',
+  },
+  avatarOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 65,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   plusBadge: {
     position: 'absolute',
@@ -438,13 +457,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
+  nextBtnDisabled: { backgroundColor: '#f0a8b8' },
   nextText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  skipBtn: {
-    borderWidth: 1,
-    borderColor: '#D20236',
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  skipText: { color: '#000', fontSize: 16, fontWeight: '600' },
 });

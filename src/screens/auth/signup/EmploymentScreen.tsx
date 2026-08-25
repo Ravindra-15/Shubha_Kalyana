@@ -89,7 +89,7 @@ export default function EmploymentScreen({ navigation }: any) {
 
   const submit = async (skip = false) => {
     if (skip) {
-      navigation.navigate('FamilyDetails');
+      navigation.navigate('AboutYou');
       return;
     }
 
@@ -118,11 +118,11 @@ export default function EmploymentScreen({ navigation }: any) {
     try {
       setLoading(true);
       if (JSON.stringify(data.employment || {}) === JSON.stringify(employment)) {
-        return navigation.navigate('FamilyDetails');
+        return navigation.navigate('AboutYou');
       }
       await apiClient.patch('/onboarding/profile', { employment });
       setField('employment', employment);
-      navigation.navigate('FamilyDetails');
+      navigation.navigate('AboutYou');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');
     } finally {

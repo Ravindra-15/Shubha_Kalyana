@@ -89,10 +89,9 @@ export default function AddressDetailsScreen({ navigation }: any) {
 
   const submit = async (skip = false) => {
     if (skip) {
-      navigation.navigate('AboutYou');
+      navigation.navigate('Employment');
       return;
     }
-
     const { e, msg } = validate();
     setErrors(e);
     if (Object.keys(e).length > 0) {
@@ -113,11 +112,11 @@ export default function AddressDetailsScreen({ navigation }: any) {
       };
       // skip API if unchanged (prevents backend step rewind)
       if (JSON.stringify(data.address || {}) === JSON.stringify(addrNow)) {
-        return navigation.navigate('AboutYou');
+        return navigation.navigate('Employment');
       }
       await apiClient.patch('/onboarding/profile', { address: { current, permanent } });
       setField('address', addrNow);
-      navigation.navigate('AboutYou');
+      navigation.navigate('Employment');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');
     } finally {

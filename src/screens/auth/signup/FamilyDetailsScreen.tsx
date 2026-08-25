@@ -59,7 +59,7 @@ export default function FamilyDetailsScreen({ navigation }: any) {
 
   const submit = async (skip = false) => {
     if (skip) {
-      navigation.navigate('BasicLifestyle');
+      navigation.navigate('Horoscope');
       return;
     }
 
@@ -83,11 +83,11 @@ export default function FamilyDetailsScreen({ navigation }: any) {
     try {
       setLoading(true);
       if (JSON.stringify(data.family || {}) === JSON.stringify(family)) {
-        return navigation.navigate('BasicLifestyle');
+        return navigation.navigate('Horoscope');
       }
       await apiClient.patch('/onboarding/profile', { family });
       setField('family', family);
-      navigation.navigate('BasicLifestyle');
+      navigation.navigate('Horoscope');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');
     } finally {

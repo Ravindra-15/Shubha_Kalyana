@@ -76,9 +76,9 @@ export default function BasicLifestyleScreen({ navigation }: any) {
   const [weightError, setWeightError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const submit = async (skip = false) => {
+const submit = async (skip = false) => {
     if (skip) {
-      navigation.navigate('Horoscope');
+      navigation.navigate('Qualification');
       return;
     }
 
@@ -151,11 +151,11 @@ export default function BasicLifestyleScreen({ navigation }: any) {
         healthConditionDetails: cleanedHealthDetails,
       };
       if (JSON.stringify(data.basicLifestyle || {}) === JSON.stringify(blNow)) {
-        return navigation.navigate('Horoscope');
+        return navigation.navigate('Qualification');
       }
       await apiClient.patch('/onboarding/profile', payload);
       setField('basicLifestyle', blNow);
-      navigation.navigate('Horoscope');
+      navigation.navigate('Qualification');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not save');
     } finally {

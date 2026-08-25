@@ -154,7 +154,7 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
           <Text style={styles.label}>Age Range</Text>
           <View style={styles.row}>
             <TextInput
-              style={[styles.input, styles.half, errors.age && styles.inputError]}
+              style={[styles.input, styles.ageInput, errors.age && styles.inputError]}
               placeholder="Min"
               placeholderTextColor="#999"
               value={ageMin}
@@ -162,8 +162,9 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
               keyboardType="number-pad"
               maxLength={2}
             />
+            <Text style={styles.toText}>To</Text>
             <TextInput
-              style={[styles.input, styles.half, errors.age && styles.inputError]}
+              style={[styles.input, styles.ageInput, errors.age && styles.inputError]}
               placeholder="Max"
               placeholderTextColor="#999"
               value={ageMax}
@@ -240,8 +241,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   half: { width: '48%' },
+  ageInput: { width: '42%' },
+  toText: { fontSize: 15, fontWeight: '600', color: '#666' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 6 },
   chip: {
     borderWidth: 1,
