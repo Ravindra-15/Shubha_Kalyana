@@ -118,11 +118,40 @@ const NAKSHATRAS: Option[] = [
 ].map((nakshatra) => ({ label: nakshatra, value: nakshatra }));
 
 const EMPLOYED_TYPES: Option[] = [
-  { label: 'Private Job', value: 'PRIVATE' },
-  { label: 'Government Job', value: 'GOVERNMENT' },
+  { label: 'Private', value: 'PRIVATE' },
+  { label: 'Government', value: 'GOVERNMENT' },
+  { label: 'Semi Government', value: 'SEMI_GOVERNMENT' },
   { label: 'Business', value: 'BUSINESS' },
-  { label: 'Self Employed', value: 'SELF_EMPLOYED' },
-  { label: 'Not Working', value: 'NOT_WORKING' },
+  { label: 'Agriculture', value: 'AGRICULTURE' },
+];
+
+const INCOME_SLABS: Option[] = [
+  { label: 'Below ₹3 Lakh', value: 'BELOW_3L' },
+  { label: '₹3 - 5 Lakh', value: '3L_5L' },
+  { label: '₹5 - 10 Lakh', value: '5L_10L' },
+  { label: '₹10 - 20 Lakh', value: '10L_20L' },
+  { label: '₹20 - 50 Lakh', value: '20L_50L' },
+  { label: 'Above ₹50 Lakh', value: 'ABOVE_50L' },
+  { label: 'Write your own', value: '__other__' },
+];
+
+const BUSINESS_TYPES: Option[] = [
+  { label: 'Manufacturing', value: 'Manufacturing' },
+  { label: 'Trading', value: 'Trading' },
+  { label: 'Services', value: 'Services' },
+  { label: 'Retail', value: 'Retail' },
+  { label: 'Other', value: 'Other' },
+];
+
+const EXPERIENCE_PRESETS = [
+  { label: 'Less than 1 year', value: '0-1', years: 0, months: 6 },
+  { label: '1 - 2 years', value: '1-2', years: 1, months: 6 },
+  { label: '2 - 5 years', value: '2-5', years: 3, months: 6 },
+  { label: '5 - 10 years', value: '5-10', years: 7, months: 6 },
+  { label: '10 - 15 years', value: '10-15', years: 12, months: 6 },
+  { label: '15 - 20 years', value: '15-20', years: 17, months: 6 },
+  { label: 'More than 20 years', value: '20+', years: 22, months: 0 },
+  { label: 'Other (enter exact)', value: '__other__' },
 ];
 
 const DIET_OPTIONS: Option[] = [
@@ -217,7 +246,8 @@ const emptyAddress = (): AddressFields => ({
   postalCode: '',
 });
 
-const hasValue = (value: unknown) => String(value ?? '').trim() !== '';
+// const hasValue = (value: unknown) => String(value ?? '').trim() !== '';
+// (hasValue removed — no longer used now that real editLocks drive field state)
 const isValidPincode = (value: string) => !value || /^\d{6}$/.test(value);
 const isValidLinkedIn = (value: string) => !value || /linkedin\.com/i.test(value);
 const toArray = (value: any) => {
@@ -296,6 +326,10 @@ export default function EditProfileScreen({ navigation }: any) {
   const [rashi, setRashi] = useState('');
   const [nakshatra, setNakshatra] = useState('');
 
+  const [religionValue, setReligionValue] = useState('');
+  const [casteId, setCasteId] = useState('');
+  const [subCasteValue, setSubCasteValue] = useState('');
+
   const [currentAddress, setCurrentAddress] = useState<AddressFields>(emptyAddress());
   const [permanentAddress, setPermanentAddress] = useState<AddressFields>(emptyAddress());
   const [sameAsCurrent, setSameAsCurrent] = useState(false);
@@ -306,9 +340,14 @@ export default function EditProfileScreen({ navigation }: any) {
   const [employedType, setEmployedType] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [designation, setDesignation] = useState('');
+  const [typeOfBusiness, setTypeOfBusiness] = useState('');
   const [annualIncome, setAnnualIncome] = useState('');
+  const [isCustomIncome, setIsCustomIncome] = useState(false);
   const [companyLocation, setCompanyLocation] = useState('');
-  const [totalExperience, setTotalExperience] = useState('');
+  const [expYears, setExpYears] = useState('');
+  const [expMonths, setExpMonths] = useState('');
+  const [expPreset, setExpPreset] = useState('');
+  const [isCustomExperience, setIsCustomExperience] = useState(false);
   const [linkedIn, setLinkedIn] = useState('');
 
   const [fatherName, setFatherName] = useState('');
@@ -344,18 +383,57 @@ export default function EditProfileScreen({ navigation }: any) {
   const [profilePictureVerified, setProfilePictureVerified] = useState(false);
   const canVerifyProfilePhoto = true;
 
+  // --- Tier 1 lock/change-request state (from backend) ---
+  const [editLocks, setEditLocks] = useState<Record<string, { locked: boolean; lockedAt: string }>>({});
+  const [changeRequests, setChangeRequests] = useState<
+    Array<{ field: string; requestedValue: any; status: string; requestedAt: string }>
+  >([]);
+  const [recentlyUpdated, setRecentlyUpdated] = useState<{ flagged: boolean; fields: string[]; flaggedAt: string } | null>(null);
+
+  // Values typed into a "Request Change" reveal-input for a locked field.
+  // Local-only until Save is pressed — not sent anywhere until then.
+  const [pendingChangeValues, setPendingChangeValues] = useState<Record<string, string>>({});
+  // DOB's request-change input needs 3 separate fields, not one string.
+  const [pendingDobDay, setPendingDobDay] = useState('');
+  const [pendingDobMonth, setPendingDobMonth] = useState('');
+  const [pendingDobYear, setPendingDobYear] = useState('');
+  // Tracks which locked fields currently have their "Request Change" input open.
+  const [openRequestFields, setOpenRequestFields] = useState<Record<string, boolean>>({});
+
+  type TierFieldState = 'UNLOCKED' | 'LOCKED_NO_REQUEST' | 'LOCKED_PENDING';
+
+  const getTierFieldState = useCallback(
+    (fieldKey: string): TierFieldState => {
+      const isLocked = editLocks[fieldKey]?.locked === true;
+      if (!isLocked) return 'UNLOCKED';
+
+      const hasPending = changeRequests.some(
+        (request) => request.field === fieldKey && request.status === 'PENDING',
+      );
+      return hasPending ? 'LOCKED_PENDING' : 'LOCKED_NO_REQUEST';
+    },
+    [editLocks, changeRequests],
+  );
+
+  const openRequestChange = (fieldKey: string, currentValue: string) => {
+    setOpenRequestFields((prev) => ({ ...prev, [fieldKey]: true }));
+    setPendingChangeValues((prev) => ({ ...prev, [fieldKey]: currentValue }));
+  };
+
+  const setPendingChangeValue = (fieldKey: string, value: string) => {
+    setPendingChangeValues((prev) => ({ ...prev, [fieldKey]: value }));
+    markChanged();
+  };
+
   const profileType = profileTypeFromGender(gender);
   const dobDisplay = [dobDay, dobMonth, dobYear].filter(Boolean).join('/');
-  const firstNameLocked = hasValue(firstName);
-  const lastNameLocked = hasValue(lastName);
-  const genderLocked = hasValue(gender);
-  const dobLocked = hasValue(dobDay) && hasValue(dobMonth) && hasValue(dobYear);
-  const qualificationLocked = hasValue(qualification);
-  const collegeLocked = hasValue(college);
-  const fatherNameLocked = hasValue(fatherName);
-  const motherNameLocked = hasValue(motherName);
-  const brothersLocked = hasValue(brothers);
-  const sistersLocked = hasValue(sisters);
+
+  const isJobType = employedType === 'PRIVATE' || employedType === 'GOVERNMENT' || employedType === 'SEMI_GOVERNMENT';
+  const isBusiness = employedType === 'BUSINESS';
+  const isAgriculture = employedType === 'AGRICULTURE';
+  const showDesignation = isJobType || isBusiness;
+  const showExperience = isJobType || isBusiness;
+  const showLinkedIn = !isAgriculture;
 
   const preferredCasteOptions = useMemo(() => {
     return castes
@@ -371,6 +449,11 @@ export default function EditProfileScreen({ navigation }: any) {
     const values = [...new Set(selected.flatMap((caste) => caste.subCastes || []))];
     return values.map((value) => ({ label: value, value }));
   }, [castes, prefCasteIds]);
+
+    const ownSubCasteOptions = useMemo(() => {
+    const selectedCaste = castes.find((caste) => caste._id === casteId);
+    return (selectedCaste?.subCastes || []).map((value) => ({ label: value, value }));
+  }, [castes, casteId]);
 
   const load = useCallback(async () => {
     try {
@@ -401,6 +484,16 @@ export default function EditProfileScreen({ navigation }: any) {
         email: user.email || '',
         photoUrl: photo,
       });
+
+      setReligionValue(basic.religion || '');
+      setCasteId(basic.caste?._id || '');
+      setSubCasteValue(basic.subCaste || '');
+
+      setEditLocks(profile.editLocks || {});
+      setChangeRequests(profile.changeRequests || []);
+      setRecentlyUpdated(profile.recentlyUpdated || null);
+      setPendingChangeValues({});
+      setOpenRequestFields({});
 
       setFirstName(basic.firstName || user.firstName || '');
       setLastName(basic.lastName || user.lastName || '');
@@ -433,14 +526,31 @@ export default function EditProfileScreen({ navigation }: any) {
 
       setQualification(profile.education?.highestQualification || '');
       setCollege(profile.education?.college || '');
-
       setEmployedType(profile.employment?.employedType || '');
       setCompanyName(profile.employment?.companyName || '');
       setDesignation(profile.employment?.designation || '');
-      setAnnualIncome(profile.employment?.annualIncome ? String(profile.employment.annualIncome) : '');
+      setTypeOfBusiness(profile.employment?.typeOfBusiness || '');
       setCompanyLocation(profile.employment?.companyLocation || '');
-      setTotalExperience(profile.employment?.totalExperience ? String(profile.employment.totalExperience) : '');
       setLinkedIn(profile.employment?.linkedInProfile || '');
+
+      const loadedIncome = profile.employment?.annualIncome || '';
+      setAnnualIncome(loadedIncome ? String(loadedIncome) : '');
+      setIsCustomIncome(
+        loadedIncome ? !INCOME_SLABS.some((slab) => slab.value === String(loadedIncome)) : false,
+      );
+
+      setExpYears(
+        profile.employment?.totalExperienceYears !== undefined
+          ? String(profile.employment.totalExperienceYears)
+          : '',
+      );
+      setExpMonths(
+        profile.employment?.totalExperienceMonths !== undefined
+          ? String(profile.employment.totalExperienceMonths)
+          : '',
+      );
+      setExpPreset('');
+      setIsCustomExperience(false);
 
       setFatherName(profile.family?.fatherName || '');
       setMotherName(profile.family?.motherName || '');
@@ -684,7 +794,7 @@ export default function EditProfileScreen({ navigation }: any) {
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!firstNameLocked) {
+    if (getTierFieldState('firstName') === 'UNLOCKED') {
       if (!firstName.trim()) {
         errors.firstName = 'First name is required';
       } else if (!/^[a-zA-Z\s'-]+$/.test(firstName.trim())) {
@@ -692,7 +802,7 @@ export default function EditProfileScreen({ navigation }: any) {
       }
     }
 
-    if (!lastNameLocked) {
+    if (getTierFieldState('lastName') === 'UNLOCKED') {
       if (!lastName.trim()) {
         errors.lastName = 'Last name is required';
       } else if (!/^[a-zA-Z\s'-]+$/.test(lastName.trim())) {
@@ -700,41 +810,44 @@ export default function EditProfileScreen({ navigation }: any) {
       }
     }
 
-    if (!genderLocked && !gender) errors.gender = 'Gender is required';
+    if (getTierFieldState('gender') === 'UNLOCKED' && !gender) errors.gender = 'Gender is required';
 
-    if (!dobLocked) {
-      if (!dobDay.trim() || !dobMonth.trim() || !dobYear.trim()) {
-        errors.dob = 'Date of birth is required';
-      } else {
-        const dd = parseInt(dobDay, 10);
-        const mm = parseInt(dobMonth, 10);
-        const yy = parseInt(dobYear, 10);
-
-        if (mm < 1 || mm > 12) {
-          errors.dob = 'Month must be between 1 and 12';
-        } else {
-          const daysInMonth = new Date(yy, mm, 0).getDate();
-          if (dd < 1 || dd > daysInMonth) {
-            errors.dob = `Day must be between 1 and ${daysInMonth}`;
-          } else {
-            const currentYear = new Date().getFullYear();
-            if (yy < 1900 || yy > currentYear) {
-              errors.dob = 'Enter a valid year';
-            } else {
-              const dobDate = new Date(yy, mm - 1, dd);
-              const today = new Date();
-              if (dobDate > today) {
-                errors.dob = 'Date of birth cannot be in the future';
-              } else {
-                let age = today.getFullYear() - dobDate.getFullYear();
-                const monthDiff = today.getMonth() - dobDate.getMonth();
-                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) age--;
-                if (age < 18) errors.dob = 'Must be at least 18 years old';
-              }
-            }
-          }
-        }
+    const validateDobParts = (day: string, month: string, year: string): string | null => {
+      if (!day.trim() || !month.trim() || !year.trim()) {
+        return 'Date of birth is required';
       }
+      const dd = parseInt(day, 10);
+      const mm = parseInt(month, 10);
+      const yy = parseInt(year, 10);
+
+      if (mm < 1 || mm > 12) return 'Month must be between 1 and 12';
+
+      const daysInMonth = new Date(yy, mm, 0).getDate();
+      if (dd < 1 || dd > daysInMonth) return `Day must be between 1 and ${daysInMonth}`;
+
+      const currentYear = new Date().getFullYear();
+      if (yy < 1900 || yy > currentYear) return 'Enter a valid year';
+
+      const dobDate = new Date(yy, mm - 1, dd);
+      const today = new Date();
+      if (dobDate > today) return 'Date of birth cannot be in the future';
+
+      let age = today.getFullYear() - dobDate.getFullYear();
+      const monthDiff = today.getMonth() - dobDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) age--;
+      if (age < 18) return 'Must be at least 18 years old';
+
+      return null;
+    };
+
+    if (getTierFieldState('dob') === 'UNLOCKED') {
+      const dobError = validateDobParts(dobDay, dobMonth, dobYear);
+      if (dobError) errors.dob = dobError;
+    }
+
+    if (getTierFieldState('dob') === 'LOCKED_NO_REQUEST' && openRequestFields.dob) {
+      const dobError = validateDobParts(pendingDobDay, pendingDobMonth, pendingDobYear);
+      if (dobError) errors.dobRequest = dobError;
     }
 
     const numberInRange = (key: string, value: string, min: number, max: number, message: string) => {
@@ -746,9 +859,22 @@ export default function EditProfileScreen({ navigation }: any) {
     numberInRange('heightFeet', heightFeet, 3, 8, 'Feet must be between 3 and 8');
     numberInRange('heightInches', heightInches, 0, 11, 'Inches must be between 0 and 11');
     numberInRange('weight', weight, 20, 250, 'Weight must be between 20 and 250 KG');
-    numberInRange('totalExperience', totalExperience, 0, 60, 'Experience must be between 0 and 60 years');
-    if (!brothersLocked) numberInRange('brothers', brothers, 0, 20, 'Enter a valid number');
-    if (!sistersLocked) numberInRange('sisters', sisters, 0, 20, 'Enter a valid number');
+    if (showExperience) {
+      if (expYears.trim()) {
+        const years = Number(expYears);
+        if (Number.isNaN(years) || years < 0 || years > 50) {
+          errors.totalExperience = 'Years must be between 0 and 50';
+        }
+      }
+      if (expMonths.trim() && !errors.totalExperience) {
+        const months = Number(expMonths);
+        if (Number.isNaN(months) || months < 0 || months > 11) {
+          errors.totalExperience = 'Months must be between 0 and 11';
+        }
+      }
+    }
+    numberInRange('brothers', brothers, 0, 20, 'Enter a valid number');
+    numberInRange('sisters', sisters, 0, 20, 'Enter a valid number');
 
     if (currentAddress.pincode.trim() && !isValidPincode(currentAddress.pincode.trim())) {
       errors.currentpincode = 'Enter 6 digit pincode';
@@ -805,19 +931,42 @@ export default function EditProfileScreen({ navigation }: any) {
         ? `${dobYear}-${String(dobMonth).padStart(2, '0')}-${String(dobDay).padStart(2, '0')}`
         : undefined;
 
+    // For each Tier 1 field, use the pending "Request Change" value if the user
+    // opened one and typed something — otherwise fall back to the field's
+    // normal current value (which is a no-op for the backend if unchanged,
+    // since it only reroutes to changeRequests when the value actually differs).
+    const resolvedFirstName = openRequestFields.firstName ? pendingChangeValues.firstName : firstName;
+    const resolvedLastName = openRequestFields.lastName ? pendingChangeValues.lastName : lastName;
+    const resolvedGender = openRequestFields.gender ? pendingChangeValues.gender : gender;
+    const resolvedDobString = openRequestFields.dob && pendingChangeValues.dob
+      ? pendingChangeValues.dob
+      : dobString;
+    const resolvedMaritalStatus = openRequestFields.maritalStatus ? pendingChangeValues.maritalStatus : maritalStatus;
+    const resolvedReligion = openRequestFields.religion ? pendingChangeValues.religion : religionValue;
+    const resolvedCasteId = openRequestFields.caste ? pendingChangeValues.caste : casteId;
+    const resolvedSubCaste = openRequestFields.subCaste ? pendingChangeValues.subCaste : subCasteValue;
+
+    let resolvedHeight: { feet: number; inches: number } | undefined;
+    if (openRequestFields.height && pendingChangeValues.height) {
+      // parsed loosely from the free-text reveal-input, e.g. `5' 8"`
+      const match = pendingChangeValues.height.match(/(\d+).*?(\d+)/);
+      resolvedHeight = match
+        ? { feet: Number(match[1]), inches: Number(match[2]) }
+        : { feet: Number(heightFeet || 0), inches: Number(heightInches || 0) };
+    } else if (heightFeet || heightInches) {
+      resolvedHeight = { feet: Number(heightFeet || 0), inches: Number(heightInches || 0) };
+    }
+
     const profilePayload: any = {
-      firstName: firstName.trim() || undefined,
-      lastName: lastName.trim() || undefined,
-      gender: gender || undefined,
-      dob: dobString ? new Date(dobString).toISOString() : undefined,
-      maritalStatus: maritalStatus || undefined,
-      height:
-        heightFeet || heightInches
-          ? {
-              feet: Number(heightFeet || 0),
-              inches: Number(heightInches || 0),
-            }
-          : undefined,
+      firstName: resolvedFirstName?.trim() || undefined,
+      lastName: resolvedLastName?.trim() || undefined,
+      gender: resolvedGender || undefined,
+      dob: resolvedDobString ? new Date(resolvedDobString).toISOString() : undefined,
+      maritalStatus: resolvedMaritalStatus || undefined,
+      religion: resolvedReligion || undefined,
+      caste: resolvedCasteId || undefined,
+      subCaste: resolvedSubCaste || undefined,
+      height: resolvedHeight,
       weight: weight
         ? {
             value: Number(weight),
@@ -835,12 +984,14 @@ export default function EditProfileScreen({ navigation }: any) {
       },
       employment: {
         employedType: employedType || undefined,
-        companyName,
-        designation,
-        annualIncome: annualIncome ? Number(annualIncome) : undefined,
-        companyLocation,
-        totalExperience: totalExperience ? Number(totalExperience) : undefined,
-        linkedInProfile: linkedIn,
+        designation: showDesignation ? designation.trim() : undefined,
+        companyName: companyName.trim() || undefined,
+        typeOfBusiness: isBusiness ? typeOfBusiness || undefined : undefined,
+        companyLocation: companyLocation.trim() || undefined,
+        annualIncome: annualIncome || undefined,
+        totalExperienceYears: showExperience && expYears ? Number(expYears) : undefined,
+        totalExperienceMonths: showExperience && expMonths ? Number(expMonths) : undefined,
+        linkedInProfile: showLinkedIn ? linkedIn.trim() || undefined : undefined,
       },
       family: {
         fatherName,
@@ -887,10 +1038,19 @@ export default function EditProfileScreen({ navigation }: any) {
 
     try {
       setSaving(true);
-      await updateMyProfile(cleanPayload(profilePayload));
+      const result = await updateMyProfile(cleanPayload(profilePayload));
       await updateMyPartnerPreference(cleanPayload(preferencePayload));
       setHasChanges(false);
-      Alert.alert('Success', 'Profile updated successfully', [
+
+      const appliedFields: string[] = result?.appliedFields || [];
+      const queuedFields: string[] = result?.queuedFields || [];
+
+      let message = 'Profile updated successfully';
+      if (queuedFields.length > 0) {
+        message = `Profile updated. ${queuedFields.length} field${queuedFields.length > 1 ? 's' : ''} sent for admin approval.`;
+      }
+
+      Alert.alert('Success', message, [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err: any) {
@@ -981,9 +1141,16 @@ export default function EditProfileScreen({ navigation }: any) {
           {!!errorMsg && <Text style={styles.errorBanner}>{errorMsg}</Text>}
 
           <Text style={styles.sectionTitle}>BASIC DETAILS</Text>
-          {firstNameLocked ? (
-            <LockedField label="First Name" value={firstName} />
-          ) : (
+          <TieredField
+            label="First Name"
+            fieldState={getTierFieldState('firstName')}
+            displayValue={firstName}
+            requestedValue={changeRequests.find((r) => r.field === 'firstName' && r.status === 'PENDING')?.requestedValue}
+            isRequestOpen={!!openRequestFields.firstName}
+            requestValue={pendingChangeValues.firstName || ''}
+            onOpenRequest={() => openRequestChange('firstName', firstName)}
+            onChangeRequestValue={(value) => setPendingChangeValue('firstName', value)}
+          >
             <EditableTextField
               label="First Name"
               value={firstName}
@@ -995,11 +1162,18 @@ export default function EditProfileScreen({ navigation }: any) {
                 clearError('firstName');
               }}
             />
-          )}
+          </TieredField>
 
-          {lastNameLocked ? (
-            <LockedField label="Last Name" value={lastName} />
-          ) : (
+          <TieredField
+            label="Last Name"
+            fieldState={getTierFieldState('lastName')}
+            displayValue={lastName}
+            requestedValue={changeRequests.find((r) => r.field === 'lastName' && r.status === 'PENDING')?.requestedValue}
+            isRequestOpen={!!openRequestFields.lastName}
+            requestValue={pendingChangeValues.lastName || ''}
+            onOpenRequest={() => openRequestChange('lastName', lastName)}
+            onChangeRequestValue={(value) => setPendingChangeValue('lastName', value)}
+          >
             <EditableTextField
               label="Last Name"
               value={lastName}
@@ -1011,120 +1185,202 @@ export default function EditProfileScreen({ navigation }: any) {
                 clearError('lastName');
               }}
             />
-          )}
+          </TieredField>
 
-          {genderLocked ? (
-            <LockedField label="Gender" value={optionLabel(GENDER_OPTIONS, gender)} />
-          ) : (
-            <>
-              <Text style={styles.label}>Gender</Text>
-              <SegmentedOptions
-                options={GENDER_OPTIONS}
-                value={gender}
-                onChange={(value) => {
-                  setGender(value);
-                  markChanged();
-                  clearError('gender');
-                }}
-                error={fieldErrors.gender}
-              />
-            </>
-          )}
+          <TieredField
+            label="Gender"
+            fieldState={getTierFieldState('gender')}
+            displayValue={optionLabel(GENDER_OPTIONS, gender)}
+            requestedValue={
+              changeRequests.find((r) => r.field === 'gender' && r.status === 'PENDING')
+                ? optionLabel(GENDER_OPTIONS, changeRequests.find((r) => r.field === 'gender' && r.status === 'PENDING')?.requestedValue)
+                : undefined
+            }
+            isRequestOpen={!!openRequestFields.gender}
+            requestValue={pendingChangeValues.gender || ''}
+            onOpenRequest={() => openRequestChange('gender', gender)}
+            onChangeRequestValue={(value) => setPendingChangeValue('gender', value)}
+            requestOptions={GENDER_OPTIONS}
+          >
+            <Text style={styles.label}>Gender</Text>
+            <SegmentedOptions
+              options={GENDER_OPTIONS}
+              value={gender}
+              onChange={(value) => {
+                setGender(value);
+                markChanged();
+                clearError('gender');
+              }}
+              error={fieldErrors.gender}
+            />
+          </TieredField>
 
           <LockedField label="Profile Type" value={profileType} />
 
-          {dobLocked ? (
-            <LockedField label="Date of Birth" value={dobDisplay} />
-          ) : (
-            <>
-              <Text style={styles.label}>Date of Birth</Text>
+          <TieredField
+            label="Date of Birth"
+            fieldState={getTierFieldState('dob')}
+            displayValue={dobDisplay}
+            requestedValue={changeRequests.find((r) => r.field === 'dob' && r.status === 'PENDING')?.requestedValue}
+            isRequestOpen={!!openRequestFields.dob}
+            requestValue={pendingChangeValues.dob || ''}
+            onOpenRequest={() => {
+              openRequestChange('dob', dobDisplay);
+              setPendingDobDay(dobDay);
+              setPendingDobMonth(dobMonth);
+              setPendingDobYear(dobYear);
+            }}
+            onChangeRequestValue={(value) => setPendingChangeValue('dob', value)}
+            requestInput={
               <View style={styles.row}>
                 <TextInput
-                  style={[styles.input, styles.dobInput, fieldErrors.dob && styles.inputError]}
+                  style={[styles.input, styles.dobInput]}
                   placeholder="Day"
                   placeholderTextColor="#999"
-                  value={dobDay}
+                  value={pendingDobDay}
                   onChangeText={(text) => {
-                    setDobDay(text);
-                    markChanged();
-                    clearError('dob');
+                    setPendingDobDay(text);
+                    const combined = `${pendingDobYear}-${String(pendingDobMonth).padStart(2, '0')}-${String(text).padStart(2, '0')}`;
+                    setPendingChangeValue('dob', combined);
                   }}
                   keyboardType="number-pad"
                   maxLength={2}
                 />
                 <TextInput
-                  style={[styles.input, styles.dobInput, fieldErrors.dob && styles.inputError]}
+                  style={[styles.input, styles.dobInput]}
                   placeholder="Month"
                   placeholderTextColor="#999"
-                  value={dobMonth}
+                  value={pendingDobMonth}
                   onChangeText={(text) => {
-                    setDobMonth(text);
-                    markChanged();
-                    clearError('dob');
+                    setPendingDobMonth(text);
+                    const combined = `${pendingDobYear}-${String(text).padStart(2, '0')}-${String(pendingDobDay).padStart(2, '0')}`;
+                    setPendingChangeValue('dob', combined);
                   }}
                   keyboardType="number-pad"
                   maxLength={2}
                 />
                 <TextInput
-                  style={[styles.input, styles.dobInput, fieldErrors.dob && styles.inputError]}
+                  style={[styles.input, styles.dobInput]}
                   placeholder="Year"
                   placeholderTextColor="#999"
-                  value={dobYear}
+                  value={pendingDobYear}
                   onChangeText={(text) => {
-                    setDobYear(text);
-                    markChanged();
-                    clearError('dob');
+                    setPendingDobYear(text);
+                    const combined = `${text}-${String(pendingDobMonth).padStart(2, '0')}-${String(pendingDobDay).padStart(2, '0')}`;
+                    setPendingChangeValue('dob', combined);
                   }}
                   keyboardType="number-pad"
                   maxLength={4}
                 />
               </View>
-              {!!fieldErrors.dob && <Text style={styles.fieldErrorText}>{fieldErrors.dob}</Text>}
-            </>
-          )}
-
-          <Text style={styles.label}>Height</Text>
-          <View style={styles.row}>
-            <View style={styles.half}>
+            }
+            requestError={fieldErrors.dobRequest}
+          >
+            <Text style={styles.label}>Date of Birth</Text>
+            <View style={styles.row}>
               <TextInput
-                style={[styles.input, fieldErrors.heightFeet && styles.inputError]}
-                placeholder="Feet"
+                style={[styles.input, styles.dobInput, fieldErrors.dob && styles.inputError]}
+                placeholder="Day"
                 placeholderTextColor="#999"
-                value={heightFeet}
+                value={dobDay}
                 onChangeText={(text) => {
-                  setHeightFeet(text);
+                  setDobDay(text);
                   markChanged();
-                  clearError('heightFeet');
-                }}
-                keyboardType="number-pad"
-                maxLength={1}
-              />
-              {!!fieldErrors.heightFeet && <Text style={styles.fieldErrorText}>{fieldErrors.heightFeet}</Text>}
-            </View>
-            <View style={styles.half}>
-              <TextInput
-                style={[styles.input, fieldErrors.heightInches && styles.inputError]}
-                placeholder="Inches"
-                placeholderTextColor="#999"
-                value={heightInches}
-                onChangeText={(text) => {
-                  setHeightInches(text);
-                  markChanged();
-                  clearError('heightInches');
+                  clearError('dob');
                 }}
                 keyboardType="number-pad"
                 maxLength={2}
               />
-              {!!fieldErrors.heightInches && <Text style={styles.fieldErrorText}>{fieldErrors.heightInches}</Text>}
+              <TextInput
+                style={[styles.input, styles.dobInput, fieldErrors.dob && styles.inputError]}
+                placeholder="Month"
+                placeholderTextColor="#999"
+                value={dobMonth}
+                onChangeText={(text) => {
+                  setDobMonth(text);
+                  markChanged();
+                  clearError('dob');
+                }}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+              <TextInput
+                style={[styles.input, styles.dobInput, fieldErrors.dob && styles.inputError]}
+                placeholder="Year"
+                placeholderTextColor="#999"
+                value={dobYear}
+                onChangeText={(text) => {
+                  setDobYear(text);
+                  markChanged();
+                  clearError('dob');
+                }}
+                keyboardType="number-pad"
+                maxLength={4}
+              />
             </View>
-          </View>
+            {!!fieldErrors.dob && <Text style={styles.fieldErrorText}>{fieldErrors.dob}</Text>}
+          </TieredField>
+
+          <TieredField
+            label="Height"
+            fieldState={getTierFieldState('height')}
+            displayValue={heightFeet && heightInches ? `${heightFeet}' ${heightInches}"` : ''}
+            requestedValue={changeRequests.find((r) => r.field === 'height' && r.status === 'PENDING')?.requestedValue}
+            isRequestOpen={!!openRequestFields.height}
+            requestValue={pendingChangeValues.height || ''}
+            onOpenRequest={() => openRequestChange('height', `${heightFeet}' ${heightInches}"`)}
+            onChangeRequestValue={(value) => setPendingChangeValue('height', value)}
+          >
+            <Text style={styles.label}>Height</Text>
+            <View style={styles.row}>
+              <View style={styles.half}>
+                <View style={styles.unitInputWrap}>
+                  <TextInput
+                    style={[styles.input, styles.unitInput, fieldErrors.heightFeet && styles.inputError]}
+                    placeholder="Feet"
+                    placeholderTextColor="#999"
+                    value={heightFeet}
+                    onChangeText={(text) => {
+                      setHeightFeet(text);
+                      markChanged();
+                      clearError('heightFeet');
+                    }}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                  />
+                  <Text style={styles.unitLabel}>Ft</Text>
+                </View>
+                {!!fieldErrors.heightFeet && <Text style={styles.fieldErrorText}>{fieldErrors.heightFeet}</Text>}
+              </View>
+              <View style={styles.half}>
+                <View style={styles.unitInputWrap}>
+                  <TextInput
+                    style={[styles.input, styles.unitInput, fieldErrors.heightInches && styles.inputError]}
+                    placeholder="Inches"
+                    placeholderTextColor="#999"
+                    value={heightInches}
+                    onChangeText={(text) => {
+                      setHeightInches(text);
+                      markChanged();
+                      clearError('heightInches');
+                    }}
+                    keyboardType="number-pad"
+                    maxLength={2}
+                  />
+                  <Text style={styles.unitLabel}>In</Text>
+                </View>
+                {!!fieldErrors.heightInches && <Text style={styles.fieldErrorText}>{fieldErrors.heightInches}</Text>}
+              </View>
+            </View>
+          </TieredField>
 
           <EditableTextField
-            label="Weight (KG)"
+            label="Weight"
             value={weight}
             placeholder="Enter weight"
             error={fieldErrors.weight}
             keyboardType="number-pad"
+            unit="Kg"
             onChangeText={(text) => {
               setWeight(text);
               markChanged();
@@ -1132,16 +1388,31 @@ export default function EditProfileScreen({ navigation }: any) {
             }}
           />
 
-          <Text style={styles.label}>Marital Status</Text>
-          <SearchableDropdown
-            placeholder="Select marital status"
-            value={maritalStatus}
-            options={MARITAL_STATUS}
-            onSelect={(value) => {
-              setMaritalStatus(value);
-              markChanged();
-            }}
-          />
+          <TieredField
+            label="Marital Status"
+            fieldState={getTierFieldState('maritalStatus')}
+            displayValue={optionLabel(MARITAL_STATUS, maritalStatus)}
+            requestedValue={
+              changeRequests.find((r) => r.field === 'maritalStatus' && r.status === 'PENDING')
+                ? optionLabel(MARITAL_STATUS, changeRequests.find((r) => r.field === 'maritalStatus' && r.status === 'PENDING')?.requestedValue)
+                : undefined
+            }
+            isRequestOpen={!!openRequestFields.maritalStatus}
+            requestValue={pendingChangeValues.maritalStatus || ''}
+            onOpenRequest={() => openRequestChange('maritalStatus', maritalStatus)}
+            onChangeRequestValue={(value) => setPendingChangeValue('maritalStatus', value)}
+          >
+            <Text style={styles.label}>Marital Status</Text>
+            <SearchableDropdown
+              placeholder="Select marital status"
+              value={maritalStatus}
+              options={MARITAL_STATUS}
+              onSelect={(value) => {
+                setMaritalStatus(value);
+                markChanged();
+              }}
+            />
+          </TieredField>
 
           <Text style={styles.label}>Rashi</Text>
           <SearchableDropdown
@@ -1166,9 +1437,94 @@ export default function EditProfileScreen({ navigation }: any) {
           />
 
           <Text style={styles.sectionTitle}>COMMUNITY DETAILS</Text>
-          <LockedField label="Religion" value={readonly.religion} />
-          <LockedField label="Caste" value={readonly.casteName} />
-          <LockedField label="Sub Caste" value={readonly.subCaste} />
+
+          <TieredField
+            label="Religion"
+            fieldState={getTierFieldState('religion')}
+            displayValue={religionValue}
+            requestedValue={changeRequests.find((r) => r.field === 'religion' && r.status === 'PENDING')?.requestedValue}
+            isRequestOpen={!!openRequestFields.religion}
+            requestValue={pendingChangeValues.religion || ''}
+            onOpenRequest={() => openRequestChange('religion', religionValue)}
+            onChangeRequestValue={(value) => setPendingChangeValue('religion', value)}
+          >
+            <Text style={styles.label}>Religion</Text>
+            <SearchableDropdown
+              placeholder="Select religion"
+              value={religionValue}
+              options={religionOptions}
+              onSelect={(value) => {
+                setReligionValue(value);
+                markChanged();
+              }}
+            />
+          </TieredField>
+
+          <TieredField
+            label="Caste"
+            fieldState={getTierFieldState('caste')}
+            displayValue={readonly.casteName}
+            requestedValue={changeRequests.find((r) => r.field === 'caste' && r.status === 'PENDING')?.requestedValue}
+            isRequestOpen={!!openRequestFields.caste}
+            requestValue={pendingChangeValues.caste || ''}
+            onOpenRequest={() => openRequestChange('caste', casteId)}
+            onChangeRequestValue={(value) => setPendingChangeValue('caste', value)}
+            requestInput={
+              <SearchableDropdown
+                placeholder="Select caste"
+                value={pendingChangeValues.caste || ''}
+                options={castes.map((c) => ({ label: c.casteName, value: c._id }))}
+                onSelect={(value) => setPendingChangeValue('caste', value)}
+              />
+            }
+          >
+            <Text style={styles.label}>Caste</Text>
+            <SearchableDropdown
+              placeholder="Select caste"
+              value={casteId}
+              options={castes.map((c) => ({ label: c.casteName, value: c._id }))}
+              onSelect={(value) => {
+                setCasteId(value);
+                setSubCasteValue('');
+                markChanged();
+              }}
+            />
+          </TieredField>
+
+          <TieredField
+            label="Sub Caste"
+            fieldState={getTierFieldState('subCaste')}
+            displayValue={subCasteValue}
+            requestedValue={changeRequests.find((r) => r.field === 'subCaste' && r.status === 'PENDING')?.requestedValue}
+            isRequestOpen={!!openRequestFields.subCaste}
+            requestValue={pendingChangeValues.subCaste || ''}
+            onOpenRequest={() => openRequestChange('subCaste', subCasteValue)}
+            onChangeRequestValue={(value) => setPendingChangeValue('subCaste', value)}
+            requestInput={
+              <SearchableDropdown
+                placeholder="Select sub caste"
+                value={pendingChangeValues.subCaste || ''}
+                options={ownSubCasteOptions}
+                onSelect={(value) => setPendingChangeValue('subCaste', value)}
+                allowCustom
+                disabled={!ownSubCasteOptions.length}
+              />
+            }
+          >
+            <Text style={styles.label}>Sub Caste</Text>
+            <SearchableDropdown
+              placeholder="Select sub caste"
+              value={subCasteValue}
+              options={ownSubCasteOptions}
+              onSelect={(value) => {
+                setSubCasteValue(value);
+                markChanged();
+              }}
+              allowCustom
+              disabled={!ownSubCasteOptions.length}
+            />
+          </TieredField>
+
           <LockedField label="Mother Tongue" value={readonly.motherTongue} />
 
           <Text style={styles.sectionTitle}>CONTACT DETAILS</Text>
@@ -1211,29 +1567,10 @@ export default function EditProfileScreen({ navigation }: any) {
           ) : null}
 
           <Text style={styles.sectionTitle}>PROFESSIONAL DETAILS</Text>
-          <Text style={styles.label}>Profession</Text>
+
+          <Text style={styles.label}>Employment Type</Text>
           <SearchableDropdown
-            placeholder="Select profession"
-            value={designation}
-            options={PROFESSION_OPTIONS}
-            allowCustom
-            onSelect={(value) => {
-              setDesignation(value);
-              markChanged();
-            }}
-          />
-          <EditableTextField
-            label="Company Name"
-            value={companyName}
-            placeholder="Enter company name"
-            onChangeText={(text) => {
-              setCompanyName(text);
-              markChanged();
-            }}
-          />
-          <Text style={styles.label}>Company Type</Text>
-          <SearchableDropdown
-            placeholder="Select company type"
+            placeholder="Select employment type"
             value={employedType}
             options={EMPLOYED_TYPES}
             onSelect={(value) => {
@@ -1241,85 +1578,226 @@ export default function EditProfileScreen({ navigation }: any) {
               markChanged();
             }}
           />
-          <EditableTextField
-            label="Annual Income"
-            value={annualIncome}
-            placeholder="Annual income"
-            error={fieldErrors.annualIncome}
-            keyboardType="number-pad"
-            maxLength={10}
-            onChangeText={(text) => {
-              setAnnualIncome(text);
-              markChanged();
-              clearError('annualIncome');
-            }}
-          />
-          <EditableTextField
-            label="Work Location"
-            value={companyLocation}
-            placeholder="Enter location"
-            onChangeText={(text) => {
-              setCompanyLocation(text);
-              markChanged();
-            }}
-          />
-          <EditableTextField
-            label="Experience"
-            value={totalExperience}
-            placeholder="Years of experience"
-            error={fieldErrors.totalExperience}
-            keyboardType="number-pad"
-            maxLength={2}
-            onChangeText={(text) => {
-              setTotalExperience(text);
-              markChanged();
-              clearError('totalExperience');
-            }}
-          />
-          <EditableTextField
-            label="LinkedIn Profile"
-            value={linkedIn}
-            placeholder="https://"
-            error={fieldErrors.linkedIn}
-            autoCapitalize="none"
-            onChangeText={(text) => {
-              setLinkedIn(text);
-              markChanged();
-              clearError('linkedIn');
-            }}
-          />
 
-          <Text style={styles.sectionTitle}>EDUCATION DETAILS</Text>
-          {qualificationLocked ? (
-            <LockedField label="Highest Qualification" value={qualification} />
-          ) : (
-            <>
-              <Text style={styles.label}>Highest Qualification</Text>
-              <SearchableDropdown
-                placeholder="Select or type qualification"
-                value={qualification}
-                options={EDUCATION_OPTIONS}
-                allowCustom
-                onSelect={(value) => {
-                  setQualification(value);
-                  markChanged();
-                }}
-              />
-            </>
-          )}
-          {collegeLocked ? (
-            <LockedField label="University / College" value={college} />
-          ) : (
+          {showDesignation && (
             <EditableTextField
-              label="University / College"
-              value={college}
-              placeholder="College name"
+              label="You work as"
+              value={designation}
+              placeholder="Designation"
               onChangeText={(text) => {
-                setCollege(text);
+                setDesignation(text);
                 markChanged();
               }}
             />
           )}
+
+          {isBusiness ? (
+            <>
+              <EditableTextField
+                label="Firm Name"
+                value={companyName}
+                placeholder="Firm name"
+                onChangeText={(text) => {
+                  setCompanyName(text);
+                  markChanged();
+                }}
+              />
+              <Text style={styles.label}>Type of Business</Text>
+              <SearchableDropdown
+                placeholder="Select type of business"
+                value={typeOfBusiness}
+                options={BUSINESS_TYPES}
+                onSelect={(value) => {
+                  setTypeOfBusiness(value);
+                  markChanged();
+                }}
+              />
+              <EditableTextField
+                label="Firm Location"
+                value={companyLocation}
+                placeholder="Firm location"
+                onChangeText={(text) => {
+                  setCompanyLocation(text);
+                  markChanged();
+                }}
+              />
+            </>
+          ) : isJobType ? (
+            <>
+              <EditableTextField
+                label="You work with"
+                value={companyName}
+                placeholder="Company name"
+                onChangeText={(text) => {
+                  setCompanyName(text);
+                  markChanged();
+                }}
+              />
+              <EditableTextField
+                label="Company Location"
+                value={companyLocation}
+                placeholder="Enter your company location"
+                onChangeText={(text) => {
+                  setCompanyLocation(text);
+                  markChanged();
+                }}
+              />
+            </>
+          ) : null}
+
+          <Text style={styles.label}>Annual Income</Text>
+          {isCustomIncome ? (
+            <>
+              <TextInput
+                style={[styles.input, fieldErrors.annualIncome && styles.inputError]}
+                placeholder="Enter annual income"
+                placeholderTextColor="#999"
+                value={annualIncome}
+                onChangeText={(text) => {
+                  setAnnualIncome(text);
+                  markChanged();
+                  clearError('annualIncome');
+                }}
+                keyboardType="number-pad"
+              />
+              {!!fieldErrors.annualIncome && <Text style={styles.fieldErrorText}>{fieldErrors.annualIncome}</Text>}
+              <TouchableOpacity onPress={() => { setIsCustomIncome(false); setAnnualIncome(''); markChanged(); }}>
+                <Text style={styles.linkText}>Choose from list instead</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <SearchableDropdown
+              placeholder="Select Income Slab"
+              value={annualIncome}
+              options={INCOME_SLABS}
+              onSelect={(value) => {
+                if (value === '__other__') {
+                  setIsCustomIncome(true);
+                  setAnnualIncome('');
+                  markChanged();
+                  return;
+                }
+                setAnnualIncome(value);
+                markChanged();
+              }}
+            />
+          )}
+
+          {showExperience && (
+            <>
+              <Text style={styles.label}>Total Experience</Text>
+              {isCustomExperience ? (
+                <>
+                  <View style={styles.row}>
+                    <View style={styles.half}>
+                      <TextInput
+                        style={[styles.input, fieldErrors.totalExperience && styles.inputError]}
+                        placeholder="Years"
+                        placeholderTextColor="#999"
+                        value={expYears}
+                        onChangeText={(text) => {
+                          const raw = text.replace(/\D/g, '');
+                          setExpYears(raw && Number(raw) > 50 ? '50' : raw);
+                          markChanged();
+                          clearError('totalExperience');
+                        }}
+                        keyboardType="number-pad"
+                        maxLength={2}
+                      />
+                    </View>
+                    <View style={styles.half}>
+                      <TextInput
+                        style={[styles.input, fieldErrors.totalExperience && styles.inputError]}
+                        placeholder="Months"
+                        placeholderTextColor="#999"
+                        value={expMonths}
+                        onChangeText={(text) => {
+                          const raw = text.replace(/\D/g, '');
+                          setExpMonths(raw && Number(raw) > 11 ? '11' : raw);
+                          markChanged();
+                          clearError('totalExperience');
+                        }}
+                        keyboardType="number-pad"
+                        maxLength={2}
+                      />
+                    </View>
+                  </View>
+                  {!!fieldErrors.totalExperience && <Text style={styles.fieldErrorText}>{fieldErrors.totalExperience}</Text>}
+                  <TouchableOpacity
+                    onPress={() => {
+                      setIsCustomExperience(false);
+                      setExpPreset('');
+                      setExpYears('');
+                      setExpMonths('');
+                      markChanged();
+                    }}
+                  >
+                    <Text style={styles.linkText}>Choose from list instead</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <SearchableDropdown
+                  placeholder="Select experience"
+                  value={expPreset}
+                  options={EXPERIENCE_PRESETS}
+                  onSelect={(value) => {
+                    if (value === '__other__') {
+                      setIsCustomExperience(true);
+                      setExpPreset('');
+                      setExpYears('');
+                      setExpMonths('');
+                      markChanged();
+                      return;
+                    }
+                    const preset = EXPERIENCE_PRESETS.find((p) => p.value === value);
+                    if (preset) {
+                      setExpPreset(value);
+                      setExpYears(String(preset.years));
+                      setExpMonths(String(preset.months));
+                      markChanged();
+                    }
+                  }}
+                />
+              )}
+            </>
+          )}
+
+          {showLinkedIn && (
+            <EditableTextField
+              label="LinkedIn Profile"
+              value={linkedIn}
+              placeholder="https://linkedin.com/in/your-name"
+              error={fieldErrors.linkedIn}
+              autoCapitalize="none"
+              onChangeText={(text) => {
+                setLinkedIn(text);
+                markChanged();
+                clearError('linkedIn');
+              }}
+            />
+          )}
+
+          <Text style={styles.sectionTitle}>EDUCATION DETAILS</Text>
+          <Text style={styles.label}>Highest Qualification</Text>
+          <SearchableDropdown
+            placeholder="Select or type qualification"
+            value={qualification}
+            options={EDUCATION_OPTIONS}
+            allowCustom
+            onSelect={(value) => {
+              setQualification(value);
+              markChanged();
+            }}
+          />
+          <EditableTextField
+            label="University / College"
+            value={college}
+            placeholder="College name"
+            onChangeText={(text) => {
+              setCollege(text);
+              markChanged();
+            }}
+          />
 
           <Text style={styles.sectionTitle}>LIFESTYLE & HEALTH</Text>
           <Text style={styles.label}>Diet</Text>
@@ -1390,19 +1868,15 @@ export default function EditProfileScreen({ navigation }: any) {
           ) : null}
 
           <Text style={styles.sectionTitle}>FAMILY DETAILS</Text>
-          {fatherNameLocked ? (
-            <LockedField label="Father Name" value={fatherName} />
-          ) : (
-            <EditableTextField
-              label="Father Name"
-              value={fatherName}
-              placeholder="Father's name"
-              onChangeText={(text) => {
-                setFatherName(text);
-                markChanged();
-              }}
-            />
-          )}
+          <EditableTextField
+            label="Father Name"
+            value={fatherName}
+            placeholder="Father's name"
+            onChangeText={(text) => {
+              setFatherName(text);
+              markChanged();
+            }}
+          />
           <EditableTextField
             label="Father Occupation"
             value={fatherOccupation}
@@ -1412,19 +1886,15 @@ export default function EditProfileScreen({ navigation }: any) {
               markChanged();
             }}
           />
-          {motherNameLocked ? (
-            <LockedField label="Mother Name" value={motherName} />
-          ) : (
-            <EditableTextField
-              label="Mother Name"
-              value={motherName}
-              placeholder="Mother's name"
-              onChangeText={(text) => {
-                setMotherName(text);
-                markChanged();
-              }}
-            />
-          )}
+          <EditableTextField
+            label="Mother Name"
+            value={motherName}
+            placeholder="Mother's name"
+            onChangeText={(text) => {
+              setMotherName(text);
+              markChanged();
+            }}
+          />
           <EditableTextField
             label="Mother Occupation"
             value={motherOccupation}
@@ -1436,42 +1906,34 @@ export default function EditProfileScreen({ navigation }: any) {
           />
           <View style={styles.row}>
             <View style={styles.half}>
-              {brothersLocked ? (
-                <LockedField label="Brother" value={brothers} compact />
-              ) : (
-                <EditableTextField
-                  label="Brother"
-                  value={brothers}
-                  placeholder="0"
-                  error={fieldErrors.brothers}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                  onChangeText={(text) => {
-                    setBrothers(text);
-                    markChanged();
-                    clearError('brothers');
-                  }}
-                />
-              )}
+              <EditableTextField
+                label="Brother"
+                value={brothers}
+                placeholder="0"
+                error={fieldErrors.brothers}
+                keyboardType="number-pad"
+                maxLength={2}
+                onChangeText={(text) => {
+                  setBrothers(text);
+                  markChanged();
+                  clearError('brothers');
+                }}
+              />
             </View>
             <View style={styles.half}>
-              {sistersLocked ? (
-                <LockedField label="Sister" value={sisters} compact />
-              ) : (
-                <EditableTextField
-                  label="Sister"
-                  value={sisters}
-                  placeholder="0"
-                  error={fieldErrors.sisters}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                  onChangeText={(text) => {
-                    setSisters(text);
-                    markChanged();
-                    clearError('sisters');
-                  }}
-                />
-              )}
+              <EditableTextField
+                label="Sister"
+                value={sisters}
+                placeholder="0"
+                error={fieldErrors.sisters}
+                keyboardType="number-pad"
+                maxLength={2}
+                onChangeText={(text) => {
+                  setSisters(text);
+                  markChanged();
+                  clearError('sisters');
+                }}
+              />
             </View>
           </View>
 
@@ -1637,6 +2099,7 @@ function EditableTextField({
   keyboardType,
   maxLength,
   autoCapitalize,
+  unit,
 }: {
   label: string;
   value: string;
@@ -1646,20 +2109,24 @@ function EditableTextField({
   keyboardType?: 'default' | 'number-pad';
   maxLength?: number;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  unit?: string;
 }) {
   return (
     <>
       <Text style={styles.label}>{label}</Text>
-      <TextInput
-        style={[styles.input, error && styles.inputError]}
-        placeholder={placeholder}
-        placeholderTextColor="#999"
-        value={value}
-        onChangeText={onChangeText}
-        keyboardType={keyboardType}
-        maxLength={maxLength}
-        autoCapitalize={autoCapitalize}
-      />
+      <View style={styles.unitInputWrap}>
+        <TextInput
+          style={[styles.input, styles.unitInput, error && styles.inputError]}
+          placeholder={placeholder}
+          placeholderTextColor="#999"
+          value={value}
+          onChangeText={onChangeText}
+          keyboardType={keyboardType}
+          maxLength={maxLength}
+          autoCapitalize={autoCapitalize}
+        />
+        {!!unit && <Text style={styles.unitLabel}>{unit}</Text>}
+      </View>
       {!!error && <Text style={styles.fieldErrorText}>{error}</Text>}
     </>
   );
@@ -1683,6 +2150,83 @@ function LockedField({
       <View style={styles.lockedBox}>
         <Text style={styles.lockedText} numberOfLines={2}>{value || '-'}</Text>
       </View>
+    </View>
+  );
+}
+
+function TieredField({
+  label,
+  fieldState,
+  displayValue,
+  requestedValue,
+  isRequestOpen,
+  requestValue,
+  onOpenRequest,
+  onChangeRequestValue,
+  requestOptions,
+  requestInput,
+  requestError,
+  children,
+}: {
+  label: string;
+  fieldState: 'UNLOCKED' | 'LOCKED_NO_REQUEST' | 'LOCKED_PENDING';
+  displayValue: string;
+  requestedValue?: any;
+  isRequestOpen: boolean;
+  requestValue: string;
+  onOpenRequest: () => void;
+  onChangeRequestValue: (value: string) => void;
+  requestOptions?: Option[]; // if set, shows a picker instead of free-text for the request-change input
+  requestInput?: React.ReactNode; // if set, shows this custom input instead of free-text/options (highest priority)
+  requestError?: string; // validation error shown under the request-change input
+  children: React.ReactNode; // the normal editable input, rendered when UNLOCKED
+}) {
+  if (fieldState === 'UNLOCKED') {
+    return <>{children}</>;
+  }
+
+  return (
+    <View style={styles.fieldWrap}>
+      <View style={styles.lockedLabelRow}>
+        <Text style={styles.label}>{label}</Text>
+        <Lock color="#9aa1ad" size={14} />
+      </View>
+      <View style={styles.lockedBox}>
+        <Text style={styles.lockedText} numberOfLines={2}>{displayValue || '-'}</Text>
+      </View>
+
+      {fieldState === 'LOCKED_PENDING' ? (
+        <View style={styles.pendingBadge}>
+          <Text style={styles.pendingBadgeText}>
+            Pending Approval{requestedValue ? `: "${requestedValue}"` : ''}
+          </Text>
+        </View>
+      ) : isRequestOpen ? (
+        <>
+          {requestInput ? (
+            requestInput
+          ) : requestOptions ? (
+            <SegmentedOptions
+              options={requestOptions}
+              value={requestValue}
+              onChange={onChangeRequestValue}
+            />
+          ) : (
+            <TextInput
+              style={styles.input}
+              placeholder={`New ${label}`}
+              placeholderTextColor="#999"
+              value={requestValue}
+              onChangeText={onChangeRequestValue}
+            />
+          )}
+          {!!requestError && <Text style={styles.fieldErrorText}>{requestError}</Text>}
+        </>
+      ) : (
+        <TouchableOpacity style={styles.requestChangeBtn} onPress={onOpenRequest}>
+          <Text style={styles.requestChangeText}>Request Change</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -2026,6 +2570,16 @@ const styles = StyleSheet.create({
     color: '#000',
     marginBottom: 12,
   },
+  unitInputWrap: { position: 'relative', justifyContent: 'center' },
+  unitInput: { paddingRight: 44 },
+  unitLabel: {
+    position: 'absolute',
+    right: 14,
+    top: 12,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000',
+  },
   textArea: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
@@ -2056,8 +2610,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     justifyContent: 'center',
+    marginBottom: 4,
   },
   lockedText: { fontSize: 14, color: '#5f6773', fontWeight: '600' },
+  requestChangeBtn: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#D20236',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  requestChangeText: { fontSize: 13, fontWeight: '700', color: '#D20236' },
+  pendingBadge: {
+    marginTop: 8,
+    backgroundColor: '#fff4e5',
+    borderWidth: 1,
+    borderColor: '#f0c896',
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+  },
+  pendingBadgeText: { fontSize: 12, fontWeight: '600', color: '#8a5a00' },
   toggleRow: { flexDirection: 'row', marginBottom: 12, gap: 10 },
   toggle: {
     flex: 1,
@@ -2072,7 +2646,8 @@ const styles = StyleSheet.create({
   toggleTextActive: { color: '#D20236', fontWeight: '700' },
   toggleRowError: { borderWidth: 1.5, borderColor: '#D20236', borderRadius: 10, padding: 4 },
   dobInput: { flex: 1 },
-  errorBanner: { fontSize: 13, color: '#D20236', fontWeight: '500', marginVertical: 10 },
+   errorBanner: { fontSize: 13, color: '#D20236', fontWeight: '500', marginVertical: 10 },
+  linkText: { color: '#D20236', fontSize: 13, fontWeight: '600', marginTop: -8, marginBottom: 14 },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
   fieldErrorText: { fontSize: 11, color: '#D20236', marginTop: -8, marginBottom: 10, fontWeight: '500' },
   addressBlock: { marginBottom: 6 },
