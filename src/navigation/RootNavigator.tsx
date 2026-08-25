@@ -8,6 +8,7 @@ import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import LoginOtpScreen from '../screens/auth/LoginOtpScreen';
 import MainTabs from './MainTabs';
+import SelectLanguageScreen from '../screens/auth/signup/SelectLanguageScreen';
 import SignupProfileForScreen from '../screens/auth/signup/SignupProfileForScreen';
 import SignupAboutScreen from '../screens/auth/signup/SignupAboutScreen';
 import SignupCasteScreen from '../screens/auth/signup/SignupCasteScreen';
@@ -113,6 +114,7 @@ export default function RootNavigator() {
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="LoginOtp" component={LoginOtpScreen} />
+            <Stack.Screen name="SelectLanguage" component={SelectLanguageScreen} />
             <Stack.Screen
               name="SignupProfileFor"
               component={SignupProfileForScreen}

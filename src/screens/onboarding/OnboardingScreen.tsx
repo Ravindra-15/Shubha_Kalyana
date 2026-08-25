@@ -10,6 +10,7 @@ import {
   FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Circle } from 'react-native-svg';
 
 const { width, height } = Dimensions.get('window');
 
@@ -37,19 +38,21 @@ const slides = [
   },
 ];
 
+const RING_RADIUS = 35;
+const CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
 export default function OnboardingScreen({ navigation }: any) {
   const [index, setIndex] = useState(0);
   const listRef = useRef<FlatList>(null);
   const isLast = index === slides.length - 1;
 
-  const goNext = () => {
-    if (isLast) {
-      navigation.replace('Login');
-    } else {
-      listRef.current?.scrollToIndex({ index: index + 1 });
-    }
-  };
-
+const goNext = () => {
+  if (isLast) {
+    navigation.replace('SelectLanguage');
+  } else {
+    listRef.current?.scrollToIndex({ index: index + 1 });
+  }
+};
   return (
     <View style={styles.container}>
       <FlatList
@@ -89,7 +92,30 @@ export default function OnboardingScreen({ navigation }: any) {
             <Text style={styles.getStartedText}>Get Started</Text>
           </View>
         ) : (
-          <View style={styles.arrowRing}>
+          <View style={styles.arrowRingWrap}>
+            <Svg width={76} height={76} style={StyleSheet.absoluteFill}>
+              <Circle
+                cx={38}
+                cy={38}
+                r={35}
+                stroke="rgba(255,255,255,0.3)"
+                strokeWidth={2}
+                fill="none"
+              />
+              <Circle
+                cx={38}
+                cy={38}
+                r={35}
+                stroke="#D20236"
+                strokeWidth={2}
+                fill="none"
+                strokeDasharray={CIRCUMFERENCE}
+                strokeDashoffset={CIRCUMFERENCE * (1 - (index + 1) / slides.length)}
+                strokeLinecap="round"
+                rotation="-90"
+                origin="38, 38"
+              />
+            </Svg>
             <View style={styles.arrowInner}>
               <Text style={styles.arrowText}>→</Text>
             </View>
@@ -138,12 +164,9 @@ const styles = StyleSheet.create({
     bottom: 50,
     alignSelf: 'center',
   },
-  arrowRing: {
+  arrowRingWrap: {
     width: 76,
     height: 76,
-    borderRadius: 38,
-    borderWidth: 2,
-    borderColor: '#D20236',
     alignItems: 'center',
     justifyContent: 'center',
   },
