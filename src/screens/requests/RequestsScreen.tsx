@@ -470,11 +470,9 @@ export default function RequestsScreen({ navigation, route }: any) {
         visible={Boolean(accessPrompt)}
         variant="accept"
         name={accessPrompt?.profile?.name}
-        price={unlockPrice}
         access={accessPrompt?.access}
         loading={unlockingRequestId === accessPrompt?.profile?.requestId}
         onClose={() => setAccessPrompt(null)}
-        onUnlock={unlockPromptProfile}
         onUpgrade={() => {
           const profileId = accessPrompt?.profile?.profileId;
           const profileName = accessPrompt?.profile?.name;

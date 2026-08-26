@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator } from 'react-native';
-import { X, Lock, Phone, Users, MapPin } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Image } from 'react-native';
+import { X, Lock, AlertCircle } from 'lucide-react-native';
 import {
   getSingleProfileUnlockLimitMessage,
   getSingleProfileUnlockRemainingLabel,
@@ -10,24 +10,22 @@ import {
 type Props = {
   visible: boolean;
   name?: string;
-  price?: number;
   access?: any;
   variant?: 'profile' | 'accept';
+  action?: 'send' | 'accept';    // only used when variant === 'accept'
   loading?: boolean;
   onClose: () => void;
-  onUnlock: () => void;          // pay ₹price to unlock this profile
   onUpgrade: () => void;         // go to plans page
 };
 
 export default function UnlockAccessModal({
   visible,
   name,
-  price = 99,
   access,
   variant = 'profile',
+  action = 'accept',
   loading = false,
   onClose,
-  onUnlock,
   onUpgrade,
 }: Props) {
   const showSingleUnlockUsage = Boolean(access && !access.hasActiveMembership);
@@ -42,9 +40,13 @@ export default function UnlockAccessModal({
             <X color="#999" size={22} />
           </TouchableOpacity>
 
-          <View style={styles.iconCircle}>
-            <Lock color="#fff" size={26} />
-          </View>
+          {isAcceptFlow ? (
+            <AlertCircle color="#D20236" size={52} strokeWidth={1.5} style={styles.warningIcon} />
+          ) : (
+            <View style={styles.iconCircle}>
+              <Lock color="#fff" size={26} />
+            </View>
+          )}
 
           <Text style={styles.title}>
             {isAcceptFlow ? 'Oops !' : 'Unlock Full Profile Access'}
@@ -53,10 +55,10 @@ export default function UnlockAccessModal({
             {singleUnlockLimitReached
               ? getSingleProfileUnlockLimitMessage(access)
               : isAcceptFlow
-                ? `Access required to accept ${name || 'this profile'}.`
+                ? `Access required to ${action === 'send' ? 'send a request to' : 'accept'} ${name || 'this profile'}.`
                 : `View contact details and start communicating with ${name || 'this profile'} securely.`}
           </Text>
-          {showSingleUnlockUsage ? (
+          {!isAcceptFlow && showSingleUnlockUsage ? (
             <View style={styles.remainingBox}>
               <Text style={styles.remainingText}>
                 {getSingleProfileUnlockRemainingLabel(access)}
@@ -64,34 +66,32 @@ export default function UnlockAccessModal({
             </View>
           ) : null}
 
-          <View style={styles.benefitBox}>
-            <Text style={styles.benefitHead}>You'll get access to:</Text>
-            <View style={styles.benefitRow}>
-              <View style={styles.benefitIcon}><Phone color="#D20236" size={15} /></View>
-              <Text style={styles.benefitText}>Contact number</Text>
+          {!isAcceptFlow ? (
+            <View style={styles.benefitBox}>
+              <Text style={styles.benefitHead}>You'll get access to:</Text>
+              <View style={styles.benefitRow}>
+                <View style={styles.benefitIcon}>
+                  <Image source={require('../assets/images/contact-icon.png')} style={styles.benefitIconImg} resizeMode="contain" />
+                </View>
+                <Text style={styles.benefitText}>Contact number</Text>
+              </View>
+              <View style={styles.benefitRow}>
+                <View style={styles.benefitIcon}>
+                  <Image source={require('../assets/images/family-icon.png')} style={styles.benefitIconImg} resizeMode="contain" />
+                </View>
+                <Text style={styles.benefitText}>Family contact details</Text>
+              </View>
+              <View style={styles.benefitRow}>
+                <View style={styles.benefitIcon}>
+                  <Image source={require('../assets/images/address-icon.png')} style={styles.benefitIconImg} resizeMode="contain" />
+                </View>
+                <Text style={styles.benefitText}>Full address</Text>
+              </View>
             </View>
-            <View style={styles.benefitRow}>
-              <View style={styles.benefitIcon}><Users color="#D20236" size={15} /></View>
-              <Text style={styles.benefitText}>Family contact details</Text>
-            </View>
-            <View style={styles.benefitRow}>
-              <View style={styles.benefitIcon}><MapPin color="#D20236" size={15} /></View>
-              <Text style={styles.benefitText}>Full address</Text>
-            </View>
-          </View>
-
-          {!singleUnlockLimitReached ? (
-            <TouchableOpacity style={styles.unlockBtn} onPress={onUnlock} disabled={loading}>
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.unlockText}>Unlock for ₹{price}</Text>
-            )}
-            </TouchableOpacity>
           ) : null}
 
           <TouchableOpacity style={styles.upgradeBtn} onPress={onUpgrade} disabled={loading}>
-            <Text style={styles.upgradeText}>Upgrade to Premium</Text>
+            <Text style={styles.upgradeText}>{isAcceptFlow ? 'Upgrade Plan' : 'Upgrade to Premium'}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -111,12 +111,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeBtn: { position: 'absolute', top: 16, right: 16, padding: 4 },
+  warningIcon: { marginBottom: 18, marginTop: 6 },
   iconCircle: {
     width: 56, height: 56, borderRadius: 28, backgroundColor: '#D20236',
     alignItems: 'center', justifyContent: 'center', marginBottom: 18, marginTop: 6,
   },
-  title: { fontSize: 19, fontFamily: 'Outfit-Bold', color: '#000', marginBottom: 8 },
-  subtitle: { fontSize: 13, color: '#777', textAlign: 'center', marginBottom: 20, lineHeight: 19 },
+  title: { fontSize: 21, fontFamily: 'Outfit-Bold', color: '#000', marginBottom: 8 },
+  subtitle: { fontSize: 15, color: '#777', textAlign: 'center', marginBottom: 20, lineHeight: 19 },
   remainingBox: {
     width: '100%',
     backgroundColor: '#fdf2f5',
@@ -125,25 +126,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     marginBottom: 16,
   },
-  remainingText: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-ExtraBold', textAlign: 'center' },
+  remainingText: { color: '#D20236', fontSize: 15, fontFamily: 'Outfit-ExtraBold', textAlign: 'center' },
   benefitBox: {
-    width: '100%', backgroundColor: '#f7f7f7', borderRadius: 12, padding: 16, marginBottom: 20,
+    width: '100%', borderRadius: 12, padding: 16, marginBottom: 20,
   },
-  benefitHead: { fontSize: 13, fontFamily: 'Outfit-Bold', color: '#333', marginBottom: 12 },
+  benefitHead: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#333', marginBottom: 12 },
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
   benefitIcon: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: '#fdf2f5',
+    width: 28, height: 28, borderRadius: 22, backgroundColor: '#fdf2f5',
     alignItems: 'center', justifyContent: 'center',
   },
-  benefitText: { fontSize: 14, color: '#333' },
-  unlockBtn: {
-    width: '100%', backgroundColor: '#D20236', borderRadius: 8,
-    paddingVertical: 15, alignItems: 'center', marginBottom: 12,
-  },
-  unlockText: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#fff' },
+  benefitIconImg: { width: 30, height: 30 },
+  benefitText: { fontSize: 16, color: '#333' },
   upgradeBtn: {
-    width: '100%', borderWidth: 1, borderColor: '#D20236', borderRadius: 8,
+    width: '100%', borderWidth: 1, borderColor: '#D20236',backgroundColor: '#D20236', borderRadius: 8,
     paddingVertical: 15, alignItems: 'center',
   },
-  upgradeText: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#D20236' },
+upgradeText: {
+  fontSize: 17,
+  fontFamily: 'Outfit-SemiBold',
+  color: '#fff',
+},
 });

@@ -13,7 +13,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ArrowLeft } from 'lucide-react-native';
 import ProfileCard from '../../components/ProfileCard';
 import RequestSentModal from '../../components/RequestSentModal';
+import UnlockAccessModal from '../../components/UnlockAccessModal';
 import apiClient from '../../api/client';
+import { getProfileAccess, getUnlockPrice } from '../../api/membershipPayment';
 import { isProfileFullyVerified } from '../../api/profile';
 import {
   getSavedProfiles,
@@ -71,6 +73,8 @@ export default function SavedProfilesScreen({ navigation }: any) {
   const [sentModal, setSentModal] = useState<{ show: boolean; name?: string }>({
     show: false,
   });
+  const [accessPrompt, setAccessPrompt] = useState<{ profileId: string; name?: string; access: any } | null>(null);
+  const [unlockPrice, setUnlockPrice] = useState(99);
 
   const load = useCallback(async (pageNum: number, replace = false) => {
     if (loading) return;
@@ -149,6 +153,22 @@ export default function SavedProfilesScreen({ navigation }: any) {
       );
       setSentModal({ show: true, name: profile?.name });
     } catch (err: any) {
+      if (err?.response?.status === 402) {
+        const name = items.find((item) => item.profileId === profileId)?.name;
+        const [accessResult, priceResult] = await Promise.allSettled([
+          getProfileAccess(profileId),
+          getUnlockPrice(),
+        ]);
+        setAccessPrompt({
+          profileId,
+          name,
+          access: accessResult.status === 'fulfilled' ? accessResult.value : null,
+        });
+        if (priceResult.status === 'fulfilled') {
+          setUnlockPrice(priceResult.value?.amount || 99);
+        }
+        return;
+      }
       Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
     }
   };
@@ -221,6 +241,21 @@ export default function SavedProfilesScreen({ navigation }: any) {
           />
         )}
       </View>
+
+      <UnlockAccessModal
+        visible={Boolean(accessPrompt)}
+        variant="accept"
+        action="send"
+        name={accessPrompt?.name}
+        access={accessPrompt?.access}
+        onClose={() => setAccessPrompt(null)}
+        onUpgrade={() => {
+          const profileId = accessPrompt?.profileId;
+          const profileName = accessPrompt?.name;
+          setAccessPrompt(null);
+          navigation.navigate('Plans', profileId ? { profileId, profileName } : undefined);
+        }}
+      />
     </SafeAreaView>
   );
 }

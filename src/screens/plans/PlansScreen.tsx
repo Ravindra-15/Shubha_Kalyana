@@ -17,7 +17,6 @@ import { getMyFullProfile } from '../../api/profile';
 import { openRazorpayOrder } from '../../utils/razorpayCheckout';
 import { formatMoney, type PaymentOrderResult } from '../../utils/paymentBreakup';
 import PaymentBreakupModal from '../../components/PaymentBreakupModal';
-import UnlockAccessModal from '../../components/UnlockAccessModal';
 import BottomNav from '../../components/BottomNav';
 import VerificationPromptModal from '../../components/VerificationPromptModal';
 import AadhaarVerificationModal from '../../components/AadhaarVerificationModal';
@@ -90,7 +89,6 @@ export default function PlansScreen({ navigation, route }: any) {
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
-  const [showProfileUnlock, setShowProfileUnlock] = useState(false);
   const [profileUnlockPrice, setProfileUnlockPrice] = useState(99);
   const [profileUnlockAccess, setProfileUnlockAccess] = useState<any>(null);
   const [unlockingProfile, setUnlockingProfile] = useState(false);
@@ -223,12 +221,6 @@ export default function PlansScreen({ navigation, route }: any) {
     }
   };
 
-  const openProfileUnlockPrompt = () => {
-    if (!targetProfileId) return;
-    setShowProfileUnlock(true);
-    loadProfileUnlockOffer();
-  };
-
   const unlockProfileIndividually = async () => {
     if (!targetProfileId) return;
 
@@ -245,7 +237,6 @@ export default function PlansScreen({ navigation, route }: any) {
         return;
       }
 
-      setShowProfileUnlock(false);
       setPendingProfileUnlockPayment({
         orderResult,
         title: 'Profile Unlock',
@@ -321,9 +312,9 @@ export default function PlansScreen({ navigation, route }: any) {
               <>
                 <TouchableOpacity
                   style={styles.unlockBanner}
-                  onPress={openProfileUnlockPrompt}
+                  onPress={unlockProfileIndividually}
                 >
-                  <Text style={styles.unlockBannerText}>Unlock this profile individually</Text>
+                  <Text style={styles.unlockBannerText}>Unlock This profile for ₹{profileUnlockPrice}</Text>
                 </TouchableOpacity>
                 <View style={styles.orRow}>
                   <View style={styles.orLine} />
@@ -401,16 +392,6 @@ export default function PlansScreen({ navigation, route }: any) {
         loading={confirmingPayment}
         onClose={closePaymentBreakup}
         onPurchase={confirmPayment}
-      />
-      <UnlockAccessModal
-        visible={showProfileUnlock}
-        name={targetProfileName}
-        price={profileUnlockPrice}
-        access={profileUnlockAccess}
-        loading={unlockingProfile}
-        onClose={() => setShowProfileUnlock(false)}
-        onUnlock={unlockProfileIndividually}
-        onUpgrade={() => setShowProfileUnlock(false)}
       />
       <PaymentBreakupModal
         visible={Boolean(pendingProfileUnlockPayment)}

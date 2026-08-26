@@ -307,6 +307,10 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       setShowSentModal(true);
       setRequestStatus('PENDING');
     } catch (err: any) {
+      if (err?.response?.status === 402) {
+        setShowUnlock(true);
+        return;
+      }
       Alert.alert(
         'Error',
         err?.response?.data?.message || 'Could not send request',
@@ -504,11 +508,8 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       <UnlockAccessModal
         visible={showUnlock}
         name={name}
-        price={unlockPrice}
         access={access}
-        loading={paying}
         onClose={() => setShowUnlock(false)}
-        onUnlock={handleUnlock}
         onUpgrade={() => {
           setShowUnlock(false);
           navigation.navigate('Plans', { profileId, profileName: name });

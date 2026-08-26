@@ -15,6 +15,8 @@ import apiClient from '../../api/client';
 import ProfileCard from '../../components/ProfileCard';
 import BottomNav from '../../components/BottomNav';
 import RequestSentModal from '../../components/RequestSentModal';
+import UnlockAccessModal from '../../components/UnlockAccessModal';
+import { getProfileAccess, getUnlockPrice } from '../../api/membershipPayment';
 import { isProfileFullyVerified } from '../../api/profile';
 
 const getAge = (dob?: string) => {
@@ -62,6 +64,8 @@ export default function AllInterestedScreen({ navigation, route }: any) {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [sentModal, setSentModal] = useState<{ show: boolean; name?: string }>({ show: false });
+  const [accessPrompt, setAccessPrompt] = useState<{ profileId: string; name?: string; access: any } | null>(null);
+  const [unlockPrice, setUnlockPrice] = useState(99);
 
   const load = useCallback(async (pageNum: number, replace = false) => {
     if (loading) return;
@@ -114,6 +118,22 @@ export default function AllInterestedScreen({ navigation, route }: any) {
       );
       setSentModal({ show: true, name: prof?.name });
     } catch (err: any) {
+      if (err?.response?.status === 402) {
+        const name = items.find((p) => p.profileId === profileId)?.name;
+        const [accessResult, priceResult] = await Promise.allSettled([
+          getProfileAccess(profileId),
+          getUnlockPrice(),
+        ]);
+        setAccessPrompt({
+          profileId,
+          name,
+          access: accessResult.status === 'fulfilled' ? accessResult.value : null,
+        });
+        if (priceResult.status === 'fulfilled') {
+          setUnlockPrice(priceResult.value?.amount || 99);
+        }
+        return;
+      }
       Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
     }
   };
@@ -192,6 +212,21 @@ export default function AllInterestedScreen({ navigation, route }: any) {
       </View>
 
       {pushed && <BottomNav active="InterestsTab" />}
+
+      <UnlockAccessModal
+        visible={Boolean(accessPrompt)}
+        variant="accept"
+        action="send"
+        name={accessPrompt?.name}
+        access={accessPrompt?.access}
+        onClose={() => setAccessPrompt(null)}
+        onUpgrade={() => {
+          const profileId = accessPrompt?.profileId;
+          const profileName = accessPrompt?.name;
+          setAccessPrompt(null);
+          navigation.navigate('Plans', profileId ? { profileId, profileName } : undefined);
+        }}
+      />
     </SafeAreaView>
   );
 }

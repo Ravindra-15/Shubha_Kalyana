@@ -25,6 +25,8 @@ import { getPublicVendors } from '../../api/vendor';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { useFocusEffect } from '@react-navigation/native';
 import RequestSentModal from '../../components/RequestSentModal';
+import UnlockAccessModal from '../../components/UnlockAccessModal';
+import { getProfileAccess, getUnlockPrice } from '../../api/membershipPayment';
 import { getUnreadCount } from '../../api/notification';
 import { sortProfilesByMatchPercent } from '../../utils/matchSorting';
 import { isProfileFullyVerified } from '../../api/profile';
@@ -46,6 +48,24 @@ export default function HomeScreen({ navigation }: any) {
     show: false,
   });
   const [unreadCount, setUnreadCount] = useState(0);
+  const [accessPrompt, setAccessPrompt] = useState<{ profileId: string; name?: string; access: any; action: 'send' | 'accept' } | null>(null);
+  const [unlockPrice, setUnlockPrice] = useState(99);
+
+  const showAccessRequired = async (profileId: string, name: string | undefined, action: 'send' | 'accept') => {
+    const [accessResult, priceResult] = await Promise.allSettled([
+      getProfileAccess(profileId),
+      getUnlockPrice(),
+    ]);
+    setAccessPrompt({
+      profileId,
+      name,
+      action,
+      access: accessResult.status === 'fulfilled' ? accessResult.value : null,
+    });
+    if (priceResult.status === 'fulfilled') {
+      setUnlockPrice(priceResult.value?.amount || 99);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -140,6 +160,11 @@ export default function HomeScreen({ navigation }: any) {
       await apiClient.patch(`/relationship/requests/${requestId}/accept`);
       setReceivedRequests(prev => prev.filter(r => r.requestId !== requestId));
     } catch (err: any) {
+      if (err?.response?.status === 402) {
+        const req = receivedRequests.find(r => r.requestId === requestId);
+        await showAccessRequired(req?.profileId, req?.name, 'accept');
+        return;
+      }
       Alert.alert('Error', err?.response?.data?.message || 'Could not accept');
     }
   };
@@ -245,6 +270,11 @@ export default function HomeScreen({ navigation }: any) {
         ),
       );
     } catch (err: any) {
+      if (err?.response?.status === 402) {
+        const name = interestedProfiles.find(p => p.profileId === profileId)?.name;
+        await showAccessRequired(profileId, name, 'send');
+        return;
+      }
       Alert.alert(
         'Error',
         err?.response?.data?.message || 'Could not send request',
@@ -268,6 +298,11 @@ export default function HomeScreen({ navigation }: any) {
       );
       setSentModal({ show: true, name: prof?.name });
     } catch (err: any) {
+      if (err?.response?.status === 402) {
+        const name = matches.find(p => p.profileId === profileId)?.name;
+        await showAccessRequired(profileId, name, 'send');
+        return;
+      }
       Alert.alert(
         'Error',
         err?.response?.data?.message || 'Could not send request',
@@ -351,6 +386,21 @@ export default function HomeScreen({ navigation }: any) {
         onClose={() => setShowFilter(false)}
         onApply={applyFilters}
         initial={activeFilters || undefined}
+      />
+
+      <UnlockAccessModal
+        visible={Boolean(accessPrompt)}
+        variant="accept"
+        action={accessPrompt?.action}
+        name={accessPrompt?.name}
+        access={accessPrompt?.access}
+        onClose={() => setAccessPrompt(null)}
+        onUpgrade={() => {
+          const profileId = accessPrompt?.profileId;
+          const profileName = accessPrompt?.name;
+          setAccessPrompt(null);
+          navigation.navigate('Plans', profileId ? { profileId, profileName } : undefined);
+        }}
       />
 
       <ScrollView

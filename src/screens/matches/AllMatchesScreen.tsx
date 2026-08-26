@@ -16,6 +16,8 @@ import apiClient from '../../api/client';
 import ProfileCard from '../../components/ProfileCard';
 import FilterModal, { Filters } from '../../components/FilterModal';
 import BottomNav from '../../components/BottomNav';
+import UnlockAccessModal from '../../components/UnlockAccessModal';
+import { getProfileAccess, getUnlockPrice } from '../../api/membershipPayment';
 import { sortProfilesByMatchPercent } from '../../utils/matchSorting';
 
 export default function AllMatchesScreen({ navigation, route }: any) {
@@ -31,6 +33,8 @@ export default function AllMatchesScreen({ navigation, route }: any) {
   const [hasNext, setHasNext] = useState(true);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [accessPrompt, setAccessPrompt] = useState<{ profileId: string; name?: string; access: any } | null>(null);
+  const [unlockPrice, setUnlockPrice] = useState(99);
 
   const buildParams = useCallback(
     (pageNum: number) => {
@@ -121,6 +125,22 @@ export default function AllMatchesScreen({ navigation, route }: any) {
         prev.map((p) => (p.profileId === profileId ? { ...p, requestStatus: 'PENDING' } : p))
       );
     } catch (err: any) {
+      if (err?.response?.status === 402) {
+        const name = profiles.find((p) => p.profileId === profileId)?.name;
+        const [accessResult, priceResult] = await Promise.allSettled([
+          getProfileAccess(profileId),
+          getUnlockPrice(),
+        ]);
+        setAccessPrompt({
+          profileId,
+          name,
+          access: accessResult.status === 'fulfilled' ? accessResult.value : null,
+        });
+        if (priceResult.status === 'fulfilled') {
+          setUnlockPrice(priceResult.value?.amount || 99);
+        }
+        return;
+      }
       Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
     }
   };
@@ -232,6 +252,21 @@ export default function AllMatchesScreen({ navigation, route }: any) {
       )}
 
       {pushed && <BottomNav active="SearchTab" />}
+
+      <UnlockAccessModal
+        visible={Boolean(accessPrompt)}
+        variant="accept"
+        action="send"
+        name={accessPrompt?.name}
+        access={accessPrompt?.access}
+        onClose={() => setAccessPrompt(null)}
+        onUpgrade={() => {
+          const profileId = accessPrompt?.profileId;
+          const profileName = accessPrompt?.name;
+          setAccessPrompt(null);
+          navigation.navigate('Plans', profileId ? { profileId, profileName } : undefined);
+        }}
+      />
     </SafeAreaView>
   );
 }
