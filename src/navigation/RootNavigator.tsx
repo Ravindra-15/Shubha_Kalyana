@@ -7,6 +7,9 @@ import SplashScreen from '../screens/onboarding/SplashScreen';
 import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import LoginOtpScreen from '../screens/auth/LoginOtpScreen';
+import ForgotMpinScreen from '../screens/auth/ForgotMpinScreen';
+import ForgotMpinVerifyScreen from '../screens/auth/ForgotMpinVerifyScreen';
+import ForgotMpinResetScreen from '../screens/auth/ForgotMpinResetScreen';
 import MainTabs from './MainTabs';
 import SelectLanguageScreen from '../screens/auth/signup/SelectLanguageScreen';
 import SignupProfileForScreen from '../screens/auth/signup/SignupProfileForScreen';
@@ -113,6 +116,9 @@ export default function RootNavigator() {
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="LoginOtp" component={LoginOtpScreen} />
+            <Stack.Screen name="ForgotMpin" component={ForgotMpinScreen} />
+            <Stack.Screen name="ForgotMpinVerify" component={ForgotMpinVerifyScreen} />
+            <Stack.Screen name="ForgotMpinReset" component={ForgotMpinResetScreen} />
             <Stack.Screen name="SelectLanguage" component={SelectLanguageScreen} />
             <Stack.Screen
               name="SignupProfileFor"

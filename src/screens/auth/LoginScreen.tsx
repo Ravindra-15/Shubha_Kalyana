@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   View,
@@ -16,12 +16,19 @@ import apiClient from '../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getResumeScreen } from '../../utils/resumeOnboarding';
 
-export default function LoginScreen({ navigation }: any) {
+export default function LoginScreen({ navigation, route }: any) {
   const [mobile, setMobile] = useState('');
   const [mpin, setMpin] = useState(['', '', '', '']);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const mpinRefs = useRef<Array<TextInput | null>>([]);
+
+  useEffect(() => {
+    if (route?.params?.justResetMpin) {
+      Alert.alert('MPIN Reset', 'Your MPIN has been reset successfully. Please login now.');
+      navigation.setParams({ justResetMpin: undefined });
+    }
+  }, [route?.params?.justResetMpin]);
 
   const handleMpinChange = (value: string, index: number) => {
     if (value.length > 1) return;

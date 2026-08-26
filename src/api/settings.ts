@@ -72,6 +72,11 @@ export const sendChangeMpinOtp = async (mobile: string) => {
   return res.data?.data;
 };
 
+export const verifyForgotMpinOtp = async (mobile: string, code: string) => {
+  const res = await apiClient.post('/auth/forgot-mpin/verify-otp', { mobile, code });
+  return res.data?.data;
+};
+
 export const resetMpin = async (payload: {
   mobile: string;
   code: string;
