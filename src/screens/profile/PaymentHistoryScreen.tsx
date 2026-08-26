@@ -1,12 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator,
+  View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { ArrowLeft, Download } from 'lucide-react-native';
 import BottomNav from '../../components/BottomNav';
-import { getMyPaymentOrders, PaymentOrder } from '../../api/payment';
+import { getMyPaymentOrders, downloadAndShareReceipt, PaymentOrder } from '../../api/payment';
 
 const PURPOSE_LABELS: Record<string, string> = {
   MEMBERSHIP: 'Membership',
@@ -26,12 +26,21 @@ const formatDate = (dateStr?: string) => {
 };
 
 const formatTitle = (order: PaymentOrder) => {
+  if (order.purpose === 'MEMBERSHIP' && order.planId?.planName) {
+    return order.planId.planName;
+  }
+  if (order.purpose === 'PROFILE_UNLOCK' && order.targetProfileId) {
+    const basic = order.targetProfileId.basicInfo || {};
+    const name = [basic.firstName, basic.lastName].filter(Boolean).join(' ');
+    return name ? `Profile Unlock - ${name}` : 'Profile Unlock';
+  }
   return PURPOSE_LABELS[order.purpose] || order.purpose;
 };
 
 export default function PaymentHistoryScreen({ navigation }: any) {
   const [items, setItems] = useState<PaymentOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -51,9 +60,16 @@ export default function PaymentHistoryScreen({ navigation }: any) {
     }, [load])
   );
 
-  const handleDownload = () => {
-    // TODO: PDF invoice generation not implemented on backend yet
-    // Placeholder until a PDF library (e.g. pdfkit) is added server-side
+  const handleDownload = async (orderId: string) => {
+    if (downloadingId) return;
+    try {
+      setDownloadingId(orderId);
+      await downloadAndShareReceipt(orderId);
+    } catch {
+      Alert.alert('Error', 'Could not download receipt. Please try again.');
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   return (
@@ -89,8 +105,16 @@ export default function PaymentHistoryScreen({ navigation }: any) {
                 <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
                 <View style={styles.cardBottomRow}>
                   {item.status === 'PAID' ? (
-                    <TouchableOpacity style={styles.downloadRow} onPress={handleDownload}>
-                      <Download color="#D20236" size={14} />
+                    <TouchableOpacity
+                      style={styles.downloadRow}
+                      onPress={() => handleDownload(item._id)}
+                      disabled={downloadingId === item._id}
+                    >
+                      {downloadingId === item._id ? (
+                        <ActivityIndicator color="#D20236" size="small" />
+                      ) : (
+                        <Download color="#D20236" size={14} />
+                      )}
                       <Text style={styles.downloadText}>Download Invoice</Text>
                     </TouchableOpacity>
                   ) : (

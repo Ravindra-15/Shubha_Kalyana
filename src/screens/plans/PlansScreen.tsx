@@ -299,7 +299,9 @@ export default function PlansScreen({ navigation, route }: any) {
           <ArrowLeft color="#000" size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Upgrade to Premium</Text>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity onPress={() => navigation.navigate('PaymentHistory')}>
+          <Text style={styles.billingLink}>Billing</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
@@ -427,6 +429,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 12,
   },
   headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
+  billingLink: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#D20236' },
   content: { flex: 1 },
   scroll: { padding: 16, paddingBottom: 20 },
   unlockBanner: {
