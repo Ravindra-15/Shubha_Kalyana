@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import ProgressBar from '../../../components/ProgressBar';
 import { useSignup } from '../../../context/SignupContext';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
 const MONTH_OPTIONS = [
@@ -66,6 +67,8 @@ export default function SignupAboutScreen({ navigation }: any) {
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
   const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
+  const { scrollRef, registerField, scrollToError } = useScrollToError();
+  const FIELD_ORDER = ['firstName', 'lastName', 'day', 'month', 'year'];
   const [activePicker, setActivePicker] = useState<DobPickerType>(null);
 
   // dynamic label: male profile = Groom, female = Bride
@@ -86,6 +89,7 @@ export default function SignupAboutScreen({ navigation }: any) {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
+      scrollToError(Object.keys(newErrors), FIELD_ORDER);
       return Alert.alert('Required', 'Please fill all mandatory fields');
     }
 
@@ -96,6 +100,7 @@ const dd = parseInt(day, 10);
     // month range
     if (mm < 1 || mm > 12) {
       setErrors({ month: true });
+      scrollToError(['month'], FIELD_ORDER);
       return Alert.alert('Invalid', 'Month must be between 1 and 12');
     }
 
@@ -103,6 +108,7 @@ const dd = parseInt(day, 10);
     const currentYear = new Date().getFullYear();
     if (yy < 1900 || yy > currentYear) {
       setErrors({ year: true });
+      scrollToError(['year'], FIELD_ORDER);
       return Alert.alert('Invalid', 'Please enter a valid year');
     }
 
@@ -110,6 +116,7 @@ const dd = parseInt(day, 10);
     const daysInMonth = new Date(yy, mm, 0).getDate();
     if (dd < 1 || dd > daysInMonth) {
       setErrors({ day: true });
+      scrollToError(['day'], FIELD_ORDER);
       return Alert.alert('Invalid', `Day must be between 1 and ${daysInMonth} for the selected month`);
     }
 
@@ -119,6 +126,7 @@ const dd = parseInt(day, 10);
 
     if (parsed > today) {
       setErrors({ day: true, month: true, year: true });
+      scrollToError(['day'], FIELD_ORDER);
       return Alert.alert('Invalid', 'Date of birth cannot be in the future');
     }
 
@@ -128,6 +136,7 @@ const dd = parseInt(day, 10);
     if (mDiff < 0 || (mDiff === 0 && today.getDate() < parsed.getDate())) age--;
     if (age < 18) {
       setErrors({ day: true, month: true, year: true });
+      scrollToError(['day'], FIELD_ORDER);
       return Alert.alert('Invalid', 'You must be at least 18 years old');
     }
 
@@ -139,7 +148,7 @@ const dd = parseInt(day, 10);
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardWrapper>
+      <KeyboardWrapper ref={scrollRef}>
         <View style={styles.scroll}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>←</Text>
@@ -162,6 +171,7 @@ const dd = parseInt(day, 10);
           Name of {personLabel} <Text style={styles.star}>*</Text>
         </Text>
         <TextInput
+          ref={registerField('firstName') as any}
           style={[styles.input, errors.firstName && styles.inputError]}
           placeholder="First Name"
           placeholderTextColor="#999"
@@ -172,6 +182,7 @@ const dd = parseInt(day, 10);
           }}
         />
         <TextInput
+          ref={registerField('lastName') as any}
           style={[styles.input, errors.lastName && styles.inputError]}
           placeholder="Last Name"
           placeholderTextColor="#999"
@@ -183,7 +194,14 @@ const dd = parseInt(day, 10);
         />
 
         <Text style={styles.label}>Date of Birth</Text>
-        <View style={styles.dobRow}>
+        <View
+          style={styles.dobRow}
+          ref={(node: any) => {
+            registerField('day')(node);
+            registerField('month')(node);
+            registerField('year')(node);
+          }}
+        >
           <TouchableOpacity
             style={[styles.dobPicker, errors.day && styles.inputError]}
             onPress={() => setActivePicker('day')}

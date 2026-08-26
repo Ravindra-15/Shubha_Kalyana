@@ -14,6 +14,7 @@ import SearchableDropdown from '../../../components/SearchableDropdown';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 
 const MARITAL_STATUS = [
@@ -75,10 +76,30 @@ export default function BasicLifestyleScreen({ navigation }: any) {
   const [inchesError, setInchesError] = useState('');
   const [weightError, setWeightError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ maritalStatus?: boolean }>({});
+  const { scrollRef, registerField, scrollToError } = useScrollToError();
 
 const submit = async (skip = false) => {
+    if (!maritalStatus) {
+      setErrors({ maritalStatus: true });
+      scrollToError(['maritalStatus'], ['maritalStatus']);
+      return Alert.alert('Required', 'Please select your marital status');
+    }
+    setErrors({});
+
     if (skip) {
-      navigation.navigate('Qualification');
+      try {
+        setLoading(true);
+        if (data.basicLifestyle?.maritalStatus !== maritalStatus) {
+          await apiClient.patch('/onboarding/profile', { maritalStatus });
+          setField('basicLifestyle', { ...(data.basicLifestyle || {}), maritalStatus });
+        }
+        navigation.navigate('Qualification');
+      } catch (err: any) {
+        Alert.alert('Error', err?.response?.data?.message || 'Could not save');
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -165,7 +186,7 @@ const submit = async (skip = false) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardWrapper>
+      <KeyboardWrapper ref={scrollRef}>
         <View style={styles.scroll}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>←</Text>
@@ -178,12 +199,18 @@ const submit = async (skip = false) => {
         </Text>
 
         <Text style={styles.label}>Maritial Status</Text>
-        <SearchableDropdown
-          placeholder="Select Your Martial Status"
-          value={maritalStatus}
-          options={MARITAL_STATUS}
-          onSelect={(val) => setMaritalStatus(val)}
-        />
+        <View ref={registerField('maritalStatus')}>
+          <SearchableDropdown
+            placeholder="Select Your Martial Status"
+            value={maritalStatus}
+            options={MARITAL_STATUS}
+            onSelect={(val) => {
+              setMaritalStatus(val);
+              setErrors({});
+            }}
+            error={errors.maritalStatus}
+          />
+        </View>
 
         <Text style={styles.label}>Height</Text>
         <View style={styles.row}>

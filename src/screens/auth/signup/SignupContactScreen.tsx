@@ -15,6 +15,7 @@ import ProgressBar from '../../../components/ProgressBar';
 import { useSignup } from '../../../context/SignupContext';
 import apiClient from '../../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 const getLookingForFromGender = (selectedGender?: string) => {
   if (selectedGender === 'MALE') return 'Groom';
@@ -27,6 +28,7 @@ export default function SignupContactScreen({ navigation }: any) {
   const [mobile, setMobile] = useState(data.mobile || '');
   const [email, setEmail] = useState(data.email || '');
   const [errors, setErrors] = useState<{ mobile?: string; email?: string }>({});
+  const { scrollRef, registerField, scrollToError } = useScrollToError();
 
   const [mobileOtpSent, setMobileOtpSent] = useState(false);
   const [mobileOtpValue, setMobileOtpValue] = useState('');
@@ -66,6 +68,7 @@ export default function SignupContactScreen({ navigation }: any) {
   const sendMobileOtp = async () => {
     if (!/^[6-9]\d{9}$/.test(mobile.trim())) {
       setErrors((e) => ({ ...e, mobile: 'Enter a valid 10 digit mobile number' }));
+      scrollToError(['mobile'], ['mobile', 'email']);
       return;
     }
     try {
@@ -119,6 +122,7 @@ export default function SignupContactScreen({ navigation }: any) {
   const sendEmailOtp = async () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setErrors((e) => ({ ...e, email: 'Enter a valid email' }));
+      scrollToError(['email'], ['mobile', 'email']);
       return;
     }
     try {
@@ -162,6 +166,7 @@ export default function SignupContactScreen({ navigation }: any) {
 
   const handleSubmit = async () => {
     if (!mobileVerified || !emailVerified) {
+      scrollToError(!mobileVerified ? ['mobile'] : ['email'], ['mobile', 'email']);
       Alert.alert('Required', 'Please verify both mobile number and email');
       return;
     }
@@ -203,7 +208,7 @@ export default function SignupContactScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardWrapper>
+      <KeyboardWrapper ref={scrollRef}>
         <View style={styles.scroll}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.back}>←</Text>
@@ -224,7 +229,7 @@ export default function SignupContactScreen({ navigation }: any) {
           </Text>
 
           <Text style={styles.label}>Mobile number <Text style={styles.star}>*</Text></Text>
-          <View style={styles.row}>
+          <View style={styles.row} ref={registerField('mobile')}>
             <TextInput
               style={[styles.input, styles.flexInput, errors.mobile && styles.inputError]}
               placeholder="Enter your mobile number"
@@ -295,7 +300,7 @@ export default function SignupContactScreen({ navigation }: any) {
           <Text style={[styles.label, { marginTop: 20 }]}>
             Email ID <Text style={styles.star}>*</Text>
           </Text>
-          <View style={styles.row}>
+          <View style={styles.row} ref={registerField('email')}>
             <TextInput
               style={[
                 styles.input,

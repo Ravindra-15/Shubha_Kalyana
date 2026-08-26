@@ -15,6 +15,7 @@ import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
 import SearchableDropdown from '../../../components/SearchableDropdown';
 import { INDIAN_STATE_OPTIONS } from '../../../constants/indianStates';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 export default function AddressDetailsScreen({ navigation }: any) {
   const { data, setField } = useSignup();
@@ -47,6 +48,8 @@ export default function AddressDetailsScreen({ navigation }: any) {
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
+  const { scrollRef, registerField, scrollToError } = useScrollToError();
+  const FIELD_ORDER = ['state', 'district', 'pincode', 'country', 'city', 'pState', 'pDistrict', 'pPincode', 'pCountry', 'pCity'];
 
   const clearErr = (key: string) => setErrors((e) => ({ ...e, [key]: false }));
 
@@ -87,14 +90,11 @@ export default function AddressDetailsScreen({ navigation }: any) {
     return o;
   };
 
-  const submit = async (skip = false) => {
-    if (skip) {
-      navigation.navigate('Employment');
-      return;
-    }
+  const submit = async (_skip = false) => {
     const { e, msg } = validate();
     setErrors(e);
     if (Object.keys(e).length > 0) {
+      scrollToError(Object.keys(e), FIELD_ORDER);
       return Alert.alert('Required', msg);
     }
 
@@ -137,7 +137,9 @@ export default function AddressDetailsScreen({ navigation }: any) {
     ct: string, setCt: (v: string) => void,
     pc: string, setPc: (v: string) => void,
     prefix: string
-  ) => (
+  ) => {
+    const key = (name: string, capName: string) => (prefix ? `${prefix}${capName}` : name);
+    return (
     <>
       <View style={styles.toggleRow}>
         <TouchableOpacity style={[styles.toggle, type === 'INDIA' && styles.toggleActive]} onPress={() => setType('INDIA')}>
@@ -154,29 +156,31 @@ export default function AddressDetailsScreen({ navigation }: any) {
       {type === 'INDIA' ? (
         <>
           <Text style={styles.label}>State <Text style={styles.star}>*</Text></Text>
-          <SearchableDropdown
-            placeholder="Select State"
-            value={s}
-            options={INDIAN_STATE_OPTIONS}
-            onSelect={(v) => {
-              setS(v);
-              clearErr(prefix ? `${prefix}State` : 'state');
-            }}
-            error={Boolean(errors[prefix ? `${prefix}State` : 'state'])}
-          />
+          <View ref={registerField(prefix ? `${prefix}State` : 'state')}>
+            <SearchableDropdown
+              placeholder="Select State"
+              value={s}
+              options={INDIAN_STATE_OPTIONS}
+              onSelect={(v) => {
+                setS(v);
+                clearErr(prefix ? `${prefix}State` : 'state');
+              }}
+              error={Boolean(errors[prefix ? `${prefix}State` : 'state'])}
+            />
+          </View>
           <Text style={styles.label}>District <Text style={styles.star}>*</Text></Text>
-          <TextInput style={[styles.input, errors[`${prefix}District`] && styles.inputError]} placeholder="District" placeholderTextColor="#999" value={d} onChangeText={(v) => { setD(v); clearErr(`${prefix}District`); }} />
+          <TextInput ref={registerField(key('district', 'District')) as any} style={[styles.input, errors[key('district', 'District')] && styles.inputError]} placeholder="District" placeholderTextColor="#999" value={d} onChangeText={(v) => { setD(v); clearErr(key('district', 'District')); }} />
           <Text style={styles.label}>Taluka</Text>
           <TextInput style={styles.input} placeholder="Taluka" placeholderTextColor="#999" value={t} onChangeText={setT} />
           <Text style={styles.label}>Pincode</Text>
-          <TextInput style={[styles.input, errors[`${prefix}Pincode`] && styles.inputError]} placeholder="6-digit pincode" placeholderTextColor="#999" value={pin} onChangeText={(v) => { setPin(v); clearErr(`${prefix}Pincode`); }} keyboardType="number-pad" maxLength={6} />
+          <TextInput ref={registerField(key('pincode', 'Pincode')) as any} style={[styles.input, errors[key('pincode', 'Pincode')] && styles.inputError]} placeholder="6-digit pincode" placeholderTextColor="#999" value={pin} onChangeText={(v) => { setPin(v); clearErr(key('pincode', 'Pincode')); }} keyboardType="number-pad" maxLength={6} />
         </>
       ) : (
         <>
           <Text style={styles.label}>Country <Text style={styles.star}>*</Text></Text>
-          <TextInput style={[styles.input, errors[`${prefix}Country`] && styles.inputError]} placeholder="Country" placeholderTextColor="#999" value={c} onChangeText={(v) => { setC(v); clearErr(`${prefix}Country`); }} />
+          <TextInput ref={registerField(key('country', 'Country')) as any} style={[styles.input, errors[key('country', 'Country')] && styles.inputError]} placeholder="Country" placeholderTextColor="#999" value={c} onChangeText={(v) => { setC(v); clearErr(key('country', 'Country')); }} />
           <Text style={styles.label}>City <Text style={styles.star}>*</Text></Text>
-          <TextInput style={[styles.input, errors[`${prefix}City`] && styles.inputError]} placeholder="City" placeholderTextColor="#999" value={ct} onChangeText={(v) => { setCt(v); clearErr(`${prefix}City`); }} />
+          <TextInput ref={registerField(key('city', 'City')) as any} style={[styles.input, errors[key('city', 'City')] && styles.inputError]} placeholder="City" placeholderTextColor="#999" value={ct} onChangeText={(v) => { setCt(v); clearErr(key('city', 'City')); }} />
           <Text style={styles.label}>State / Province</Text>
           <TextInput style={styles.input} placeholder="State or Province" placeholderTextColor="#999" value={sp} onChangeText={setSp} />
           <Text style={styles.label}>Postal Code</Text>
@@ -184,11 +188,12 @@ export default function AddressDetailsScreen({ navigation }: any) {
         </>
       )}
     </>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardWrapper>
+      <KeyboardWrapper ref={scrollRef}>
         <View style={styles.inner}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.back}>←</Text>

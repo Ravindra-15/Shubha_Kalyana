@@ -14,6 +14,7 @@ import SearchableDropdown from '../../../components/SearchableDropdown';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 const EMPLOYED_TYPES = [
   { label: 'Private', value: 'PRIVATE' },
@@ -79,6 +80,7 @@ export default function EmploymentScreen({ navigation }: any) {
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
+  const { scrollRef, registerField, scrollToError } = useScrollToError();
 
   const isJobType = employedType === 'PRIVATE' || employedType === 'GOVERNMENT' || employedType === 'SEMI_GOVERNMENT';
   const isBusiness = employedType === 'BUSINESS';
@@ -88,19 +90,15 @@ export default function EmploymentScreen({ navigation }: any) {
   const showLinkedIn = !isAgriculture;
 
   const submit = async (skip = false) => {
-    if (skip) {
-      navigation.navigate('AboutYou');
-      return;
-    }
-
     const newErrors: { [k: string]: boolean } = {};
     if (!employedType) newErrors.employedType = true;
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
+      scrollToError(['employedType'], ['employedType']);
       return Alert.alert('Required', 'Please select employment type');
     }
 
-    if (linkedIn.trim() && !/linkedin\.com/i.test(linkedIn.trim())) {
+    if (!skip && linkedIn.trim() && !/linkedin\.com/i.test(linkedIn.trim())) {
       setErrors({ linkedIn: true });
       return Alert.alert('Invalid', 'Please enter a valid LinkedIn URL');
     }
@@ -132,7 +130,7 @@ export default function EmploymentScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardWrapper>
+      <KeyboardWrapper ref={scrollRef}>
         <View style={styles.scroll}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.back}>←</Text>
@@ -145,16 +143,18 @@ export default function EmploymentScreen({ navigation }: any) {
           </Text>
 
           <Text style={styles.label}>Employment Type <Text style={styles.star}>*</Text></Text>
-          <SearchableDropdown
-            placeholder="Select Employment Type"
-            value={employedType}
-            options={EMPLOYED_TYPES}
-            onSelect={(val) => {
-              setEmployedType(val);
-              setErrors((e) => ({ ...e, employedType: false }));
-            }}
-            error={errors.employedType}
-          />
+          <View ref={registerField('employedType')}>
+            <SearchableDropdown
+              placeholder="Select Employment Type"
+              value={employedType}
+              options={EMPLOYED_TYPES}
+              onSelect={(val) => {
+                setEmployedType(val);
+                setErrors((e) => ({ ...e, employedType: false }));
+              }}
+              error={errors.employedType}
+            />
+          </View>
 
           {showDesignation && (
             <>

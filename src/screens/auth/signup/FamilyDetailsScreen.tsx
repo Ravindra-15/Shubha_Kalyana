@@ -15,6 +15,7 @@ import ProgressBar from '../../../components/ProgressBar';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 const FAMILY_TYPES = [
   { label: 'Joint Family', value: 'JOINT' },
@@ -54,21 +55,19 @@ export default function FamilyDetailsScreen({ navigation }: any) {
   const [activePicker, setActivePicker] = useState<SiblingPickerType>(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
+  const { scrollRef, registerField, scrollToError } = useScrollToError();
+  const FIELD_ORDER = ['fatherName', 'motherName', 'familyType'];
 
   const maxAllowed = familyType === 'JOINT' ? 20 : 10;
 
-  const submit = async (skip = false) => {
-    if (skip) {
-      navigation.navigate('Horoscope');
-      return;
-    }
-
+  const submit = async (_skip = false) => {
     const newErrors: { [k: string]: boolean } = {};
     if (!familyType) newErrors.familyType = true;
     if (!fatherName.trim()) newErrors.fatherName = true;
     if (!motherName.trim()) newErrors.motherName = true;
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
+      scrollToError(Object.keys(newErrors), FIELD_ORDER);
       return Alert.alert('Required', 'Please fill all mandatory fields');
     }
 
@@ -135,7 +134,7 @@ export default function FamilyDetailsScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardWrapper>
+      <KeyboardWrapper ref={scrollRef}>
         <View style={styles.scroll}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.back}>←</Text>
@@ -149,6 +148,7 @@ export default function FamilyDetailsScreen({ navigation }: any) {
 
            <Text style={styles.label}>Father's Name <Text style={styles.star}>*</Text></Text>
           <TextInput
+            ref={registerField('fatherName') as any}
             style={[styles.input, errors.fatherName && styles.inputError]}
             placeholder="Enter Father's name"
             placeholderTextColor="#999"
@@ -167,6 +167,7 @@ export default function FamilyDetailsScreen({ navigation }: any) {
 
           <Text style={styles.label}>Mother's Name <Text style={styles.star}>*</Text></Text>
           <TextInput
+            ref={registerField('motherName') as any}
             style={[styles.input, errors.motherName && styles.inputError]}
             placeholder="Enter Mother's name"
             placeholderTextColor="#999"
@@ -184,7 +185,7 @@ export default function FamilyDetailsScreen({ navigation }: any) {
           />
 
           <Text style={styles.label}>Family Type <Text style={styles.star}>*</Text></Text>
-          <View style={styles.row}>
+          <View style={styles.row} ref={registerField('familyType')}>
             {FAMILY_TYPES.map((opt) => (
               <TouchableOpacity
                 key={opt.value}

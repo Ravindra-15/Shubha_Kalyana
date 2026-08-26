@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import ProgressBar from '../../../components/ProgressBar';
 import { useSignup } from '../../../context/SignupContext';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 const PROFILE_OPTIONS = [
   { label: 'Myself', value: 'Myself' },
@@ -60,12 +61,19 @@ export default function SignupProfileForScreen({ navigation }: any) {
   const [gender, setGender] = useState(data.gender || '');
   const [showOther, setShowOther] = useState(false);
   const [otherRelation, setOtherRelation] = useState('');
+  const [errors, setErrors] = useState<{ profileFor?: boolean; gender?: boolean }>({});
+  const { scrollRef, registerField, scrollToError } = useScrollToError();
 
   const handleContinue = () => {
     const finalProfileFor = showOther ? otherRelation.trim() : profileFor;
-    if (!finalProfileFor)
-      return Alert.alert('Required', 'Please select who this profile is for');
-    if (!gender) return Alert.alert('Required', 'Please select gender');
+    const newErrors: typeof errors = {};
+    if (!finalProfileFor) newErrors.profileFor = true;
+    if (!gender) newErrors.gender = true;
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      scrollToError(Object.keys(newErrors), ['profileFor', 'gender']);
+      return Alert.alert('Required', newErrors.profileFor ? 'Please select who this profile is for' : 'Please select gender');
+    }
     setField('profileFor', showOther ? 'My Relative' : finalProfileFor);
     setField('gender', gender);
     setField('lookingFor', getLookingForFromGender(gender));
@@ -74,7 +82,7 @@ export default function SignupProfileForScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardWrapper>
+      <KeyboardWrapper ref={scrollRef}>
         <View style={styles.scroll}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>←</Text>
@@ -94,7 +102,7 @@ export default function SignupProfileForScreen({ navigation }: any) {
           This <Text style={styles.titleRed}>Profile</Text> is for
         </Text>
 
-        <View style={styles.grid}>
+        <View ref={registerField('profileFor')} style={[styles.grid, errors.profileFor && styles.errorBorder]}>
           {PROFILE_OPTIONS.map(opt => (
             <TouchableOpacity
               key={opt.value}
@@ -182,7 +190,7 @@ export default function SignupProfileForScreen({ navigation }: any) {
         )}
 
         <Text style={styles.genderTitle}>Gender</Text>
-        <View style={styles.genderRow}>
+        <View ref={registerField('gender')} style={[styles.genderRow, errors.gender && styles.errorBorder]}>
           {GENDER_OPTIONS.map(opt => (
             <TouchableOpacity
               key={opt.value}
@@ -268,6 +276,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   pillActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
+  errorBorder: { borderWidth: 1.5, borderColor: '#D20236', borderRadius: 12, padding: 6 },
   genderPill: { width: '48%', justifyContent: 'flex-start' },
   pillText: { fontSize: 15, color: '#333', marginLeft: 10 },
   pillTextActive: { color: '#D20236', fontFamily: 'Outfit-SemiBold' },

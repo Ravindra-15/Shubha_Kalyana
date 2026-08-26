@@ -1,7 +1,10 @@
-import React, { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import React, { ReactNode, forwardRef } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 
-export default function KeyboardWrapper({ children }: { children: ReactNode }) {
+export default forwardRef<ScrollView, { children: ReactNode }>(function KeyboardWrapper(
+  { children },
+  ref
+) {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
@@ -9,6 +12,7 @@ export default function KeyboardWrapper({ children }: { children: ReactNode }) {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
      <ScrollView
+        ref={ref}
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -17,7 +21,7 @@ export default function KeyboardWrapper({ children }: { children: ReactNode }) {
       </ScrollView>
     </KeyboardAvoidingView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },

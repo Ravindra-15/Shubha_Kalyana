@@ -14,6 +14,7 @@ import ProgressBar from '../../../components/ProgressBar';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 const QUALIFICATIONS = [
   'B.Tech', 'B.E', 'B.Sc', 'B.Com', 'B.A', 'BBA', 'BCA', 'B.Pharm', 'LLB', 'MBBS',
   'M.Tech', 'M.E', 'M.Sc', 'M.Com', 'M.A', 'MBA', 'MCA', 'M.Pharm', 'LLM',
@@ -26,14 +27,12 @@ export default function QualificationScreen({ navigation }: any) {
   const [college, setCollege] = useState(data.education?.college || '');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ qualification?: boolean }>({});
+  const { scrollRef, registerField, scrollToError } = useScrollToError();
 
-  const submit = async (skip = false) => {
-    if (skip) {
-      navigation.navigate('FamilyDetails');
-      return;
-    }
+  const submit = async (_skip = false) => {
     if (!qualification.trim()) {
       setErrors({ qualification: true });
+      scrollToError(['qualification'], ['qualification']);
       return Alert.alert('Required', 'Please enter your highest qualification');
     }
     setErrors({});
@@ -61,7 +60,7 @@ export default function QualificationScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardWrapper>
+      <KeyboardWrapper ref={scrollRef}>
         <View style={styles.scroll}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>←</Text>
@@ -74,14 +73,16 @@ export default function QualificationScreen({ navigation }: any) {
         </Text>
 
         <Text style={styles.label}>Highest Qualification <Text style={styles.star}>*</Text></Text>
-        <SearchableDropdown
-          placeholder="Select or type qualification"
-          value={qualification}
-          options={QUALIFICATIONS.map((q) => ({ label: q, value: q }))}
-          onSelect={(val) => { setQualification(val); setErrors({}); }}
-          allowCustom
-          error={errors.qualification}
-        />
+        <View ref={registerField('qualification')}>
+          <SearchableDropdown
+            placeholder="Select or type qualification"
+            value={qualification}
+            options={QUALIFICATIONS.map((q) => ({ label: q, value: q }))}
+            onSelect={(val) => { setQualification(val); setErrors({}); }}
+            allowCustom
+            error={errors.qualification}
+          />
+        </View>
 
         <Text style={styles.label}>College / University</Text>
         <TextInput

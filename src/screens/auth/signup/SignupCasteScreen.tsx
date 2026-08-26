@@ -15,6 +15,7 @@ import ProgressBar from '../../../components/ProgressBar';
 import { useSignup } from '../../../context/SignupContext';
 import { getCastes, Caste } from '../../../api/caste';
 import SearchableDropdown from '../../../components/SearchableDropdown';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 const MOTHER_TONGUES = [
   'Kannada',
@@ -55,6 +56,9 @@ export default function SignupCasteScreen({ navigation }: any) {
 
   const [castes, setCastes] = useState<Caste[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
+  const { scrollRef, registerField, scrollToError } = useScrollToError();
+  const FIELD_ORDER = ['religion', 'casteId', 'subCaste', 'livingIn', 'motherTongue'];
 
   useEffect(() => {
     (async () => {
@@ -76,14 +80,18 @@ const visibleCastes = religion
   const subCasteOptions = selectedCaste?.subCastes || [];
 
   const handleContinue = () => {
-    if (!religion.trim())
-      return Alert.alert('Required', 'Please enter religion');
-    if (!casteId) return Alert.alert('Required', 'Please select caste');
-    if (!subCaste) return Alert.alert('Required', 'Please select sub caste');
-    if (!livingIn.trim())
-      return Alert.alert('Required', 'Please enter where you are living');
-    if (!motherTongue.trim())
-      return Alert.alert('Required', 'Please enter mother tongue');
+    const newErrors: { [k: string]: boolean } = {};
+    if (!religion.trim()) newErrors.religion = true;
+    if (!casteId) newErrors.casteId = true;
+    if (!subCaste) newErrors.subCaste = true;
+    if (!livingIn.trim()) newErrors.livingIn = true;
+    if (!motherTongue.trim()) newErrors.motherTongue = true;
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      scrollToError(Object.keys(newErrors), FIELD_ORDER);
+      return Alert.alert('Required', 'Please fill all mandatory fields');
+    }
 
     setField('religion', religion.trim());
     setField('caste', casteId);
@@ -95,7 +103,7 @@ const visibleCastes = religion
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardWrapper>
+      <KeyboardWrapper ref={scrollRef}>
         <View style={styles.scroll}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>←</Text>
@@ -118,17 +126,21 @@ const visibleCastes = religion
         <Text style={styles.label}>
           Religion <Text style={styles.star}>*</Text>
         </Text>
-        <SearchableDropdown
-          placeholder="Select Religion"
-          value={religion}
-          options={RELIGIONS.map(r => ({ label: r, value: r }))}
-          onSelect={val => {
-            setReligion(val);
-            setCasteId('');
-            setSubCaste('');
-          }}
-          allowCustom
-        />
+        <View ref={registerField('religion')}>
+          <SearchableDropdown
+            placeholder="Select Religion"
+            value={religion}
+            options={RELIGIONS.map(r => ({ label: r, value: r }))}
+            onSelect={val => {
+              setReligion(val);
+              setCasteId('');
+              setSubCaste('');
+              setErrors(e => ({ ...e, religion: false }));
+            }}
+            allowCustom
+            error={errors.religion}
+          />
+        </View>
 
         <Text style={styles.label}>
           Select Caste <Text style={styles.star}>*</Text>
@@ -136,46 +148,66 @@ const visibleCastes = religion
         {loading ? (
           <ActivityIndicator color="#D20236" style={{ marginVertical: 16 }} />
         ) : (
-          <SearchableDropdown
-            placeholder="Caste"
-            value={casteId}
-            options={visibleCastes.map(c => ({ label: c.casteName, value: c._id }))}
-            onSelect={val => {
-              setCasteId(val);
-              setSubCaste('');
-            }}
-          />
+          <View ref={registerField('casteId')}>
+            <SearchableDropdown
+              placeholder="Caste"
+              value={casteId}
+              options={visibleCastes.map(c => ({ label: c.casteName, value: c._id }))}
+              onSelect={val => {
+                setCasteId(val);
+                setSubCaste('');
+                setErrors(e => ({ ...e, casteId: false }));
+              }}
+              error={errors.casteId}
+            />
+          </View>
         )}
-        <SearchableDropdown
-          placeholder="Sub- Caste"
-          value={subCaste}
-          options={subCasteOptions.map(sc => ({ label: sc, value: sc }))}
-          onSelect={val => setSubCaste(val)}
-          allowCustom
-          disabled={subCasteOptions.length === 0}
-        />
+        <View ref={registerField('subCaste')}>
+          <SearchableDropdown
+            placeholder="Sub- Caste"
+            value={subCaste}
+            options={subCasteOptions.map(sc => ({ label: sc, value: sc }))}
+            onSelect={val => {
+              setSubCaste(val);
+              setErrors(e => ({ ...e, subCaste: false }));
+            }}
+            allowCustom
+            disabled={subCasteOptions.length === 0}
+            error={errors.subCaste}
+          />
+        </View>
 
         <Text style={styles.label}>
           Living In <Text style={styles.star}>*</Text>
         </Text>
         <TextInput
-          style={styles.input}
+          ref={registerField('livingIn') as any}
+          style={[styles.input, errors.livingIn && styles.inputError]}
           placeholder="Enter city / place"
           placeholderTextColor="#999"
           value={livingIn}
-          onChangeText={setLivingIn}
+          onChangeText={t => {
+            setLivingIn(t);
+            setErrors(e => ({ ...e, livingIn: false }));
+          }}
         />
 
         <Text style={styles.label}>
           Mother Tongue <Text style={styles.star}>*</Text>
         </Text>
-        <SearchableDropdown
-          placeholder="Select Mother Tongue"
-          value={motherTongue}
-          options={MOTHER_TONGUES.map(tongue => ({ label: tongue, value: tongue }))}
-          onSelect={val => setMotherTongue(val)}
-          allowCustom
-        />
+        <View ref={registerField('motherTongue')}>
+          <SearchableDropdown
+            placeholder="Select Mother Tongue"
+            value={motherTongue}
+            options={MOTHER_TONGUES.map(tongue => ({ label: tongue, value: tongue }))}
+            onSelect={val => {
+              setMotherTongue(val);
+              setErrors(e => ({ ...e, motherTongue: false }));
+            }}
+            allowCustom
+            error={errors.motherTongue}
+          />
+        </View>
 
         <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
           <Text style={styles.continueText}>Continue →</Text>
@@ -229,6 +261,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     color: '#000',
   },
+  inputError: { borderColor: '#D20236', borderWidth: 1.5 },
   continueBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,
