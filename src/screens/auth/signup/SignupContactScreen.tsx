@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
+import ProgressBar from '../../../components/ProgressBar';
 import { useSignup } from '../../../context/SignupContext';
 import apiClient from '../../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -207,6 +208,9 @@ export default function SignupContactScreen({ navigation }: any) {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
+
+          <ProgressBar step={4} total={17} />
+
         <View style={styles.iconCircle}>
           <Image
             source={require('../../../assets/images/user-icon.png')}
@@ -398,9 +402,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   icon: { width: 34, height: 34 },
-  title: { fontSize: 24, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 30 },
-  titleRed: { color: '#D20236' },
-  label: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 10 },
+  title: { fontSize: 24, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 30 },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
+  label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 10 },
   star: { color: '#D20236' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   input: {
@@ -422,7 +426,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginBottom: 10,
   },
-  otpBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  otpBtnText: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
   cooldownBox: {
     backgroundColor: '#f0f0f0',
     borderRadius: 8,
@@ -430,7 +434,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginBottom: 10,
   },
-  cooldownText: { color: '#999', fontSize: 14, fontWeight: '600' },
+  cooldownText: { color: '#999', fontSize: 14, fontFamily: 'Outfit-SemiBold' },
   devOtp: {
     backgroundColor: '#fff8e1',
     borderColor: '#ffe082',
@@ -442,7 +446,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   errorText: { color: '#D20236', fontSize: 13, marginBottom: 10 },
-  verifiedText: { color: '#2e7d32', fontSize: 14, fontWeight: '600', marginBottom: 10 },
+  verifiedText: { color: '#2e7d32', fontSize: 14, fontFamily: 'Outfit-SemiBold', marginBottom: 10 },
   continueBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,
@@ -451,6 +455,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   continueBtnDisabled: { backgroundColor: '#f0a8b8' },
-  continueText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  continueText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
 });

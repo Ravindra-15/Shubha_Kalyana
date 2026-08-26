@@ -171,7 +171,7 @@ const submit = async (skip = false) => {
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
 
-        <ProgressBar step={4} total={8} />
+        <ProgressBar step={5} total={17} />
 
         <Text style={styles.title}>
           Martial <Text style={styles.titleRed}>Status</Text>
@@ -349,9 +349,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { paddingHorizontal: 24, paddingBottom: 30, flexGrow: 1 },
   back: { fontSize: 24, color: '#000', marginTop: 8 },
-  title: { fontSize: 26, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 30 },
-  titleRed: { color: '#D20236' },
-  label: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 10 },
+  title: { fontSize: 26, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 30 },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
+  label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 10 },
   input: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   },
   dietPillActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
   dietText: { fontSize: 15, color: '#333', textAlign: 'center' },
-  dietTextActive: { color: '#D20236', fontWeight: '600' },
+  dietTextActive: { color: '#D20236', fontFamily: 'Outfit-SemiBold' },
   healthRow: { flexDirection: 'row', marginBottom: 16 },
   healthPill: {
     flex: 1,
@@ -412,8 +412,8 @@ const styles = StyleSheet.create({
   },
   healthPillFirst: { marginRight: 12 },
   healthPillActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
-  healthText: { fontSize: 15, color: '#333', fontWeight: '600' },
-  healthTextActive: { color: '#D20236', fontWeight: '700' },
+  healthText: { fontSize: 15, color: '#333', fontFamily: 'Outfit-SemiBold' },
+  healthTextActive: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   textArea: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
-  fieldErrorText: { color: '#D20236', fontSize: 12, fontWeight: '500', marginBottom: 6 },
+  fieldErrorText: { color: '#D20236', fontSize: 12, fontFamily: 'Outfit-Medium', marginBottom: 6 },
   counter: { alignSelf: 'flex-end', color: '#999', fontSize: 12, marginBottom: 12 },
   spacer: { flex: 1, minHeight: 20 },
   nextBtn: {
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  nextText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  nextText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   skipBtn: {
     borderWidth: 1,
     borderColor: '#D20236',
@@ -444,5 +444,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  skipText: { color: '#000', fontSize: 16, fontWeight: '600' },
+  skipText: { color: '#000', fontSize: 16, fontFamily: 'Outfit-SemiBold' },
 });

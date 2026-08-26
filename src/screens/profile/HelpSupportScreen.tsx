@@ -98,23 +98,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   scroll: { padding: 16, paddingBottom: 30 },
   box: { backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: '#f0f0f0' },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 15,
     borderBottomWidth: 1, borderBottomColor: '#f5f5f5',
   },
-  rowLabel: { flex: 1, fontSize: 14, color: '#333', fontWeight: '500' },
+  rowLabel: { flex: 1, fontSize: 14, color: '#333', fontFamily: 'Outfit-Medium' },
   contactCard: {
     backgroundColor: '#eef4fc', borderRadius: 14, padding: 18, marginTop: 20,
   },
-  contactTitle: { fontSize: 15, fontWeight: '700', color: '#000', marginBottom: 14 },
+  contactTitle: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#000', marginBottom: 14 },
   contactRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
   contactIconWrap: {
     width: 34, height: 34, borderRadius: 17, backgroundColor: '#fff',
     alignItems: 'center', justifyContent: 'center',
   },
   contactLabel: { fontSize: 12, color: '#666' },
-  contactValue: { fontSize: 14, fontWeight: '600', color: '#000', marginTop: 2 },
+  contactValue: { fontSize: 14, fontFamily: 'Outfit-SemiBold', color: '#000', marginTop: 2 },
 });

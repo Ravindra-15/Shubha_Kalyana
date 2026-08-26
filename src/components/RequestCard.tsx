@@ -106,12 +106,12 @@ const styles = StyleSheet.create({
   placeholder: { backgroundColor: '#eee' },
   info: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  name: { fontSize: 16, fontWeight: '700', color: '#000' },
+  name: { fontSize: 16, fontFamily: 'Outfit-Bold', color: '#000' },
   detail: { fontSize: 13, color: '#888', marginTop: 3 },
   meta: {
     fontSize: 11,
     color: '#D20236',
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     marginTop: 5,
     textTransform: 'uppercase',
   },
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   disabledBtn: { opacity: 0.65 },
-  acceptText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  acceptText: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
   rejectBtn: {
     flex: 1,
     backgroundColor: '#f0f0f0',
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
   },
-  rejectText: { color: '#333', fontSize: 14, fontWeight: '700' },
+  rejectText: { color: '#333', fontSize: 14, fontFamily: 'Outfit-Bold' },
   viewWrap: { alignItems: 'center', marginTop: 12 },
-  viewText: { fontSize: 14, color: '#333', fontWeight: '600' },
+  viewText: { fontSize: 14, color: '#333', fontFamily: 'Outfit-SemiBold' },
 });

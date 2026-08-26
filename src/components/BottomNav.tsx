@@ -44,5 +44,5 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   item: { flex: 1, alignItems: 'center', gap: 3 },
-  label: { fontSize: 11, fontWeight: '600' },
+  label: { fontSize: 11, fontFamily: 'Outfit-SemiBold' },
 });

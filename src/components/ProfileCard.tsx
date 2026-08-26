@@ -115,10 +115,10 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     marginTop: -10,
   },
-  matchText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  matchText: { color: '#fff', fontSize: 10, fontFamily: 'Outfit-Bold' },
   info: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  name: { fontSize: 16, fontWeight: '700', color: '#000' },
+  name: { fontSize: 16, fontFamily: 'Outfit-Bold', color: '#000' },
   detail: { fontSize: 13, color: '#666', marginTop: 2 },
   actionBtn: {
     backgroundColor: '#D20236',
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   actionBtnDisabled: { backgroundColor: '#e69aab' },
-  actionText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  actionText: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -140,5 +140,5 @@ const styles = StyleSheet.create({
   },
   linkBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   linkText: { fontSize: 13, color: '#666' },
-  removeText: { fontSize: 13, color: '#D20236', fontWeight: '600' },
+  removeText: { fontSize: 13, color: '#D20236', fontFamily: 'Outfit-SemiBold' },
 });

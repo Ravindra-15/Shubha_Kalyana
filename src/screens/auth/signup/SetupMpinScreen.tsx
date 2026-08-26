@@ -32,7 +32,7 @@ export default function SetupMpinScreen({ navigation }: any) {
     (async () => {
       const screen = await getResumeScreen();
       // if backend already past MPIN, skip this screen
-      if (screen && screen !== 'SetupMpin' && screen !== 'VerifyMobile') {
+      if (screen && screen !== 'SetupMpin') {
         navigation.replace(screen as never);
       }
     })();
@@ -120,7 +120,7 @@ export default function SetupMpinScreen({ navigation }: any) {
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
 
-        <ProgressBar step={9} total={9} />
+        <ProgressBar step={13} total={17} />
 
         <Text style={styles.title}>
           Set up a{'\n'}<Text style={styles.titleRed}>MPIN</Text>
@@ -162,11 +162,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   inner: { flex: 1, paddingHorizontal: 24, paddingBottom: 30 },
   back: { fontSize: 24, color: '#000', marginTop: 8 },
-  title: { fontSize: 26, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 40, marginTop: 10 },
-  titleRed: { color: '#D20236' },
-  label: { fontSize: 15, fontWeight: '600', color: '#333', marginBottom: 16 },
+  title: { fontSize: 26, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 40, marginTop: 10 },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
+  label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#333', marginBottom: 16 },
   labelRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 0 },
-  eye: { fontSize: 13, color: '#D20236', fontWeight: '600', marginLeft: 12, marginBottom: 16 },
+  eye: { fontSize: 13, color: '#D20236', fontFamily: 'Outfit-SemiBold', marginLeft: 12, marginBottom: 16 },
   pinRow: { flexDirection: 'row', justifyContent: 'center' },
   pinBox: {
     width: 56,
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   check: { fontSize: 40, color: '#2ecc71', marginBottom: 12 },
-  cardText: { fontSize: 18, fontWeight: '600', color: '#000' },
+  cardText: { fontSize: 18, fontFamily: 'Outfit-SemiBold', color: '#000' },
   spacer: { flex: 1 },
   nextBtn: {
     backgroundColor: '#D20236',
@@ -201,5 +201,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  nextText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  nextText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
 });

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
+import ProgressBar from '../../../components/ProgressBar';
 import { useSignup } from '../../../context/SignupContext';
 
 const PROFILE_OPTIONS = [
@@ -78,6 +79,8 @@ export default function SignupProfileForScreen({ navigation }: any) {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
+
+        <ProgressBar step={1} total={17} />
 
         <View style={styles.iconCircle}>
           <Image
@@ -242,12 +245,12 @@ const styles = StyleSheet.create({
   icon: { width: 34, height: 34 },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Regular',
     color: '#000',
     textAlign: 'center',
     marginBottom: 30,
   },
-  titleRed: { color: '#D20236' },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -267,7 +270,7 @@ const styles = StyleSheet.create({
   pillActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
   genderPill: { width: '48%', justifyContent: 'flex-start' },
   pillText: { fontSize: 15, color: '#333', marginLeft: 10 },
-  pillTextActive: { color: '#D20236', fontWeight: '600' },
+  pillTextActive: { color: '#D20236', fontFamily: 'Outfit-SemiBold' },
   radio: {
     width: 18,
     height: 18,
@@ -279,7 +282,7 @@ const styles = StyleSheet.create({
   radioActive: { borderColor: '#D20236', backgroundColor: '#D20236' },
   genderTitle: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     color: '#D20236',
     textAlign: 'center',
     marginVertical: 16,
@@ -298,8 +301,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginBottom: 24,
   },
-  lookingForLabel: { fontSize: 12, color: '#777', fontWeight: '700', marginBottom: 4 },
-  lookingForValue: { fontSize: 16, color: '#D20236', fontWeight: '700' },
+  lookingForLabel: { fontSize: 12, color: '#777', fontFamily: 'Outfit-Bold', marginBottom: 4 },
+  lookingForValue: { fontSize: 16, color: '#D20236', fontFamily: 'Outfit-Bold' },
   lookingForPlaceholder: { color: '#999' },
   continueBtn: {
     backgroundColor: '#D20236',
@@ -307,7 +310,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  continueText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  continueText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   disclaimer: {
     fontSize: 11,
     color: '#999',
@@ -330,7 +333,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   relText: { fontSize: 15, color: '#333' },
-  relTextActive: { color: '#D20236', fontWeight: '600' },
+  relTextActive: { color: '#D20236', fontFamily: 'Outfit-SemiBold' },
   input: {
     borderWidth: 1,
     borderColor: '#e0e0e0',

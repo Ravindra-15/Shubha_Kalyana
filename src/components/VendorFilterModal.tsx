@@ -103,8 +103,8 @@ const styles = StyleSheet.create({
   },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#e0e0e0', alignSelf: 'center', marginBottom: 16 },
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  title: { fontSize: 18, fontWeight: '700', color: '#000' },
-  label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 10 },
+  title: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
+  label: { fontSize: 14, fontFamily: 'Outfit-SemiBold', color: '#333', marginBottom: 10 },
   inputWrap: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10,
@@ -112,15 +112,15 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, fontSize: 14, color: '#000' },
   expHeadRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  expValue: { fontSize: 13, fontWeight: '700', color: '#D20236', marginBottom: 10 },
+  expValue: { fontSize: 13, fontFamily: 'Outfit-Bold', color: '#D20236', marginBottom: 10 },
   applyBtn: {
     backgroundColor: '#D20236', borderRadius: 10, paddingVertical: 15,
     alignItems: 'center', marginTop: 20,
   },
-  applyText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  applyText: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#fff' },
   resetBtn: {
     borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, paddingVertical: 15,
     alignItems: 'center', marginTop: 12,
   },
-  resetText: { fontSize: 15, fontWeight: '600', color: '#333' },
+  resetText: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#333' },
 });

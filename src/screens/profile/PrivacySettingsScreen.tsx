@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   content: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30, paddingVertical: 40 },
   card: {
     backgroundColor: '#fdf2f5', borderRadius: 18, padding: 28,
@@ -52,6 +52,6 @@ const styles = StyleSheet.create({
     width: 64, height: 64, borderRadius: 32, backgroundColor: '#fff',
     alignItems: 'center', justifyContent: 'center', marginBottom: 18,
   },
-  title: { fontSize: 18, fontWeight: '700', color: '#000', marginBottom: 10 },
+  title: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000', marginBottom: 10 },
   subtitle: { fontSize: 13, color: '#777', textAlign: 'center', lineHeight: 20 },
 });

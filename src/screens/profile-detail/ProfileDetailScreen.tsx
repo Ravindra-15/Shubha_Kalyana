@@ -787,7 +787,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#fff',
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 17, fontFamily: 'Outfit-Bold', color: '#000' },
   coverWrap: { height: 320, position: 'relative' },
   cover: { width: '100%', height: '100%' },
   coverPlaceholder: { backgroundColor: '#ccc' },
@@ -803,7 +803,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     gap: 5,
   },
-  verifiedText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  verifiedText: { color: '#fff', fontSize: 12, fontFamily: 'Outfit-SemiBold' },
   coverInfo: {
     position: 'absolute',
     bottom: 0,
@@ -812,7 +812,7 @@ const styles = StyleSheet.create({
     padding: 18,
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
-  coverName: { color: '#fff', fontSize: 24, fontWeight: '700' },
+  coverName: { color: '#fff', fontSize: 24, fontFamily: 'Outfit-Bold' },
   coverMeta: { color: '#fff', fontSize: 13, marginTop: 4 },
   coverIconRow: {
     flexDirection: 'row',
@@ -828,7 +828,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
   },
-  sendText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  sendText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   saveBtn: {
     borderRadius: 8,
     paddingVertical: 15,
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     marginTop: 10,
   },
-  saveText: { color: '#333', fontSize: 15, fontWeight: '600' },
+  saveText: { color: '#333', fontSize: 15, fontFamily: 'Outfit-SemiBold' },
   section: { backgroundColor: '#fff', marginTop: 10, paddingHorizontal: 16 },
   sectionHead: {
     flexDirection: 'row',
@@ -844,7 +844,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#000' },
+  sectionTitle: { fontSize: 16, fontFamily: 'Outfit-Bold', color: '#000' },
   sectionBody: { paddingBottom: 12 },
   row: {
     flexDirection: 'row',
@@ -856,7 +856,7 @@ const styles = StyleSheet.create({
   rowValue: {
     fontSize: 14,
     color: '#000',
-    fontWeight: '500',
+    fontFamily: 'Outfit-Medium',
     flex: 1,
     textAlign: 'right',
   },
@@ -894,9 +894,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
-  hobbyText: { fontSize: 13, color: '#D20236', fontWeight: '500' },
+  hobbyText: { fontSize: 13, color: '#D20236', fontFamily: 'Outfit-Medium' },
   sendBtnDisabled: { backgroundColor: '#e69aab' },
   lockedInline: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  contactValue: { fontSize: 14, color: '#000', fontWeight: '500' },
+  contactValue: { fontSize: 14, color: '#000', fontFamily: 'Outfit-Medium' },
   notProvided: { fontSize: 14, color: '#bbb', fontStyle: 'italic', flex: 1, textAlign: 'right' },
 });

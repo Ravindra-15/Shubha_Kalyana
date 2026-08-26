@@ -185,7 +185,7 @@ export default function UploadAadhaarScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={9} total={9} />
+          <ProgressBar step={16} total={17} />
 
           <Text style={styles.congrats}>One Last Thing !</Text>
           <Text style={styles.title}>
@@ -254,11 +254,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   inner: { paddingHorizontal: 24, paddingBottom: 30, flexGrow: 1 },
   back: { fontSize: 24, color: '#000', marginTop: 8 },
-  congrats: { fontSize: 22, fontWeight: '700', color: '#D20236', textAlign: 'center', marginTop: 10 },
-  title: { fontSize: 19, fontWeight: '700', color: '#000', textAlign: 'center', marginTop: 4 },
+  congrats: { fontSize: 22, fontFamily: 'Outfit-Bold', color: '#D20236', textAlign: 'center', marginTop: 10 },
+  title: { fontSize: 19, fontFamily: 'Outfit-Bold', color: '#000', textAlign: 'center', marginTop: 4 },
   star: { color: '#D20236' },
   subtitle: { fontSize: 13, color: '#666', textAlign: 'center', marginTop: 8, marginBottom: 24 },
-  label: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 10 },
+  label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 10 },
   input: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
@@ -272,8 +272,8 @@ const styles = StyleSheet.create({
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
   aadhaarStatusSlot: { minHeight: 20, marginBottom: 12, justifyContent: 'center' },
   availabilityMuted: { fontSize: 12, color: '#666' },
-  availabilitySuccess: { fontSize: 12, color: '#15803d', fontWeight: '600' },
-  availabilityError: { fontSize: 12, color: '#D20236', fontWeight: '600' },
+  availabilitySuccess: { fontSize: 12, color: '#15803d', fontFamily: 'Outfit-SemiBold' },
+  availabilityError: { fontSize: 12, color: '#D20236', fontFamily: 'Outfit-SemiBold' },
   dropZone: {
     borderWidth: 1.5,
     borderColor: '#e0e0e0',
@@ -283,9 +283,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   uploadIcon: { fontSize: 28, color: '#666', marginBottom: 10 },
-  dropTitle: { fontSize: 15, fontWeight: '600', color: '#333', textAlign: 'center' },
+  dropTitle: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#333', textAlign: 'center' },
   dropHint: { fontSize: 12, color: '#999', marginTop: 8, marginBottom: 16 },
-  fileName: { fontSize: 14, color: '#D20236', fontWeight: '600', marginBottom: 16, marginTop: 4 },
+  fileName: { fontSize: 14, color: '#D20236', fontFamily: 'Outfit-SemiBold', marginBottom: 16, marginTop: 4 },
   browseBtn: {
     borderWidth: 1,
     borderColor: '#D20236',
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginTop: 8,
   },
-  browseText: { color: '#D20236', fontSize: 14, fontWeight: '600' },
+  browseText: { color: '#D20236', fontSize: 14, fontFamily: 'Outfit-SemiBold' },
   spacer: { minHeight: 30 },
   nextBtn: {
     backgroundColor: '#D20236',
@@ -302,5 +302,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  nextText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  nextText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
 });

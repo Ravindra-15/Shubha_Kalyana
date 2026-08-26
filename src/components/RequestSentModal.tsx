@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   },
   closeBtn: { position: 'absolute', top: 16, right: 16, padding: 4 },
   tick: { width: 70, height: 70, marginBottom: 20, marginTop: 6 },
-  title: { fontSize: 19, fontWeight: '700', color: '#000', marginBottom: 8 },
+  title: { fontSize: 19, fontFamily: 'Outfit-Bold', color: '#000', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#777', textAlign: 'center', marginBottom: 24, lineHeight: 20 },
   browseBtn: {
     width: '100%',
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  browseText: { fontSize: 15, fontWeight: '600', color: '#000' },
+  browseText: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000' },
   viewBtn: {
     width: '100%',
     backgroundColor: '#D20236',
@@ -81,5 +81,5 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
   },
-  viewText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  viewText: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#fff' },
 });

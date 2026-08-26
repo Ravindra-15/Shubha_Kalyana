@@ -136,11 +136,11 @@ const styles = StyleSheet.create({
   eyebrow: {
     color: '#D20236',
     fontSize: 12,
-    fontWeight: '800',
+    fontFamily: 'Outfit-ExtraBold',
     letterSpacing: 0,
     textTransform: 'uppercase',
   },
-  title: { marginTop: 7, paddingRight: 32, color: '#000', fontSize: 21, fontWeight: '800' },
+  title: { marginTop: 7, paddingRight: 32, color: '#000', fontSize: 21, fontFamily: 'Outfit-ExtraBold' },
   subtitle: { marginTop: 8, color: '#666', fontSize: 13, lineHeight: 19 },
   breakupBox: {
     marginTop: 22,
@@ -156,10 +156,10 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 13,
   },
-  label: { color: '#555', fontSize: 14, fontWeight: '600', flex: 1 },
-  value: { color: '#111', fontSize: 14, fontWeight: '800' },
-  creditLabel: { color: '#1a7f37', fontSize: 14, fontWeight: '700', flex: 1 },
-  creditValue: { color: '#1a7f37', fontSize: 14, fontWeight: '800' },
+  label: { color: '#555', fontSize: 14, fontFamily: 'Outfit-SemiBold', flex: 1 },
+  value: { color: '#111', fontSize: 14, fontFamily: 'Outfit-ExtraBold' },
+  creditLabel: { color: '#1a7f37', fontSize: 14, fontFamily: 'Outfit-Bold', flex: 1 },
+  creditValue: { color: '#1a7f37', fontSize: 14, fontFamily: 'Outfit-ExtraBold' },
   gstRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -170,8 +170,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 11,
   },
-  gstLabel: { color: '#D20236', fontSize: 14, fontWeight: '800' },
-  gstValue: { color: '#D20236', fontSize: 14, fontWeight: '800' },
+  gstLabel: { color: '#D20236', fontSize: 14, fontFamily: 'Outfit-ExtraBold' },
+  gstValue: { color: '#D20236', fontSize: 14, fontFamily: 'Outfit-ExtraBold' },
   totalRow: {
     marginTop: 14,
     paddingTop: 14,
@@ -182,8 +182,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  totalLabel: { color: '#000', fontSize: 16, fontWeight: '800' },
-  totalValue: { color: '#000', fontSize: 18, fontWeight: '900' },
+  totalLabel: { color: '#000', fontSize: 16, fontFamily: 'Outfit-ExtraBold' },
+  totalValue: { color: '#000', fontSize: 18, fontFamily: 'Outfit-Black' },
   actions: { flexDirection: 'row', gap: 12, marginTop: 22 },
   cancelBtn: {
     flex: 1,
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
-  cancelText: { color: '#333', fontSize: 15, fontWeight: '800' },
+  cancelText: { color: '#333', fontSize: 15, fontFamily: 'Outfit-ExtraBold' },
   purchaseBtn: {
     flex: 1,
     backgroundColor: '#D20236',
@@ -201,5 +201,5 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
-  purchaseText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  purchaseText: { color: '#fff', fontSize: 15, fontFamily: 'Outfit-ExtraBold' },
 });

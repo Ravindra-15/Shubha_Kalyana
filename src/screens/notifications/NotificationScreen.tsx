@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   list: { padding: 16, flexGrow: 1 },
   card: {
     flexDirection: 'row',
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   body: { flex: 1 },
-  title: { fontSize: 15, fontWeight: '700', color: '#000' },
+  title: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#000' },
   desc: { fontSize: 13, color: '#555', marginTop: 3, lineHeight: 18 },
   metaRow: {
     flexDirection: 'row',
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   time: { fontSize: 11, color: '#999' },
-  viewLink: { fontSize: 12, color: '#D20236', fontWeight: '600' },
+  viewLink: { fontSize: 12, color: '#D20236', fontFamily: 'Outfit-SemiBold' },
   dot: {
     width: 8,
     height: 8,
@@ -284,5 +284,5 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   loadMoreButtonDisabled: { opacity: 0.7 },
-  loadMoreText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  loadMoreText: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
 });

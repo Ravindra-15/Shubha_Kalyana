@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
   headerAvatar: { width: 40, height: 40, borderRadius: 20 },
   avatarPlaceholder: { backgroundColor: 'rgba(255,255,255,0.3)' },
   headerInfo: { flex: 1 },
-  headerName: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  headerName: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   headerStatus: { color: '#ffd5de', fontSize: 12, marginTop: 1 },
   list: { padding: 16, paddingBottom: 10 },
   todayDivider: {
@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
   lockedComposerText: {
     color: '#666',
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     textAlign: 'center',
   },
   unlockComposer: {
@@ -614,7 +614,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: '#8a1430',
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
   },
   unlockComposerBtn: {
     alignSelf: 'flex-start',
@@ -626,6 +626,6 @@ const styles = StyleSheet.create({
   unlockComposerBtnText: {
     color: '#fff',
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
   },
 });

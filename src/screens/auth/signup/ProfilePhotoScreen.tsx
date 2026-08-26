@@ -159,7 +159,7 @@ export default function ProfilePhotoScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          <ProgressBar step={9} total={9} />
+          <ProgressBar step={14} total={17} />
 
           <Text style={styles.title}>
             Almost there! Let's add your <Text style={styles.titleRed}>photo</Text>
@@ -278,24 +278,24 @@ const styles = StyleSheet.create({
   back: { fontSize: 24, color: '#000', marginTop: 8 },
   congrats: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     color: '#D20236',
     textAlign: 'center',
     marginTop: 10,
   },
   title: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Regular',
     color: '#000',
     textAlign: 'center',
     marginTop: 4,
   },
-  titleRed: { color: '#D20236' },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   subtitle: { fontSize: 13, color: '#666', textAlign: 'center', marginTop: 8 },
   recentPhotoMessage: {
     fontSize: 13,
     color: '#D20236',
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 24,
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  plus: { color: '#fff', fontSize: 20, fontWeight: '700' },
+  plus: { color: '#fff', fontSize: 20, fontFamily: 'Outfit-Bold' },
   uploadBtn: {
     backgroundColor: '#D20236',
     borderRadius: 30,
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 50,
   },
-  uploadText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  uploadText: { color: '#fff', fontSize: 15, fontFamily: 'Outfit-Bold' },
   guidelinesSection: {
     marginTop: 24,
     borderWidth: 1,
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   guidelinesTitle: {
     marginHorizontal: 10,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     color: '#111',
   },
   guidelineGrid: {
@@ -405,12 +405,12 @@ const styles = StyleSheet.create({
   statusBadgeText: {
     color: '#fff',
     fontSize: 8,
-    fontWeight: '800',
+    fontFamily: 'Outfit-ExtraBold',
   },
   guidelineLabel: {
     marginTop: 6,
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     color: '#222',
     textAlign: 'center',
   },
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
   guidelineSubTitle: {
     fontSize: 14,
-    fontWeight: '800',
+    fontFamily: 'Outfit-ExtraBold',
     color: '#111',
     marginBottom: 6,
   },
@@ -458,5 +458,5 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   nextBtnDisabled: { backgroundColor: '#f0a8b8' },
-  nextText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  nextText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
 });

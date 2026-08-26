@@ -85,9 +85,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   scroll: { padding: 20, paddingBottom: 40 },
   updated: { fontSize: 12, color: '#999', marginBottom: 20 },
-  heading: { fontSize: 15, fontWeight: '700', color: '#000', marginTop: 18, marginBottom: 8 },
+  heading: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#000', marginTop: 18, marginBottom: 8 },
   body: { fontSize: 13, color: '#555', lineHeight: 20 },
 });

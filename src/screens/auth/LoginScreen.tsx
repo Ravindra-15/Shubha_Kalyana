@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { paddingHorizontal: 24, paddingVertical: 40, flexGrow: 1, justifyContent: 'center' },
   logo: { width: 180, height: 130, alignSelf: 'center', marginBottom: 40 },
-  label: { fontSize: 14, color: '#333', marginBottom: 8, fontWeight: '500' },
+  label: { fontSize: 14, color: '#333', marginBottom: 8, fontFamily: 'Outfit-Medium' },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   forgotWrap: { alignSelf: 'flex-end', marginBottom: 24 },
-  forgot: { color: '#D20236', fontSize: 13, fontWeight: '500' },
+  forgot: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-Medium' },
   loginBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  loginText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  loginText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   otpBtn: {
     borderWidth: 1,
     borderColor: '#D20236',
@@ -212,8 +212,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  otpText: { color: '#D20236', fontSize: 16, fontWeight: '600' },
+  otpText: { color: '#D20236', fontSize: 16, fontFamily: 'Outfit-SemiBold' },
   signupRow: { flexDirection: 'row', justifyContent: 'center' },
   signupText: { color: '#333', fontSize: 14 },
-  signupLink: { color: '#D20236', fontSize: 14, fontWeight: '700' },
+  signupLink: { color: '#D20236', fontSize: 14, fontFamily: 'Outfit-Bold' },
 });

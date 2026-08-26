@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backBtn: { padding: 4 },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   searchRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 10, height: 44 },
   searchBox: {
     flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 3,
   },
-  filterBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  filterBadgeText: { color: '#fff', fontSize: 10, fontFamily: 'Outfit-Bold' },
   countText: { fontSize: 12, color: '#999', paddingHorizontal: 16, marginBottom: 8 },
   list: { paddingHorizontal: 16, paddingBottom: 20 },
   empty: { textAlign: 'center', color: '#999', marginTop: 40 },

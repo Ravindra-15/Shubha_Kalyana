@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 40,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     color: '#fff',
     lineHeight: 48,
     textAlign: 'center',
@@ -189,8 +189,8 @@ const styles = StyleSheet.create({
   getStartedText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     textAlign: 'center',
   },
-  arrowText: { fontSize: 26, color: '#000', fontWeight: '600' },
+  arrowText: { fontSize: 26, color: '#000', fontFamily: 'Outfit-SemiBold' },
 });

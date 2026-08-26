@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   content: { flex: 1 },
   list: { paddingHorizontal: 16, paddingBottom: 20, flexGrow: 1 },
   empty: { textAlign: 'center', color: '#999', marginTop: 40 },

@@ -150,10 +150,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { flex: 1, paddingHorizontal: 24, alignItems: 'center', paddingTop: 60 },
   logo: { width: 140, height: 100, marginBottom: 30 },
-  title: { fontSize: 24, fontWeight: '700', color: '#333' },
-  titleRed: { fontSize: 24, fontWeight: '700', color: '#D20236', marginBottom: 16 },
+  title: { fontSize: 24, fontFamily: 'Outfit-Bold', color: '#333' },
+  titleRed: { fontSize: 24, fontFamily: 'Outfit-Bold', color: '#D20236', marginBottom: 16 },
   subtitle: { fontSize: 14, color: '#666', marginBottom: 4 },
-  phone: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 30 },
+  phone: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 30 },
   input: {
     width: '100%',
     borderWidth: 1,
@@ -189,5 +189,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
-  submitText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  submitText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
 });

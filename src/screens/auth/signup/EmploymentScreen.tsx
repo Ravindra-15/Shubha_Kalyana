@@ -138,7 +138,7 @@ export default function EmploymentScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={2} total={8} />
+          <ProgressBar step={10} total={17} />
 
           <Text style={styles.title}>
             Add your{'\n'}<Text style={styles.titleRed}>Employment Details</Text>
@@ -353,9 +353,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { paddingHorizontal: 24, paddingBottom: 30, flexGrow: 1 },
   back: { fontSize: 24, color: '#000', marginTop: 8 },
-  title: { fontSize: 26, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 30 },
-  titleRed: { color: '#D20236' },
-  label: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 10 },
+  title: { fontSize: 26, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 30 },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
+  label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 10 },
   star: { color: '#D20236' },
   input: {
     borderWidth: 1,
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
   row: { flexDirection: 'row', gap: 10 },
   flexInput: { flex: 1 },
-  linkText: { color: '#D20236', fontSize: 13, fontWeight: '600', marginTop: -12, marginBottom: 16 },
+  linkText: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-SemiBold', marginTop: -12, marginBottom: 16 },
   spacer: { flex: 1, minHeight: 30 },
   nextBtn: {
     backgroundColor: '#D20236',
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  nextText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  nextText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   skipBtn: {
     borderWidth: 1,
     borderColor: '#D20236',
@@ -387,5 +387,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  skipText: { color: '#000', fontSize: 16, fontWeight: '600' },
+  skipText: { color: '#000', fontSize: 16, fontFamily: 'Outfit-SemiBold' },
 });

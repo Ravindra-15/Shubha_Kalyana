@@ -187,13 +187,13 @@ const styles = StyleSheet.create({
   back: { fontSize: 24, color: '#000', marginTop: 8 },
   title: {
     fontSize: 26,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Regular',
     color: '#000',
     textAlign: 'center',
     marginBottom: 12,
     marginTop: 10,
   },
-  titleRed: { color: '#D20236' },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   subtitle: {
     fontSize: 14,
     color: '#666',
@@ -216,8 +216,8 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   resendRow: { alignItems: 'flex-end', marginTop: 12, paddingHorizontal: 8 },
-  timer: { color: '#D20236', fontSize: 14, fontWeight: '600' },
-  resend: { color: '#D20236', fontSize: 14, fontWeight: '600' },
+  timer: { color: '#D20236', fontSize: 14, fontFamily: 'Outfit-SemiBold' },
+  resend: { color: '#D20236', fontSize: 14, fontFamily: 'Outfit-SemiBold' },
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   check: { fontSize: 40, color: '#2ecc71', marginBottom: 12 },
-  cardText: { fontSize: 18, fontWeight: '600', color: '#000' },
+  cardText: { fontSize: 18, fontFamily: 'Outfit-SemiBold', color: '#000' },
   spacer: { flex: 1 },
   nextBtn: {
     backgroundColor: '#D20236',
@@ -239,10 +239,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  nextText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  nextText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   phone: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     color: '#000',
     textAlign: 'center',
     marginBottom: 40,

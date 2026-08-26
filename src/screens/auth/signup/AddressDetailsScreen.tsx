@@ -194,7 +194,7 @@ export default function AddressDetailsScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={7} total={9} />
+          <ProgressBar step={9} total={17} />
 
           <Text style={styles.title}>Where do you <Text style={styles.titleRed}>Live</Text></Text>
 
@@ -239,26 +239,26 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   inner: { paddingHorizontal: 24, paddingBottom: 30, flexGrow: 1 },
   back: { fontSize: 24, color: '#000', marginTop: 8 },
-  title: { fontSize: 26, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 20 },
-  titleRed: { color: '#D20236' },
-  section: { fontSize: 17, fontWeight: '700', color: '#D20236', marginTop: 20, marginBottom: 14 },
+  title: { fontSize: 26, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 20 },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
+  section: { fontSize: 17, fontFamily: 'Outfit-Bold', color: '#D20236', marginTop: 20, marginBottom: 14 },
   toggleRow: { flexDirection: 'row', marginBottom: 16 },
   toggle: { flex: 1, borderWidth: 1, borderColor: '#e0e0e0', paddingVertical: 12, alignItems: 'center' },
   toggleActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
   toggleText: { fontSize: 15, color: '#333' },
-  toggleTextActive: { color: '#D20236', fontWeight: '700' },
-  label: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 10, marginTop: 4 },
+  toggleTextActive: { color: '#D20236', fontFamily: 'Outfit-Bold' },
+  label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 10, marginTop: 4 },
   star: { color: '#D20236' },
   input: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, marginBottom: 14, color: '#000' },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
   checkRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   checkbox: { width: 22, height: 22, borderRadius: 4, borderWidth: 1.5, borderColor: '#ccc', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   checkboxActive: { borderColor: '#D20236', backgroundColor: '#D20236' },
-  checkmark: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  checkmark: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
   checkLabel: { fontSize: 15, color: '#333' },
   spacer: { minHeight: 20 },
   nextBtn: { backgroundColor: '#D20236', borderRadius: 8, paddingVertical: 16, alignItems: 'center', marginBottom: 14 },
-  nextText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  nextText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   skipBtn: { borderWidth: 1, borderColor: '#D20236', borderRadius: 8, paddingVertical: 16, alignItems: 'center' },
-  skipText: { color: '#000', fontSize: 16, fontWeight: '600' },
+  skipText: { color: '#000', fontSize: 16, fontFamily: 'Outfit-SemiBold' },
 });

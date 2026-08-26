@@ -53,11 +53,11 @@ export default function ConfirmDialog({
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', paddingHorizontal: 24 },
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 22 },
-  title: { fontSize: 17, fontWeight: '700', color: '#000', marginBottom: 8 },
+  title: { fontSize: 17, fontFamily: 'Outfit-Bold', color: '#000', marginBottom: 8 },
   message: { fontSize: 13, color: '#777', lineHeight: 19, marginBottom: 20 },
   btnRow: { flexDirection: 'row', gap: 10 },
   cancelBtn: { flex: 1, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, paddingVertical: 13, alignItems: 'center' },
-  cancelText: { fontSize: 14, fontWeight: '600', color: '#000' },
+  cancelText: { fontSize: 14, fontFamily: 'Outfit-SemiBold', color: '#000' },
   confirmBtn: { flex: 1, borderRadius: 8, paddingVertical: 13, alignItems: 'center' },
-  confirmText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+  confirmText: { fontSize: 14, fontFamily: 'Outfit-Bold', color: '#fff' },
 });

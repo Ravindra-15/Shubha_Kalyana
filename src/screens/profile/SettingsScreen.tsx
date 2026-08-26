@@ -69,14 +69,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   scroll: { padding: 16, paddingBottom: 30 },
-  sectionTitle: { fontSize: 12, color: '#999', fontWeight: '700', marginBottom: 8, letterSpacing: 0.5 },
+  sectionTitle: { fontSize: 12, color: '#999', fontFamily: 'Outfit-Bold', marginBottom: 8, letterSpacing: 0.5 },
   box: { backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: '#f0f0f0' },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 15,
     borderBottomWidth: 1, borderBottomColor: '#f5f5f5',
   },
-  rowLabel: { flex: 1, fontSize: 14, color: '#333', fontWeight: '500' },
+  rowLabel: { flex: 1, fontSize: 14, color: '#333', fontFamily: 'Outfit-Medium' },
   footer: { textAlign: 'center', fontSize: 11, color: '#bbb', marginTop: 4 },
 });

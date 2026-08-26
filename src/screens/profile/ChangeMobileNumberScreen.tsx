@@ -344,17 +344,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   content: { flex: 1, paddingHorizontal: 20, paddingTop: 10 },
   label: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     color: '#333',
     marginBottom: 8,
     marginTop: 16,
   },
   hint: { fontSize: 12, color: '#888', marginBottom: 14 },
-  devOtpText: { fontSize: 12, color: '#1a7f37', fontWeight: '600', marginBottom: 14 },
+  devOtpText: { fontSize: 12, color: '#1a7f37', fontFamily: 'Outfit-SemiBold', marginBottom: 14 },
   readonlyBox: {
     backgroundColor: '#f5f5f5',
     borderRadius: 10,
@@ -379,12 +379,12 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   primaryBtnDisabled: { backgroundColor: '#e9a9b6' },
-  primaryBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  primaryBtnText: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#fff' },
   errorText: {
     fontSize: 13,
     color: '#D20236',
     marginTop: 12,
-    fontWeight: '500',
+    fontFamily: 'Outfit-Medium',
   },
   otpRow: {
     flexDirection: 'row',
@@ -407,9 +407,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
   },
-  resendText: { fontSize: 13, fontWeight: '600', color: '#D20236' },
+  resendText: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#D20236' },
   resendTextDisabled: { color: '#bbb' },
-  changeNumberText: { fontSize: 13, fontWeight: '600', color: '#666' },
+  changeNumberText: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#666' },
   successWrap: { alignItems: 'center', marginTop: 60 },
   successIcon: {
     width: 64,
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     color: '#000',
     textAlign: 'center',
     marginBottom: 28,
@@ -433,5 +433,5 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 50,
   },
-  doneBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  doneBtnText: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#fff' },
 });

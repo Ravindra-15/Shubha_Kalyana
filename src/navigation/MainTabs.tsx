@@ -81,7 +81,7 @@ export default function MainTabs({ navigation }: any) {
             borderTopWidth: 1,
             borderTopColor: '#f0f0f0',
           },
-          tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+          tabBarLabelStyle: { fontSize: 11, fontFamily: 'Outfit-SemiBold' },
         }}
       >
         <Tab.Screen

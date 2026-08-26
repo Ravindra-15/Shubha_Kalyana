@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 24,
   },
-  congrats: { fontSize: 24, fontWeight: '700', color: '#D20236', marginBottom: 10 },
+  congrats: { fontSize: 24, fontFamily: 'Outfit-Bold', color: '#D20236', marginBottom: 10 },
   subtitle: { fontSize: 15, color: '#333', marginBottom: 30, textAlign: 'center' },
   browseBtn: {
     backgroundColor: '#D20236',
@@ -78,5 +78,5 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
-  browseText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  browseText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
 });

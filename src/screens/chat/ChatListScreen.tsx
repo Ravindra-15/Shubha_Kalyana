@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   searchWrap: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: '#f5f5f5', borderRadius: 10, marginHorizontal: 16, marginBottom: 10,
@@ -201,11 +201,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#2ecc71', borderWidth: 2, borderColor: '#fff',
   },
   rowContent: { flex: 1, marginLeft: 12 },
-  name: { fontSize: 15, fontWeight: '700', color: '#000' },
+  name: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#000' },
   lastMsg: { fontSize: 13, color: '#888', marginTop: 2 },
   rowMeta: { alignItems: 'flex-end', gap: 6 },
   time: { fontSize: 11, color: '#aaa' },
   badge: { backgroundColor: '#D20236', borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
-  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  badgeText: { color: '#fff', fontSize: 11, fontFamily: 'Outfit-Bold' },
   empty: { textAlign: 'center', color: '#999', marginTop: 40 },
 });

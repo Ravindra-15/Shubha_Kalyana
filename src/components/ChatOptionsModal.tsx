@@ -61,9 +61,9 @@ const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   card: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 28 },
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  headTitle: { fontSize: 16, fontWeight: '700', color: '#000' },
+  headTitle: { fontSize: 16, fontFamily: 'Outfit-Bold', color: '#000' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderTopWidth: 1, borderTopColor: '#f2f2f2' },
-  rowText: { fontSize: 15, color: '#333', fontWeight: '500' },
+  rowText: { fontSize: 15, color: '#333', fontFamily: 'Outfit-Medium' },
   cancelBtn: { marginTop: 14, backgroundColor: '#f0f0f0', borderRadius: 8, paddingVertical: 13, alignItems: 'center' },
-  cancelText: { fontSize: 14, fontWeight: '600', color: '#000' },
+  cancelText: { fontSize: 14, fontFamily: 'Outfit-SemiBold', color: '#000' },
 });

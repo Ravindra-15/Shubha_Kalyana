@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   option: { paddingVertical: 14, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#f2f2f2' },
   optionText: { fontSize: 15, color: '#333' },
   customRow: { paddingVertical: 12, paddingHorizontal: 8, borderTopWidth: 1, borderTopColor: '#eee' },
-  customText: { fontSize: 15, color: '#D20236', fontWeight: '600' },
+  customText: { fontSize: 15, color: '#D20236', fontFamily: 'Outfit-SemiBold' },
   empty: { textAlign: 'center', color: '#999', paddingVertical: 20 },
-  clear: { fontSize: 15, color: '#999', fontWeight: '600' },
+  clear: { fontSize: 15, color: '#999', fontFamily: 'Outfit-SemiBold' },
 });

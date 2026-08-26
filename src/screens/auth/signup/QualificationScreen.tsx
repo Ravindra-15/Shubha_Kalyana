@@ -67,7 +67,7 @@ export default function QualificationScreen({ navigation }: any) {
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
 
-        <ProgressBar step={1} total={8} />
+        <ProgressBar step={6} total={17} />
 
         <Text style={styles.title}>
           Select your{'\n'}<Text style={styles.titleRed}>Qualification</Text>
@@ -111,9 +111,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { paddingHorizontal: 24, paddingBottom: 30, flexGrow: 1 },
   back: { fontSize: 24, color: '#000', marginTop: 8 },
-  title: { fontSize: 26, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 36 },
-  titleRed: { color: '#D20236' },
-  label: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 10 },
+  title: { fontSize: 26, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 36 },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
+  label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 10 },
   star: { color: '#D20236' },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
   input: {
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  nextText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  nextText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   skipBtn: {
     borderWidth: 1,
     borderColor: '#D20236',
@@ -142,5 +142,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  skipText: { color: '#000', fontSize: 16, fontWeight: '600' },
+  skipText: { color: '#000', fontSize: 16, fontFamily: 'Outfit-SemiBold' },
 });

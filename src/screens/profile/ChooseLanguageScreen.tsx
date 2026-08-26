@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   content: { padding: 20 },
   option: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -109,12 +109,12 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   checkboxActive: { borderColor: '#D20236', backgroundColor: '#D20236' },
-  optionText: { fontSize: 15, color: '#333', fontWeight: '500' },
-  optionTextActive: { color: '#D20236', fontWeight: '700' },
+  optionText: { fontSize: 15, color: '#333', fontFamily: 'Outfit-Medium' },
+  optionTextActive: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   applyBtn: {
     backgroundColor: '#D20236', borderRadius: 10, paddingVertical: 15,
     alignItems: 'center', marginTop: 20,
   },
   applyBtnDisabled: { backgroundColor: '#e9a9b6' },
-  applyText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  applyText: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#fff' },
 });

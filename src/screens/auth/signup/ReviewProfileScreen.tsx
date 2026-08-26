@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ProgressBar from '../../../components/ProgressBar';
 import { useSignup } from '../../../context/SignupContext';
 
 export default function ReviewProfileScreen({ navigation }: any) {
@@ -20,6 +21,8 @@ export default function ReviewProfileScreen({ navigation }: any) {
         <TouchableOpacity onPress={goToLogin}>
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
+
+        <ProgressBar step={17} total={17} />
 
         <View style={styles.content}>
           <Text style={styles.title}>
@@ -54,12 +57,12 @@ const styles = StyleSheet.create({
   content: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Regular',
     color: '#000',
     textAlign: 'center',
     marginBottom: 40,
   },
-  titleRed: { color: '#D20236' },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   reviewImage: {
     width: 260,
     height: 260,
@@ -73,5 +76,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  btnText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
 });

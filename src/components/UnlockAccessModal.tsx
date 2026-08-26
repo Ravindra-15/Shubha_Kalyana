@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     width: 56, height: 56, borderRadius: 28, backgroundColor: '#D20236',
     alignItems: 'center', justifyContent: 'center', marginBottom: 18, marginTop: 6,
   },
-  title: { fontSize: 19, fontWeight: '700', color: '#000', marginBottom: 8 },
+  title: { fontSize: 19, fontFamily: 'Outfit-Bold', color: '#000', marginBottom: 8 },
   subtitle: { fontSize: 13, color: '#777', textAlign: 'center', marginBottom: 20, lineHeight: 19 },
   remainingBox: {
     width: '100%',
@@ -125,11 +125,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     marginBottom: 16,
   },
-  remainingText: { color: '#D20236', fontSize: 13, fontWeight: '800', textAlign: 'center' },
+  remainingText: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-ExtraBold', textAlign: 'center' },
   benefitBox: {
     width: '100%', backgroundColor: '#f7f7f7', borderRadius: 12, padding: 16, marginBottom: 20,
   },
-  benefitHead: { fontSize: 13, fontWeight: '700', color: '#333', marginBottom: 12 },
+  benefitHead: { fontSize: 13, fontFamily: 'Outfit-Bold', color: '#333', marginBottom: 12 },
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
   benefitIcon: {
     width: 28, height: 28, borderRadius: 14, backgroundColor: '#fdf2f5',
@@ -140,10 +140,10 @@ const styles = StyleSheet.create({
     width: '100%', backgroundColor: '#D20236', borderRadius: 8,
     paddingVertical: 15, alignItems: 'center', marginBottom: 12,
   },
-  unlockText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  unlockText: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#fff' },
   upgradeBtn: {
     width: '100%', borderWidth: 1, borderColor: '#D20236', borderRadius: 8,
     paddingVertical: 15, alignItems: 'center',
   },
-  upgradeText: { fontSize: 15, fontWeight: '600', color: '#D20236' },
+  upgradeText: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#D20236' },
 });

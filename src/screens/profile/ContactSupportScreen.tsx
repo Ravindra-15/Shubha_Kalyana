@@ -115,9 +115,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   content: { padding: 20 },
-  label: { fontSize: 13, fontWeight: '600', color: '#333', marginBottom: 8, marginTop: 12 },
+  label: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#333', marginBottom: 8, marginTop: 12 },
   input: {
     borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 13, fontSize: 14, color: '#000',
@@ -126,22 +126,22 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, padding: 12,
     fontSize: 14, color: '#000', textAlignVertical: 'top', minHeight: 130,
   },
-  errorText: { fontSize: 13, color: '#D20236', marginTop: 12, fontWeight: '500' },
+  errorText: { fontSize: 13, color: '#D20236', marginTop: 12, fontFamily: 'Outfit-Medium' },
   submitBtn: {
     backgroundColor: '#D20236', borderRadius: 10, paddingVertical: 15,
     alignItems: 'center', marginTop: 24,
   },
   submitBtnDisabled: { backgroundColor: '#e9a9b6' },
-  submitText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  submitText: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#fff' },
   successWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30 },
   successIcon: {
     width: 64, height: 64, borderRadius: 32, backgroundColor: '#eafaf0',
     alignItems: 'center', justifyContent: 'center', marginBottom: 20,
   },
-  successTitle: { fontSize: 17, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 10 },
+  successTitle: { fontSize: 17, fontFamily: 'Outfit-Bold', color: '#000', textAlign: 'center', marginBottom: 10 },
   successSubtitle: { fontSize: 13, color: '#777', textAlign: 'center', lineHeight: 19, marginBottom: 28 },
   doneBtn: {
     backgroundColor: '#D20236', borderRadius: 10, paddingVertical: 14, paddingHorizontal: 50,
   },
-  doneBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  doneBtnText: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#fff' },
 });

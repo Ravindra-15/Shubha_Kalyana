@@ -68,7 +68,7 @@ export default function HobbiesScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={9} total={9} />
+          <ProgressBar step={15} total={17} />
 
           <Text style={styles.title}>
             Add your Hobbies and{'\n'}<Text style={styles.titleRed}>Interests</Text>
@@ -113,10 +113,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   inner: { paddingHorizontal: 24, paddingBottom: 30, flexGrow: 1 },
   back: { fontSize: 24, color: '#000', marginTop: 8 },
-  title: { fontSize: 24, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 24, marginTop: 6 },
-  titleRed: { color: '#D20236' },
+  title: { fontSize: 24, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 24, marginTop: 6 },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   group: { marginBottom: 20 },
-  groupTitle: { fontSize: 15, fontWeight: '700', color: '#000', marginBottom: 12 },
+  groupTitle: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#000', marginBottom: 12 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap' },
   chip: {
     borderWidth: 1,
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   },
   chipActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
   chipText: { fontSize: 14, color: '#333' },
-  chipTextActive: { color: '#D20236', fontWeight: '600' },
+  chipTextActive: { color: '#D20236', fontFamily: 'Outfit-SemiBold' },
   spacer: { minHeight: 20 },
   nextBtn: {
     backgroundColor: '#D20236',
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  nextText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  nextText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   skipBtn: {
     borderWidth: 1,
     borderColor: '#D20236',
@@ -146,5 +146,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  skipText: { color: '#000', fontSize: 16, fontWeight: '600' },
+  skipText: { color: '#000', fontSize: 16, fontFamily: 'Outfit-SemiBold' },
 });

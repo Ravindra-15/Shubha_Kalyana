@@ -93,13 +93,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   scroll: { padding: 16, paddingBottom: 30 },
   card: {
     backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: '#f0f0f0',
     padding: 16, marginBottom: 12,
   },
   qRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  question: { flex: 1, fontSize: 14, fontWeight: '600', color: '#000', marginRight: 10 },
+  question: { flex: 1, fontSize: 14, fontFamily: 'Outfit-SemiBold', color: '#000', marginRight: 10 },
   answer: { fontSize: 13, color: '#666', marginTop: 12, lineHeight: 19 },
 });

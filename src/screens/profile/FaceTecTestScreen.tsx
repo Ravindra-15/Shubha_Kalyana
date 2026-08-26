@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerTitle: {fontSize: 18, fontWeight: '700', color: '#000'},
+  headerTitle: {fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000'},
   headerSpacer: {width: 40},
   content: {
     flex: 1,
@@ -282,11 +282,11 @@ const styles = StyleSheet.create({
   },
   successIconWrap: {backgroundColor: '#e9f8ee'},
   failedIconWrap: {backgroundColor: '#fdf2f5'},
-  failedIcon: {fontSize: 32, fontWeight: '800', color: '#D20236'},
+  failedIcon: {fontSize: 32, fontFamily: 'Outfit-ExtraBold', color: '#D20236'},
   stateTitle: {
     marginTop: 18,
     fontSize: 21,
-    fontWeight: '800',
+    fontFamily: 'Outfit-ExtraBold',
     color: '#000',
     textAlign: 'center',
   },
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   resultText: {
     marginTop: 14,
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     color: '#333',
   },
   loader: {marginTop: 22},
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingHorizontal: 16,
   },
-  primaryButtonText: {fontSize: 15, fontWeight: '700', color: '#fff'},
+  primaryButtonText: {fontSize: 15, fontFamily: 'Outfit-Bold', color: '#fff'},
   secondaryButton: {
     minHeight: 46,
     borderRadius: 10,
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingHorizontal: 16,
   },
-  secondaryButtonText: {fontSize: 14, fontWeight: '700', color: '#333'},
+  secondaryButtonText: {fontSize: 14, fontFamily: 'Outfit-Bold', color: '#333'},
 });
 
 export default FaceTecTestScreen;

@@ -63,8 +63,8 @@ export default function SelectLanguageScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { flex: 1, paddingHorizontal: 24, paddingTop: 40, paddingBottom: 30 },
-  title: { fontSize: 24, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 50 },
-  titleRed: { color: '#D20236' },
+  title: { fontSize: 24, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 50 },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   list: { gap: 12 },
   option: {
     flexDirection: 'row',
@@ -85,8 +85,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   radioActive: { borderColor: '#D20236', backgroundColor: '#D20236' },
-  optionLabel: { fontSize: 15, color: '#333', fontWeight: '600' },
-  optionNative: { fontSize: 14, color: '#D20236', fontWeight: '700' },
+  optionLabel: { fontSize: 15, color: '#333', fontFamily: 'Outfit-SemiBold' },
+  optionNative: { fontSize: 14, color: '#D20236', fontFamily: 'Outfit-Bold' },
   spacer: { flex: 1 },
   nextBtn: {
     backgroundColor: '#D20236',
@@ -94,5 +94,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  nextText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  nextText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
 });

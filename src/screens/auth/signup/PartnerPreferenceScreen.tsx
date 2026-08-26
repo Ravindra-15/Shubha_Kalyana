@@ -92,7 +92,7 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
 
   const goToNextStep = async () => {
     const resumeScreen = await getResumeScreen();
-    navigation.navigate((resumeScreen as never) || 'VerifyMobile');
+    navigation.navigate((resumeScreen as never) || 'SetupMpin');
   };
 
   const submit = async (skip = false) => {
@@ -145,7 +145,7 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={5} total={8} />
+          <ProgressBar step={12} total={17} />
 
           <Text style={styles.title}>
             Select your{'\n'}<Text style={styles.titleRed}>Partner Preferences</Text>
@@ -227,9 +227,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   inner: { paddingHorizontal: 24, paddingBottom: 30 },
   back: { fontSize: 24, color: '#000', marginTop: 8 },
-  title: { fontSize: 26, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 24 },
-  titleRed: { color: '#D20236' },
-  label: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 10, marginTop: 6 },
+  title: { fontSize: 26, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 24 },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
+  label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 10, marginTop: 6 },
   input: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   half: { width: '48%' },
   ageInput: { width: '42%' },
-  toText: { fontSize: 15, fontWeight: '600', color: '#666' },
+  toText: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#666' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 6 },
   chip: {
     borderWidth: 1,
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   },
   chipActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
   chipText: { fontSize: 14, color: '#333' },
-  chipTextActive: { color: '#D20236', fontWeight: '600' },
+  chipTextActive: { color: '#D20236', fontFamily: 'Outfit-SemiBold' },
   nextBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
-  nextText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  nextText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   skipBtn: {
     borderWidth: 1,
     borderColor: '#D20236',
@@ -273,5 +273,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  skipText: { color: '#000', fontSize: 16, fontWeight: '600' },
+  skipText: { color: '#000', fontSize: 16, fontFamily: 'Outfit-SemiBold' },
 });

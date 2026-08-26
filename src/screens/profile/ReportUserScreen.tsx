@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   scroll: { padding: 20, paddingBottom: 40 },
   introCard: {
     flexDirection: 'row', gap: 12, backgroundColor: '#fdf2f5',
@@ -96,12 +96,12 @@ const styles = StyleSheet.create({
     width: 36, height: 36, borderRadius: 18, backgroundColor: '#fdf2f5',
     alignItems: 'center', justifyContent: 'center',
   },
-  stepTitle: { fontSize: 14, fontWeight: '700', color: '#000', marginBottom: 4 },
+  stepTitle: { fontSize: 14, fontFamily: 'Outfit-Bold', color: '#000', marginBottom: 4 },
   stepDesc: { fontSize: 12, color: '#777', lineHeight: 18 },
   helpLinkCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: '#f7f7f7', borderRadius: 14, padding: 16, marginTop: 8,
   },
-  helpLinkTitle: { fontSize: 14, fontWeight: '600', color: '#000' },
+  helpLinkTitle: { fontSize: 14, fontFamily: 'Outfit-SemiBold', color: '#000' },
   helpLinkDesc: { fontSize: 12, color: '#888', marginTop: 2 },
 });

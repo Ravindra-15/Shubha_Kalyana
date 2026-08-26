@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   backBtn: {width: 40, height: 40, alignItems: 'center', justifyContent: 'center'},
-  headerTitle: {fontSize: 18, fontWeight: '700', color: '#000'},
+  headerTitle: {fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000'},
   headerSpacer: {width: 40},
   content: {flex: 1, justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 40},
   stateCard: {
@@ -211,25 +211,25 @@ const styles = StyleSheet.create({
   },
   successIconWrap: {backgroundColor: '#e9f8ee'},
   failedIconWrap: {backgroundColor: '#fdf2f5'},
-  failedIcon: {fontSize: 32, fontWeight: '800', color: '#D20236'},
-  stateTitle: {marginTop: 18, fontSize: 21, fontWeight: '800', color: '#000', textAlign: 'center'},
+  failedIcon: {fontSize: 32, fontFamily: 'Outfit-ExtraBold', color: '#D20236'},
+  stateTitle: {marginTop: 18, fontSize: 21, fontFamily: 'Outfit-ExtraBold', color: '#000', textAlign: 'center'},
   successTitle: {color: '#1a7f37'},
   failedTitle: {color: '#D20236'},
   stateMessage: {marginTop: 8, fontSize: 14, lineHeight: 21, color: '#666', textAlign: 'center'},
-  resultText: {marginTop: 14, fontSize: 13, fontWeight: '700', color: '#333'},
+  resultText: {marginTop: 14, fontSize: 13, fontFamily: 'Outfit-Bold', color: '#333'},
   loader: {marginTop: 22},
   primaryButton: {
     minHeight: 48, borderRadius: 10, backgroundColor: '#D20236',
     alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch',
     marginTop: 24, paddingHorizontal: 16,
   },
-  primaryButtonText: {fontSize: 15, fontWeight: '700', color: '#fff'},
+  primaryButtonText: {fontSize: 15, fontFamily: 'Outfit-Bold', color: '#fff'},
   secondaryButton: {
     minHeight: 46, borderRadius: 10, borderWidth: 1, borderColor: '#e0e0e0',
     alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch',
     marginTop: 12, paddingHorizontal: 16,
   },
-  secondaryButtonText: {fontSize: 14, fontWeight: '700', color: '#333'},
+  secondaryButtonText: {fontSize: 14, fontFamily: 'Outfit-Bold', color: '#333'},
 });
 
 export default PhotoCompareScreen;

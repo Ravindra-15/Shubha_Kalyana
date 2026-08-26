@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
+import ProgressBar from '../../../components/ProgressBar';
 import { useSignup } from '../../../context/SignupContext';
 import { getCastes, Caste } from '../../../api/caste';
 import SearchableDropdown from '../../../components/SearchableDropdown';
@@ -46,7 +47,7 @@ const RELIGIONS = [
 
 export default function SignupCasteScreen({ navigation }: any) {
   const { data, setField } = useSignup();
-  const [religion, setReligion] = useState(data.religion || 'Hindu');
+  const [religion, setReligion] = useState(data.religion || '');
   const [casteId, setCasteId] = useState(data.caste || '');
   const [subCaste, setSubCaste] = useState(data.subCaste || '');
   const [motherTongue, setMotherTongue] = useState(data.motherTongue || '');
@@ -100,6 +101,8 @@ const visibleCastes = religion
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
 
+        <ProgressBar step={3} total={17} />
+
         <View style={styles.iconCircle}>
           <Image
             source={require('../../../assets/images/user-icon.png')}
@@ -112,7 +115,9 @@ const visibleCastes = religion
           Select <Text style={styles.titleRed}>Caste</Text>
         </Text>
 
-        <Text style={styles.label}>Religion</Text>
+        <Text style={styles.label}>
+          Religion <Text style={styles.star}>*</Text>
+        </Text>
         <SearchableDropdown
           placeholder="Select Religion"
           value={religion}
@@ -200,15 +205,15 @@ const styles = StyleSheet.create({
   icon: { width: 34, height: 34 },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Regular',
     color: '#000',
     textAlign: 'center',
     marginBottom: 30,
   },
-  titleRed: { color: '#D20236' },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   label: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
     color: '#000',
     marginBottom: 10,
     marginTop: 6,
@@ -231,5 +236,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
-  continueText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  continueText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
 });

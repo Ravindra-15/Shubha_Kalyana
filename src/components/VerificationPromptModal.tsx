@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   eyebrow: {
     color: '#D20236',
     fontSize: 11,
-    fontWeight: '800',
+    fontFamily: 'Outfit-ExtraBold',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
   },
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     marginTop: 7,
     color: '#111',
     fontSize: 22,
-    fontWeight: '900',
+    fontFamily: 'Outfit-Black',
   },
   closeBtn: {
     width: 34,
@@ -259,8 +259,8 @@ const styles = StyleSheet.create({
   },
   photoIconBox: { backgroundColor: '#fdf2f5' },
   aadhaarIconBox: { backgroundColor: '#eff6ff' },
-  itemTitle: { color: '#111', fontSize: 15, fontWeight: '800' },
-  itemSub: { marginTop: 3, color: '#777', fontSize: 12, fontWeight: '500' },
+  itemTitle: { color: '#111', fontSize: 15, fontFamily: 'Outfit-ExtraBold' },
+  itemSub: { marginTop: 3, color: '#777', fontSize: 12, fontFamily: 'Outfit-Medium' },
   statusPill: {
     borderRadius: 999,
     paddingHorizontal: 10,
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   },
   statusVerified: { backgroundColor: '#e9f8ee' },
   statusPending: { backgroundColor: '#fff7e6' },
-  statusText: { fontSize: 11, fontWeight: '800' },
+  statusText: { fontSize: 11, fontFamily: 'Outfit-ExtraBold' },
   statusVerifiedText: { color: '#1a7f37' },
   statusPendingText: { color: '#9a6700' },
   actions: {
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   disabledBtn: { backgroundColor: '#d7d7d7' },
-  primaryText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  primaryText: { color: '#fff', fontSize: 15, fontFamily: 'Outfit-ExtraBold' },
   secondaryBtn: {
     minHeight: 48,
     borderRadius: 10,
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   secondaryDisabledBtn: { backgroundColor: '#f3f3f3' },
-  secondaryText: { color: '#333', fontSize: 15, fontWeight: '800' },
+  secondaryText: { color: '#333', fontSize: 15, fontFamily: 'Outfit-ExtraBold' },
   secondaryDisabledText: { color: '#aaa' },
   shareBtn: {
     minHeight: 44,
@@ -313,11 +313,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
-  shareText: { color: '#555', fontSize: 13, fontWeight: '700' },
+  shareText: { color: '#555', fontSize: 13, fontFamily: 'Outfit-Bold' },
   laterBtn: {
     minHeight: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  laterText: { color: '#666', fontSize: 14, fontWeight: '800' },
+  laterText: { color: '#666', fontSize: 14, fontFamily: 'Outfit-ExtraBold' },
 });

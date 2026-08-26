@@ -215,11 +215,11 @@ const styles = StyleSheet.create({
   eyebrow: {
     color: '#D20236',
     fontSize: 11,
-    fontWeight: '800',
+    fontFamily: 'Outfit-ExtraBold',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
   },
-  title: { marginTop: 7, color: '#111', fontSize: 22, fontWeight: '900' },
+  title: { marginTop: 7, color: '#111', fontSize: 22, fontFamily: 'Outfit-Black' },
   closeBtn: {
     width: 34,
     height: 34,
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   body: { paddingHorizontal: 20, paddingTop: 16, gap: 9 },
-  label: { color: '#222', fontSize: 13, fontWeight: '800' },
+  label: { color: '#222', fontSize: 13, fontFamily: 'Outfit-ExtraBold' },
   inputWrap: {
     minHeight: 48,
     borderWidth: 1,
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 6,
   },
-  input: { flex: 1, color: '#000', fontSize: 15, fontWeight: '700', paddingVertical: 0 },
+  input: { flex: 1, color: '#000', fontSize: 15, fontFamily: 'Outfit-Bold', paddingVertical: 0 },
   messageBox: {
     borderRadius: 10,
     paddingHorizontal: 12,
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   },
   successBox: { backgroundColor: '#e9f8ee' },
   errorBox: { backgroundColor: '#fff1f3' },
-  messageText: { flex: 1, fontSize: 13, fontWeight: '700', lineHeight: 18 },
+  messageText: { flex: 1, fontSize: 13, fontFamily: 'Outfit-Bold', lineHeight: 18 },
   successText: { color: '#1a7f37' },
   errorText: { color: '#D20236' },
   actions: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 18, gap: 10 },
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   disabledBtn: { backgroundColor: '#e69aab' },
-  primaryText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  primaryText: { color: '#fff', fontSize: 15, fontFamily: 'Outfit-ExtraBold' },
   laterBtn: { minHeight: 40, alignItems: 'center', justifyContent: 'center' },
-  laterText: { color: '#666', fontSize: 14, fontWeight: '800' },
+  laterText: { color: '#666', fontSize: 14, fontFamily: 'Outfit-ExtraBold' },
 });

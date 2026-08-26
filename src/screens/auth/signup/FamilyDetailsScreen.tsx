@@ -141,7 +141,7 @@ export default function FamilyDetailsScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={3} total={8} />
+          <ProgressBar step={7} total={17} />
 
           <Text style={styles.title}>
             Enter your{'\n'}<Text style={styles.titleRed}>Family Details</Text>
@@ -276,10 +276,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { paddingHorizontal: 24, paddingBottom: 30, flexGrow: 1 },
   back: { fontSize: 24, color: '#000', marginTop: 8 },
-  title: { fontSize: 26, fontWeight: '700', color: '#000', textAlign: 'center', marginBottom: 36 },
-  titleRed: { color: '#D20236' },
-  label: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 10, marginTop: 4 },
-  smallLabel: { fontSize: 13, fontWeight: '600', color: '#555', marginBottom: 8 },
+  title: { fontSize: 26, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 36 },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
+  label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 10, marginTop: 4 },
+  smallLabel: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#555', marginBottom: 8 },
   star: { color: '#D20236' },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
   input: {
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   },
   pickerText: { fontSize: 15, color: '#000' },
   pickerPlaceholder: { fontSize: 15, color: '#999' },
-  linkText: { color: '#D20236', fontSize: 12, fontWeight: '600', marginTop: -12, marginBottom: 14 },
+  linkText: { color: '#D20236', fontSize: 12, fontFamily: 'Outfit-SemiBold', marginTop: -12, marginBottom: 14 },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   half: { flex: 1 },
   typePill: {
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   typePillActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
-  typePillText: { fontSize: 14, fontWeight: '600', color: '#333' },
+  typePillText: { fontSize: 14, fontFamily: 'Outfit-SemiBold', color: '#333' },
   typePillTextActive: { color: '#D20236' },
   modalOverlay: {
     flex: 1,
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   modalOptionText: { fontSize: 16, color: '#333', textAlign: 'center' },
   spacer: { flex: 1, minHeight: 30 },
   nextBtn: { backgroundColor: '#D20236', borderRadius: 8, paddingVertical: 16, alignItems: 'center', marginBottom: 14 },
-  nextText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  nextText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   skipBtn: { borderWidth: 1, borderColor: '#D20236', borderRadius: 8, paddingVertical: 16, alignItems: 'center' },
-  skipText: { color: '#000', fontSize: 16, fontWeight: '600' },
+  skipText: { color: '#000', fontSize: 16, fontFamily: 'Outfit-SemiBold' },
 });

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
+import ProgressBar from '../../../components/ProgressBar';
 import { useSignup } from '../../../context/SignupContext';
 
 const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
@@ -143,6 +144,8 @@ const dd = parseInt(day, 10);
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
+
+        <ProgressBar step={2} total={17} />
 
         <View style={styles.iconCircle}>
           <Image
@@ -296,13 +299,13 @@ const styles = StyleSheet.create({
   icon: { width: 34, height: 34 },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Regular',
     color: '#000',
     textAlign: 'center',
     marginBottom: 30,
   },
-  titleRed: { color: '#D20236' },
-  label: { fontSize: 15, fontWeight: '600', color: '#000', marginBottom: 10 },
+  titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
+  label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 10 },
   star: { color: '#D20236' },
   input: {
     borderWidth: 1,
@@ -335,7 +338,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginBottom: 16,
   },
-  ageText: { fontSize: 15, color: '#333', fontWeight: '600' },
+  ageText: { fontSize: 15, color: '#333', fontFamily: 'Outfit-SemiBold' },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -362,6 +365,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
-  continueText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  continueText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
 });

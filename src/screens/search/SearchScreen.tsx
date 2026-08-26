@@ -9,5 +9,5 @@ export default function SearchScreen() {
 }
 const styles = StyleSheet.create({
   c: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
-  t: { fontSize: 22, fontWeight: '700', color: '#D20236' },
+  t: { fontSize: 22, fontFamily: 'Outfit-Bold', color: '#D20236' },
 });

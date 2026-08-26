@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 20,
   },
-  welcome: { fontSize: 24, fontWeight: '700', color: '#000' },
+  welcome: { fontSize: 24, fontFamily: 'Outfit-Bold', color: '#000' },
   name: { color: '#D20236' },
   subtitle: { fontSize: 13, color: '#666', marginTop: 4 },
   bellWrap: { padding: 4 },
@@ -608,10 +608,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
-  badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  badgeText: { color: '#fff', fontSize: 10, fontFamily: 'Outfit-Bold' },
   planCard: { borderRadius: 16, padding: 18, marginBottom: 24 },
   planRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  planTitle: { color: '#fff', fontSize: 17, fontWeight: '700', marginLeft: 8 },
+  planTitle: { color: '#fff', fontSize: 17, fontFamily: 'Outfit-Bold', marginLeft: 8 },
   planSubtitle: {
     color: '#ffe0e6',
     fontSize: 13,
@@ -631,7 +631,7 @@ const styles = StyleSheet.create({
   upgradeText: {
     color: '#D20236',
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Outfit-Bold',
     marginRight: 6,
   },
   sectionHeader: {
@@ -640,9 +640,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 14,
   },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#000' },
+  sectionTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   sectionSub: { fontSize: 13, color: '#666', marginTop: 2 },
-  viewAll: { fontSize: 14, color: '#D20236', fontWeight: '600' },
+  viewAll: { fontSize: 14, color: '#D20236', fontFamily: 'Outfit-SemiBold' },
   empty: { textAlign: 'center', color: '#999', marginVertical: 20 },
   filterBar: {
     flexDirection: 'row',
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  filterText: { fontSize: 14, color: '#333', fontWeight: '600' },
+  filterText: { fontSize: 14, color: '#333', fontFamily: 'Outfit-SemiBold' },
   vendorSection: { marginTop: 10, marginBottom: 20 },
   vendorHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   vendorCard: {
@@ -680,5 +680,5 @@ const styles = StyleSheet.create({
     padding: 14,
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
-  vendorName: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  vendorName: { color: '#fff', fontSize: 18, fontFamily: 'Outfit-Bold' },
 });
