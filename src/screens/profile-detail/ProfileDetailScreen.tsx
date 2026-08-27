@@ -340,7 +340,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       setShowUnlock(true);
       return;
     }
-    const otherUserId = data?.profile?.userId;
+    const otherUserId = data?.user?._id;
     if (!otherUserId) {
       Alert.alert('Error', 'Could not identify user');
       return;
