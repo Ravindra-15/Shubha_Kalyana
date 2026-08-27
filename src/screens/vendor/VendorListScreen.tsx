@@ -137,58 +137,60 @@ export default function VendorListScreen({ navigation }: any) {
           onEndReachedThreshold={0.5}
           renderItem={({ item }) => (
             <View style={styles.card}>
-              {item.image?.url ? (
-                <Image source={{ uri: resolveImageUrl(item.image.url) }} style={styles.cardImage} />
-              ) : (
-                <View style={[styles.cardImage, styles.cardImagePlaceholder]} />
-              )}
-
-              <View style={styles.cardBody}>
-                <View style={styles.nameRow}>
-                  <Text style={styles.vendorName}>{item.vendorName}</Text>
-                  <View style={styles.verifiedBadge}>
-                    <BadgeCheck color="#fff" size={14} />
-                  </View>
-                </View>
-
-                <View style={styles.metaRow}>
-                  <Briefcase color="#888" size={13} />
-                  <Text style={styles.metaText}>{item.serviceCategory}</Text>
-                </View>
-                <View style={styles.metaRow}>
-                  <MapPin color="#888" size={13} />
-                  <Text style={styles.metaText}>{item.location}</Text>
-                </View>
-                <View style={styles.metaRow}>
-                  <Text style={styles.experienceText}>★ {item.experience}+ Years</Text>
-                </View>
-
-                {!!item.about && <Text style={styles.about} numberOfLines={2}>{item.about}</Text>}
-
-                {!!item.contactNumber && (
-                  <View style={styles.metaRow}>
-                    <Phone color="#888" size={13} />
-                    <Text style={styles.metaText}>+91 {item.contactNumber}</Text>
-                  </View>
+              <View style={styles.topRow}>
+                {item.image?.url ? (
+                  <Image source={{ uri: resolveImageUrl(item.image.url) }} style={styles.cardImage} />
+                ) : (
+                  <View style={[styles.cardImage, styles.cardImagePlaceholder]} />
                 )}
 
-                <View style={styles.actionRow}>
-                  <TouchableOpacity
-                    style={styles.contactBtn}
-                    onPress={() => contactVendor(item.contactNumber)}
-                  >
-                    <Text style={styles.contactBtnText}>Contact Vendor</Text>
-                  </TouchableOpacity>
-                  {!!item.portfolioLink && (
-                    <TouchableOpacity
-                      style={styles.websiteBtn}
-                      onPress={() => openWebsite(item.portfolioLink)}
-                    >
-                      <Globe color="#333" size={14} />
-                      <Text style={styles.websiteBtnText}>Website</Text>
-                    </TouchableOpacity>
-                  )}
+                <View style={styles.infoCol}>
+                  <View style={styles.nameRow}>
+                    <Text style={styles.vendorName}>{item.vendorName}</Text>
+                    <View style={styles.verifiedBadge}>
+                      <BadgeCheck color="#fff" size={12} />
+                    </View>
+                  </View>
+
+                  <View style={styles.metaRow}>
+                    <Briefcase color="#888" size={13} />
+                    <Text style={styles.metaText}>{item.serviceCategory}</Text>
+                  </View>
+                  <View style={styles.metaRow}>
+                    <MapPin color="#888" size={13} />
+                    <Text style={styles.metaText}>{item.location}</Text>
+                  </View>
+                  <View style={styles.metaRow}>
+                    <Text style={styles.experienceText}>★ {item.experience}+ Years</Text>
+                  </View>
                 </View>
+              </View>
+
+              {!!item.about && <Text style={styles.about} numberOfLines={2}>{item.about}</Text>}
+
+              {!!item.contactNumber && (
+                <View style={styles.metaRow}>
+                  <Phone color="#888" size={15} />
+                  <Text style={styles.metaText}>+91 {item.contactNumber}</Text>
+                </View>
+              )}
+
+              <View style={styles.actionRow}>
+                <TouchableOpacity
+                  style={styles.contactBtn}
+                  onPress={() => contactVendor(item.contactNumber)}
+                >
+                  <Text style={styles.contactBtnText}>Contact Vendor</Text>
+                </TouchableOpacity>
+                {!!item.portfolioLink && (
+                  <TouchableOpacity
+                    style={styles.websiteBtn}
+                    onPress={() => openWebsite(item.portfolioLink)}
+                  >
+                    <Globe color="#333" size={14} />
+                    <Text style={styles.websiteBtnText}>Website</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           )}
@@ -238,31 +240,32 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: 16, paddingBottom: 20 },
   card: {
     backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#f0f0f0',
-    marginBottom: 16, overflow: 'hidden',
+    marginBottom: 16, padding: 14,
   },
-  cardImage: { width: '100%', height: 140 },
+  topRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  cardImage: { width: 90, height: 90 },
   cardImagePlaceholder: { backgroundColor: '#eee' },
-  cardBody: { padding: 16 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+  infoCol: { flex: 1, justifyContent: 'center' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' },
   verifiedBadge: {
     width: 20, height: 20, borderRadius: 10, backgroundColor: '#D20236',
     alignItems: 'center', justifyContent: 'center',
   },
-  vendorName: { fontSize: 16, fontFamily: 'Outfit-Bold', color: '#000' },
+  vendorName: { fontSize: 19, fontFamily: 'Outfit-Bold', color: '#000' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  metaText: { fontSize: 13, color: '#666' },
-  experienceText: { fontSize: 12, color: '#b8860b', fontFamily: 'Outfit-SemiBold' },
-  about: { fontSize: 13, color: '#555', marginTop: 6, marginBottom: 10, lineHeight: 18 },
+  metaText: { fontSize: 15, color: '#666' },
+  experienceText: { fontSize: 15, color: '#b8860b', fontFamily: 'Outfit-SemiBold' },
+  about: { fontSize: 15, color: '#555', marginTop: 6, marginBottom: 10, lineHeight: 18 },
   actionRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
   contactBtn: {
     flex: 1, backgroundColor: '#D20236', borderRadius: 8, paddingVertical: 12, alignItems: 'center',
   },
-  contactBtnText: { fontSize: 14, fontFamily: 'Outfit-Bold', color: '#fff' },
+  contactBtnText: { fontSize: 17, fontFamily: 'Outfit-Bold', color: '#fff' },
   websiteBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8,
     paddingHorizontal: 16, paddingVertical: 12,
   },
-  websiteBtnText: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#333' },
+  websiteBtnText: { fontSize: 17, fontFamily: 'Outfit-SemiBold', color: '#333' },
   empty: { textAlign: 'center', color: '#999', marginTop: 40 },
 });
