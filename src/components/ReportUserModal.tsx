@@ -43,7 +43,7 @@ export default function ReportUserModal({ visible, chatId, onClose, onSubmitted 
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <KeyboardAvoidingView
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -108,8 +108,16 @@ export default function ReportUserModal({ visible, chatId, onClose, onSubmitted 
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 20 },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 22, maxHeight: '85%' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  card: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 22,
+    paddingTop: 22,
+    paddingBottom: 28,
+    maxHeight: '80%',
+  },
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headTitle: { fontSize: 17, fontFamily: 'Outfit-Bold', color: '#D20236' },
   subtitle: { fontSize: 12, color: '#888', marginTop: 4, marginBottom: 14 },

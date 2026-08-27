@@ -1,19 +1,18 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
-import { Eye, Trash2, Ban, ShieldCheck, X } from 'lucide-react-native';
+import { Eye, Ban, ShieldCheck, X } from 'lucide-react-native';
 
 type Props = {
   visible: boolean;
   isBlockedByMe: boolean;
   onClose: () => void;
   onViewProfile: () => void;
-  onDeleteChat: () => void;
   onBlockAndReport: () => void;
   onUnblock: () => void;
 };
 
 export default function ChatOptionsModal({
-  visible, isBlockedByMe, onClose, onViewProfile, onDeleteChat, onBlockAndReport, onUnblock,
+  visible, isBlockedByMe, onClose, onViewProfile, onBlockAndReport, onUnblock,
 }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -29,11 +28,6 @@ export default function ChatOptionsModal({
           <TouchableOpacity style={styles.row} onPress={onViewProfile}>
             <Eye color="#333" size={18} />
             <Text style={styles.rowText}>View Profile</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.row} onPress={onDeleteChat}>
-            <Trash2 color="#333" size={18} />
-            <Text style={styles.rowText}>Delete Chat</Text>
           </TouchableOpacity>
 
           {isBlockedByMe ? (

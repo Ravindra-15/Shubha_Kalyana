@@ -1,7 +1,8 @@
 import { io, Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '../api/client';
 
-const SOCKET_URL = 'http://localhost:5000';
+const SOCKET_URL = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
 
 let socket: Socket | null = null;
 
@@ -36,6 +37,15 @@ export function getSocket(): Socket | null {
 
 export function joinChat(chatId: string) {
   socket?.emit('join_chat', { chatId });
+}
+
+export function joinUser(): Promise<string[]> {
+  return new Promise((resolve) => {
+    if (!socket) return resolve([]);
+    socket.emit('join_user', (ack: any) => {
+      resolve(ack?.data?.onlineUserIds || []);
+    });
+  });
 }
 
 export function sendSocketMessage(payload: {

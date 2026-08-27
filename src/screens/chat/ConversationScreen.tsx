@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -28,6 +29,7 @@ import {
   connectSocket,
   getSocket,
   joinChat,
+  joinUser,
   emitTyping,
   emitStopTyping,
   emitMarkRead,
@@ -67,7 +69,6 @@ export default function ConversationScreen({ route, navigation }: any) {
   const typingTimeout = useRef<any>(null);
   const [showOptions, setShowOptions] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showReportSubmitted, setShowReportSubmitted] = useState(false);
   const [blocking, setBlocking] = useState(false);
@@ -76,6 +77,7 @@ export default function ConversationScreen({ route, navigation }: any) {
   const [canSendMessage, setCanSendMessage] = useState(true);
   const [sendRestrictionReason, setSendRestrictionReason] = useState('');
   const [chatProfileId, setChatProfileId] = useState(profileId || '');
+  const [refreshing, setRefreshing] = useState(false);
 
   // load history + set up socket
   useEffect(() => {
@@ -106,6 +108,10 @@ export default function ConversationScreen({ route, navigation }: any) {
       if (sock) {
         joinChat(chatId);
         emitMarkRead(chatId);
+        const onlineUserIds = await joinUser();
+        if (mounted && receiverId && onlineUserIds.some((id) => String(id) === String(receiverId))) {
+          setOnline(true);
+        }
       }
       await markChatRead(chatId);
       refreshUnreadCount();
@@ -115,6 +121,35 @@ export default function ConversationScreen({ route, navigation }: any) {
       mounted = false;
     };
   }, [chatId, profileId, refreshUnreadCount]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const data = await getMessages(chatId, 1);
+      setMessages(data.messages || []);
+      setChatBlocked(Boolean(data.chat?.isRestricted));
+      setBlockedByMe(Boolean(data.chat?.blockedByMe));
+      setCanSendMessage(data.chat?.canSendMessage !== false);
+      setSendRestrictionReason(data.chat?.sendRestrictionReason || '');
+      setChatProfileId(data.chat?.oppositeProfileId || profileId || '');
+
+      const sock = await connectSocket();
+      if (sock) {
+        joinChat(chatId);
+        emitMarkRead(chatId);
+        const onlineUserIds = await joinUser();
+        setOnline(
+          Boolean(receiverId) &&
+            onlineUserIds.some((id) => String(id) === String(receiverId)),
+        );
+      }
+      await markChatRead(chatId);
+      refreshUnreadCount();
+    } catch {
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // socket listeners
   useEffect(() => {
@@ -316,17 +351,6 @@ export default function ConversationScreen({ route, navigation }: any) {
     navigation.navigate('ProfileDetail', { profileId });
   };
 
-  const handleDeleteChat = () => {
-    setShowOptions(false);
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDeleteChat = () => {
-    // TODO: no backend endpoint exists yet for deleting a whole conversation.
-    setShowDeleteConfirm(false);
-    Alert.alert('Coming soon', 'Delete conversation will be available soon.');
-  };
-
   const handleBlockAndReport = () => {
     setShowOptions(false);
     setShowBlockConfirm(true);
@@ -390,7 +414,6 @@ export default function ConversationScreen({ route, navigation }: any) {
         isBlockedByMe={blockedByMe}
         onClose={() => setShowOptions(false)}
         onViewProfile={handleViewProfile}
-        onDeleteChat={handleDeleteChat}
         onBlockAndReport={handleBlockAndReport}
         onUnblock={handleUnblock}
       />
@@ -402,14 +425,6 @@ export default function ConversationScreen({ route, navigation }: any) {
         loading={blocking}
         onClose={() => setShowBlockConfirm(false)}
         onConfirm={confirmBlock}
-      />
-      <ConfirmDialog
-        visible={showDeleteConfirm}
-        title="Delete Conversation?"
-        message="This action will remove the chat history from your account."
-        confirmLabel="Delete"
-        onClose={() => setShowDeleteConfirm(false)}
-        onConfirm={confirmDeleteChat}
       />
       <ReportUserModal
         visible={showReportModal}
@@ -463,6 +478,14 @@ export default function ConversationScreen({ route, navigation }: any) {
               showsVerticalScrollIndicator={false}
               ListHeaderComponent={<Text style={styles.todayDivider}>Today</Text>}
               style={{ flex: 1 }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={['#D20236']}
+                  tintColor="#D20236"
+                />
+              }
             />
           )}
         </View>
