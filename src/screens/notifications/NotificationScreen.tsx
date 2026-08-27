@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   FlatList,
   TouchableOpacity,
@@ -16,6 +17,7 @@ import {
   UserPlus,
   CreditCard,
   MessageCircle,
+  Eye,
   Bell,
   CheckCheck,
 } from 'lucide-react-native';
@@ -24,6 +26,7 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
 } from '../../api/notification';
+import { resolveImageUrl } from '../../utils/imageUrl';
 
 // icon + color per notification type
 const typeConfig = (type: string) => {
@@ -37,6 +40,7 @@ const typeConfig = (type: string) => {
     return { Icon: CreditCard, color: '#b8860b' };
   if (t.includes('CHAT') || t.includes('MESSAGE'))
     return { Icon: MessageCircle, color: '#2b6cb0' };
+  if (t.includes('VIEWED')) return { Icon: Eye, color: '#7c3aed' };
   return { Icon: Bell, color: '#666' };
 };
 
@@ -166,17 +170,24 @@ export default function NotificationScreen({ navigation }: any) {
             const { Icon, color } = typeConfig(item.type);
             const unread = !item.readAt;
             const hasProfile = !!item.data?.profileId;
+            const avatarUri = item.data?.viewerPhoto
+              ? resolveImageUrl(item.data.viewerPhoto)
+              : '';
             return (
               <TouchableOpacity
                 style={[styles.card, unread && styles.cardUnread]}
                 onPress={() => onTap(item)}
                 activeOpacity={0.7}
               >
-                <View
-                  style={[styles.iconWrap, { backgroundColor: `${color}18` }]}
-                >
-                  <Icon color={color} size={20} />
-                </View>
+                {avatarUri ? (
+                  <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                ) : (
+                  <View
+                    style={[styles.iconWrap, { backgroundColor: `${color}18` }]}
+                  >
+                    <Icon color={color} size={20} />
+                  </View>
+                )}
                 <View style={styles.body}>
                   <Text style={styles.title}>{item.title}</Text>
                   <Text style={styles.desc}>{item.body}</Text>
@@ -249,6 +260,12 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#f0f0f0',
   },
   body: { flex: 1 },
   title: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#000' },
