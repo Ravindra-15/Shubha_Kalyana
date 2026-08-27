@@ -6,8 +6,12 @@ export const getPartnerProfile = async (id: string) => {
 };
 
 export const getProfileViewersSummary = async () => {
-  const res = await apiClient.get('/relationship/profile-viewers/me/summary');
-  return res.data?.data || { profileViewersCount: 0, totalProfileViews: 0 };
+  const res = await apiClient.get('/relationship/profile-viewers/me/count');
+  const data = res.data?.data || {};
+  return {
+    profileViewersCount: data.count ?? data.total ?? 0,
+    totalProfileViews: data.total ?? data.count ?? 0,
+  };
 };
 
 export const getProfileViewers = async (params?: { page?: number; limit?: number }) => {
