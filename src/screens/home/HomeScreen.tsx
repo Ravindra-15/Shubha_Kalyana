@@ -71,13 +71,13 @@ export default function HomeScreen({ navigation }: any) {
     useCallback(() => {
       loadUser();
       loadPlan();
-      loadMatches();
+      loadMatches(activeFilters);
       loadReceivedRequests();
       loadInterested();
       loadVendors();
       loadUnread();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [activeFilters])
   );
 
   const loadUnread = async () => {
@@ -92,13 +92,13 @@ export default function HomeScreen({ navigation }: any) {
         params.minAge = filters.minAge;
         params.maxAge = filters.maxAge;
         if (filters.religion) params.religion = filters.religion;
-        if (filters.caste) params.caste = filters.caste;
-        if (filters.subCaste) params.subCaste = filters.subCaste;
+        if (filters.caste?.length) params.caste = filters.caste;
+        if (filters.subCaste?.length) params.subCaste = filters.subCaste;
         if (filters.maritalStatus) params.maritalStatus = filters.maritalStatus;
-        if (filters.education) params.education = filters.education;
-        if (filters.profession) params.profession = filters.profession;
-        if (filters.preferredLocation) params.preferredLocation = filters.preferredLocation;
-        if (filters.workingLocation) params.workingLocation = filters.workingLocation;
+        if (filters.education?.length) params.education = filters.education;
+        if (filters.profession?.length) params.profession = filters.profession;
+        if (filters.preferredLocation?.length) params.preferredLocation = filters.preferredLocation;
+        if (filters.workingLocation?.length) params.workingLocation = filters.workingLocation;
       }
       console.log('Search Params:', params);
 
