@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
+import { useAuth } from '../../context/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -42,12 +43,14 @@ const RING_RADIUS = 35;
 const CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 export default function OnboardingScreen({ navigation }: any) {
+  const { markOnboardingSeen } = useAuth();
   const [index, setIndex] = useState(0);
   const listRef = useRef<FlatList>(null);
   const isLast = index === slides.length - 1;
 
 const goNext = () => {
   if (isLast) {
+    markOnboardingSeen();
     navigation.replace('SelectLanguage');
   } else {
     listRef.current?.scrollToIndex({ index: index + 1 });

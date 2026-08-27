@@ -60,7 +60,7 @@ import ProfileViewersScreen from '../screens/profile/ProfileViewersScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
-  const { token, loading } = useAuth();
+  const { token, loading, hasSeenOnboarding } = useAuth();
 
   if (loading) {
     return (
@@ -70,9 +70,18 @@ export default function RootNavigator() {
     );
   }
 
+  const initialRouteName = token
+    ? 'MainTabs'
+    : hasSeenOnboarding
+    ? 'Login'
+    : 'Splash';
+
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        screenOptions={{ headerShown: false }}
+        initialRouteName={initialRouteName}
+      >
         {token ? (
           // Logged in
           <>
