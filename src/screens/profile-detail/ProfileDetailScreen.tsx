@@ -92,14 +92,10 @@ function Row({
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
       {locked ? (
-        <TouchableOpacity
-          style={styles.lockedVal}
-          onPress={onLockedPress}
-          activeOpacity={0.6}
-        >
+        <View style={styles.lockedVal}>
           <Lock color="#D20236" size={12} />
           <View style={styles.blurBar} />
-        </TouchableOpacity>
+        </View>
       ) : empty ? (
         <Text style={styles.notProvided}>Not provided</Text>
       ) : (
@@ -131,13 +127,10 @@ function ContactRow({
       <Icon color={iconColor} size={16} />
       <Text style={styles.contactLabel}>{label}</Text>
       {locked ? (
-        <TouchableOpacity
-          onPress={onLockedPress}
-          style={styles.lockedInline}
-          activeOpacity={0.6}>
+        <View style={styles.lockedInline}>
           <Lock color="#D20236" size={12} />
           <View style={styles.blurBar} />
-        </TouchableOpacity>
+        </View>
       ) : empty ? (
         <Text style={styles.notProvided}>Not provided</Text>
       ) : (
