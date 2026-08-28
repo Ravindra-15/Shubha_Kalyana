@@ -10,6 +10,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {launchCamera} from 'react-native-image-picker';
 import {ArrowLeft, BadgeCheck, Camera} from 'lucide-react-native';
 import {compareFacePhoto} from '../../api/profile';
+import {requestCameraPermission, showCameraPermissionAlert} from '../../utils/cameraPermission';
 
 type VerificationStatus = 'idle' | 'uploading' | 'completed' | 'failed';
 
@@ -36,6 +37,12 @@ const PhotoCompareScreen = ({navigation}: any) => {
   };
 
   const takeSelfieAndVerify = async () => {
+    const permissionStatus = await requestCameraPermission();
+    if (permissionStatus !== 'granted') {
+      showCameraPermissionAlert(permissionStatus);
+      return;
+    }
+
     const result = await launchCamera({
       mediaType: 'photo',
       cameraType: 'front',
