@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  RefreshControl,
   TouchableOpacity,
   Alert,
 } from 'react-native';
@@ -30,6 +31,7 @@ import { getProfileAccess, getUnlockPrice } from '../../api/membershipPayment';
 import { getUnreadCount } from '../../api/notification';
 import { sortProfilesByMatchPercent } from '../../utils/matchSorting';
 import { isProfileFullyVerified } from '../../api/profile';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
@@ -363,6 +365,18 @@ export default function HomeScreen({ navigation }: any) {
     }
   };
 
+  const { refreshing, onRefresh } = usePullToRefresh(() =>
+    Promise.all([
+      loadUser(),
+      loadPlan(),
+      loadMatches(activeFilters),
+      loadReceivedRequests(),
+      loadInterested(),
+      loadVendors(),
+      loadUnread(),
+    ])
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <WelcomePopup
@@ -406,6 +420,9 @@ export default function HomeScreen({ navigation }: any) {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#D20236']} tintColor="#D20236" />
+        }
       >
         {/* Header */}
         <View style={styles.header}>

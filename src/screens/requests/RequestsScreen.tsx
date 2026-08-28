@@ -27,6 +27,7 @@ import {
 import { openRazorpayOrder } from '../../utils/razorpayCheckout';
 import type { PaymentOrderResult } from '../../utils/paymentBreakup';
 import { getSingleProfileUnlockLimitMessage } from '../../utils/singleProfileUnlockAccess';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 const TABS = ['Received', 'Sent', 'Accepted', 'Pending'] as const;
 type Tab = (typeof TABS)[number];
@@ -189,8 +190,8 @@ export default function RequestsScreen({ navigation, route }: any) {
     setTab(getInitialTab(route));
   }, [route]);
 
-  const load = useCallback(async (which: Tab) => {
-    setLoading(true);
+  const load = useCallback(async (which: Tab, silent = false) => {
+    if (!silent) setLoading(true);
     try {
       let res;
       if (which === 'Received') {
@@ -211,7 +212,7 @@ export default function RequestsScreen({ navigation, route }: any) {
     } catch {
       setItems([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -220,6 +221,8 @@ export default function RequestsScreen({ navigation, route }: any) {
       load(tab);
     }, [tab, load])
   );
+
+  const { refreshing, onRefresh } = usePullToRefresh(() => load(tab, true));
 
   const showAccessRequired = async (profile: any) => {
     const [accessResult, priceResult] = await Promise.allSettled([
@@ -460,6 +463,8 @@ export default function RequestsScreen({ navigation, route }: any) {
             keyExtractor={(item, i) => item.requestId || item.profileId || String(i)}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
             renderItem={renderRequestItem}
             ListEmptyComponent={<Text style={styles.empty}>No {tab.toLowerCase()} requests</Text>}
           />

@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView,
+  View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -11,6 +11,7 @@ import apiClient from '../../api/client';
 import { getActiveMembership } from '../../api/membership';
 import { getProfileViewersSummary, isProfileFullyVerified } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 
 const getAge = (dob?: string) => {
@@ -83,6 +84,8 @@ export default function ProfileScreen({ navigation }: any) {
     }, [load])
   );
 
+  const { refreshing, onRefresh } = usePullToRefresh(load);
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -145,6 +148,9 @@ export default function ProfileScreen({ navigation }: any) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={true}
         bounces={true}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#D20236']} tintColor="#D20236" />
+        }
       >
         <View style={styles.content}>
           <View style={styles.identityRow}>

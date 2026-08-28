@@ -18,6 +18,7 @@ import apiClient from '../../api/client';
 import { getProfileAccess, getUnlockPrice } from '../../api/membershipPayment';
 import { getProfileViewers, isProfileFullyVerified } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 const getAge = (dob?: string) => {
   if (!dob) return null;
@@ -159,6 +160,8 @@ export default function ProfileViewersScreen({ navigation }: any) {
     if (!loading && hasNext) load(page + 1, false);
   };
 
+  const { refreshing, onRefresh } = usePullToRefresh(() => load(1, true));
+
   const sendRequest = async (profileId: string) => {
     try {
       await apiClient.post(`/relationship/requests/${profileId}`, {});
@@ -222,6 +225,8 @@ export default function ProfileViewersScreen({ navigation }: any) {
             showsVerticalScrollIndicator={false}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
             ListHeaderComponent={
               <Text style={styles.countText}>
                 {total} profile viewer{total === 1 ? '' : 's'}

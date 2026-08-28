@@ -21,6 +21,7 @@ import {
   Bell,
   CheckCheck,
 } from 'lucide-react-native';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import {
   getNotifications,
   markNotificationRead,
@@ -85,9 +86,9 @@ export default function NotificationScreen({ navigation }: any) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [pagination, setPagination] = useState<any>(defaultPagination);
 
-  const loadPage = useCallback(async (page = 1, replace = true) => {
-    if (replace) setLoading(true);
-    else setLoadingMore(true);
+  const loadPage = useCallback(async (page = 1, replace = true, silent = false) => {
+    if (replace && !silent) setLoading(true);
+    else if (!replace) setLoadingMore(true);
     try {
       const data = await getNotifications(page, PAGE_SIZE);
       const nextItems = data.notifications || [];
@@ -96,13 +97,13 @@ export default function NotificationScreen({ navigation }: any) {
       );
       setPagination(data.pagination || { ...defaultPagination, page });
     } catch {
-      if (replace) {
+      if (replace && !silent) {
         setItems([]);
         setPagination({ ...defaultPagination, page });
       }
     } finally {
-      if (replace) setLoading(false);
-      else setLoadingMore(false);
+      if (replace && !silent) setLoading(false);
+      else if (!replace) setLoadingMore(false);
     }
   }, []);
 
@@ -111,6 +112,8 @@ export default function NotificationScreen({ navigation }: any) {
       loadPage(1, true);
     }, [loadPage]),
   );
+
+  const { refreshing, onRefresh } = usePullToRefresh(() => loadPage(1, true, true));
 
   const hasMore =
     typeof pagination?.hasNextPage === 'boolean'
@@ -166,6 +169,8 @@ export default function NotificationScreen({ navigation }: any) {
           keyExtractor={item => item._id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           renderItem={({ item }) => {
             const { Icon, color } = typeConfig(item.type);
             const unread = !item.readAt;

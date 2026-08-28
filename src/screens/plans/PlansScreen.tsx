@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  RefreshControl,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
@@ -14,6 +15,7 @@ import { ArrowLeft, Crown, Check } from 'lucide-react-native';
 import { getPlans, getActiveMembership, createMembershipOrder } from '../../api/membershipPlans';
 import type { Plan } from '../../api/membershipPlans';
 import { getMyFullProfile } from '../../api/profile';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { openRazorpayOrder } from '../../utils/razorpayCheckout';
 import { formatMoney, type PaymentOrderResult } from '../../utils/paymentBreakup';
 import PaymentBreakupModal from '../../components/PaymentBreakupModal';
@@ -101,12 +103,10 @@ export default function PlansScreen({ navigation, route }: any) {
   const [aadhaarPromptVisible, setAadhaarPromptVisible] = useState(false);
   const [aadhaarPhotoVerified, setAadhaarPhotoVerified] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [list, active] = await Promise.all([getPlans(), getActiveMembership()]);
-      console.log('PLANS RAW:', JSON.stringify(list.map((p) => ({ name: p.planName, rank: p.rank }))));
-      console.log('PLANS FULL:', JSON.stringify(list[0]));
       setPlans(list.sort((a: any, b: any) => (a.displayOrder ?? a.rank ?? 99) - (b.displayOrder ?? b.rank ?? 99)));
       setActivePlanId(active?.planId?._id || active?.planId || active?.plan?._id || null);
       setActivePlanRank(Number(active?.planSnapshot?.rank || active?.plan?.rank || 0));
@@ -115,7 +115,7 @@ export default function PlansScreen({ navigation, route }: any) {
       setActivePlanId(null);
       setActivePlanRank(0);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -142,6 +142,10 @@ export default function PlansScreen({ navigation, route }: any) {
     useCallback(() => {
       load();
     }, [load])
+  );
+
+  const { refreshing, onRefresh } = usePullToRefresh(() =>
+    Promise.all([load(true), loadProfileUnlockOffer()])
   );
 
   useFocusEffect(
@@ -308,7 +312,13 @@ export default function PlansScreen({ navigation, route }: any) {
         {loading ? (
           <ActivityIndicator color="#D20236" style={{ marginTop: 40 }} />
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scroll}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#D20236']} tintColor="#D20236" />
+            }
+          >
             {/* Optional per-profile unlock banner */}
             {targetProfileId && (
               <>

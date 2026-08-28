@@ -11,40 +11,42 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 
 const { width, height } = Dimensions.get('window');
-
-const slides = [
-  {
-    id: '1',
-    image: require('../../assets/images/onboarding1.png'),
-    line1: 'Find',
-    highlight: 'Meaningful',
-    line2: 'Matches !',
-  },
-  {
-    id: '2',
-    image: require('../../assets/images/onboarding2.png'),
-    line1: 'Connect with',
-    highlight: 'Confidence',
-    line2: '',
-  },
-  {
-    id: '3',
-    image: require('../../assets/images/onboarding3.png'),
-    line1: 'Start Your',
-    highlight: 'Journey',
-    line2: 'Today',
-  },
-];
 
 const RING_RADIUS = 35;
 const CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 export default function OnboardingScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { markOnboardingSeen } = useAuth();
   const [index, setIndex] = useState(0);
+
+  const slides = [
+    {
+      id: '1',
+      image: require('../../assets/images/onboarding1.png'),
+      line1: t('onboarding.slide1Line1'),
+      highlight: t('onboarding.slide1Highlight'),
+      line2: t('onboarding.slide1Line2'),
+    },
+    {
+      id: '2',
+      image: require('../../assets/images/onboarding2.png'),
+      line1: t('onboarding.slide2Line1'),
+      highlight: t('onboarding.slide2Highlight'),
+      line2: '',
+    },
+    {
+      id: '3',
+      image: require('../../assets/images/onboarding3.png'),
+      line1: t('onboarding.slide3Line1'),
+      highlight: t('onboarding.slide3Highlight'),
+      line2: t('onboarding.slide3Line2'),
+    },
+  ];
   const listRef = useRef<FlatList>(null);
   const isLast = index === slides.length - 1;
 
@@ -92,7 +94,7 @@ const goNext = () => {
       <TouchableOpacity style={styles.arrowWrap} onPress={goNext} activeOpacity={0.8}>
         {isLast ? (
           <View style={styles.getStartedBtn}>
-            <Text style={styles.getStartedText}>Get Started</Text>
+            <Text style={styles.getStartedText}>{t('onboarding.getStarted')}</Text>
           </View>
         ) : (
           <View style={styles.arrowRingWrap}>

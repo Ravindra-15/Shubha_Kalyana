@@ -19,6 +19,7 @@ import BottomNav from '../../components/BottomNav';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess, getUnlockPrice } from '../../api/membershipPayment';
 import { sortProfilesByMatchPercent } from '../../utils/matchSorting';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 export default function AllMatchesScreen({ navigation, route }: any) {
   const pushed = route?.params?.pushed === true;
@@ -106,6 +107,8 @@ export default function AllMatchesScreen({ navigation, route }: any) {
   const loadMore = () => {
     if (!loading && hasNext) load(page + 1, false);
   };
+
+  const { refreshing, onRefresh } = usePullToRefresh(() => load(1, true));
 
   const applyFilters = (next: Filters | null) => {
     setFilters(next);
@@ -226,6 +229,8 @@ export default function AllMatchesScreen({ navigation, route }: any) {
           showsVerticalScrollIndicator={false}
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           renderItem={({ item }) => (
             <ProfileCard
               profile={item}

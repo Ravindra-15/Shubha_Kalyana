@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeft, Check } from 'lucide-react-native';
+import i18n from '../../i18n';
 import { getAccountSettings, saveLanguagePreference } from '../../api/settings';
-
-const LANGUAGES = [
-  { label: 'English', value: 'en' },
-  { label: 'ಕನ್ನಡ (Kannada)', value: 'kn' },
-];
+import { LANGUAGES } from '../../constants/languages';
 
 export default function ChooseLanguageScreen({ navigation }: any) {
   const [selected, setSelected] = useState('en');
@@ -33,6 +31,8 @@ export default function ChooseLanguageScreen({ navigation }: any) {
     try {
       setSaving(true);
       await saveLanguagePreference(selected);
+      await AsyncStorage.setItem('appLanguage', selected);
+      await i18n.changeLanguage(selected);
       Alert.alert('Success', 'Language preference saved', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
@@ -57,21 +57,24 @@ export default function ChooseLanguageScreen({ navigation }: any) {
         <ActivityIndicator color="#D20236" style={{ marginTop: 40 }} />
       ) : (
         <View style={styles.content}>
-          {LANGUAGES.map((lang) => {
-            const active = selected === lang.value;
-            return (
-              <TouchableOpacity
-                key={lang.value}
-                style={[styles.option, active && styles.optionActive]}
-                onPress={() => setSelected(lang.value)}
-              >
-                <View style={[styles.checkbox, active && styles.checkboxActive]}>
-                  {active && <Check color="#fff" size={14} />}
-                </View>
-                <Text style={[styles.optionText, active && styles.optionTextActive]}>{lang.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
+            {LANGUAGES.map((lang) => {
+              const active = selected === lang.value;
+              return (
+                <TouchableOpacity
+                  key={lang.value}
+                  style={[styles.option, active && styles.optionActive]}
+                  onPress={() => setSelected(lang.value)}
+                >
+                  <View style={[styles.checkbox, active && styles.checkboxActive]}>
+                    {active && <Check color="#fff" size={14} />}
+                  </View>
+                  <Text style={[styles.optionText, active && styles.optionTextActive]}>{lang.label}</Text>
+                  <Text style={styles.optionNative}>{lang.native}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
 
           <TouchableOpacity
             style={[styles.applyBtn, saving && styles.applyBtnDisabled]}
@@ -97,7 +100,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 12,
   },
   headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
-  content: { padding: 20 },
+  content: { flex: 1, padding: 20 },
+  listContent: { paddingBottom: 4 },
   option: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 12,
@@ -109,8 +113,9 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   checkboxActive: { borderColor: '#D20236', backgroundColor: '#D20236' },
-  optionText: { fontSize: 15, color: '#333', fontFamily: 'Outfit-Medium' },
+  optionText: { flex: 1, fontSize: 15, color: '#333', fontFamily: 'Outfit-Medium' },
   optionTextActive: { color: '#D20236', fontFamily: 'Outfit-Bold' },
+  optionNative: { fontSize: 14, color: '#D20236', fontFamily: 'Outfit-Bold' },
   applyBtn: {
     backgroundColor: '#D20236', borderRadius: 10, paddingVertical: 15,
     alignItems: 'center', marginTop: 20,

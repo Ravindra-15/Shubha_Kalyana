@@ -9,6 +9,7 @@ import { getPublicVendors } from '../../api/vendor';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import BottomNav from '../../components/BottomNav';
 import VendorFilterModal, { VendorFilters } from '../../components/VendorFilterModal';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 const PAGE_SIZE = 6;
 
@@ -21,16 +22,21 @@ export default function VendorListScreen({ navigation }: any) {
   const [filters, setFilters] = useState<VendorFilters>({ location: '', minExperience: 0 });
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const data = await getPublicVendors();
-    setAllVendors(data);
-    setLoading(false);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const data = await getPublicVendors();
+      setAllVendors(data);
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const { refreshing, onRefresh } = usePullToRefresh(() => load(true));
 
   const categories = useMemo(() => {
     const unique = Array.from(new Set(allVendors.map((v) => v.serviceCategory).filter(Boolean)));
@@ -135,6 +141,8 @@ export default function VendorListScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           renderItem={({ item }) => (
             <View style={styles.card}>
               <View style={styles.topRow}>

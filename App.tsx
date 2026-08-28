@@ -7,6 +7,7 @@ import React from 'react';
 import { StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import './src/utils/setupDefaultFont';
+import './src/i18n';
 import { AuthProvider } from './src/context/AuthContext';
 import { SignupProvider } from './src/context/SignupContext';
 import RootNavigator from './src/navigation/RootNavigator';

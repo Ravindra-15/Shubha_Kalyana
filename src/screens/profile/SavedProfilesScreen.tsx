@@ -21,6 +21,7 @@ import {
   getSavedProfiles,
   removeSavedProfile,
 } from '../../utils/savedProfiles';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 const getAge = (dob?: string) => {
   if (!dob) return null;
@@ -142,6 +143,8 @@ export default function SavedProfilesScreen({ navigation }: any) {
     if (!loading && hasNext) load(page + 1, false);
   };
 
+  const { refreshing, onRefresh } = usePullToRefresh(() => load(1, true));
+
   const sendRequest = async (profileId: string) => {
     try {
       await apiClient.post(`/relationship/requests/${profileId}`, {});
@@ -214,6 +217,8 @@ export default function SavedProfilesScreen({ navigation }: any) {
             showsVerticalScrollIndicator={false}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
             renderItem={({ item }) => (
               <ProfileCard
                 profile={item}

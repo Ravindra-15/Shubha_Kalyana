@@ -7,6 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ArrowLeft, Download } from 'lucide-react-native';
 import BottomNav from '../../components/BottomNav';
 import { getMyPaymentOrders, downloadAndShareReceipt, PaymentOrder } from '../../api/payment';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 const PURPOSE_LABELS: Record<string, string> = {
   MEMBERSHIP: 'Membership',
@@ -60,6 +61,8 @@ export default function PaymentHistoryScreen({ navigation }: any) {
     }, [load])
   );
 
+  const { refreshing, onRefresh } = usePullToRefresh(load);
+
   const handleDownload = async (orderId: string) => {
     if (downloadingId) return;
     try {
@@ -92,6 +95,8 @@ export default function PaymentHistoryScreen({ navigation }: any) {
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           renderItem={({ item }) => {
             const statusInfo = STATUS_STYLES[item.status] || { color: '#666', label: item.status };
             return (

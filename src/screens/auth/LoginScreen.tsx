@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import {
   View,
@@ -17,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getResumeScreen } from '../../utils/resumeOnboarding';
 
 export default function LoginScreen({ navigation, route }: any) {
+  const { t } = useTranslation();
   const [mobile, setMobile] = useState('');
   const [mpin, setMpin] = useState(['', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -25,7 +27,7 @@ export default function LoginScreen({ navigation, route }: any) {
 
   useEffect(() => {
     if (route?.params?.justResetMpin) {
-      Alert.alert('MPIN Reset', 'Your MPIN has been reset successfully. Please login now.');
+      Alert.alert(t('login.mpinResetTitle'), t('login.mpinResetMessage'));
       navigation.setParams({ justResetMpin: undefined });
     }
   }, [route?.params?.justResetMpin]);
@@ -41,8 +43,8 @@ export default function LoginScreen({ navigation, route }: any) {
 
   const handleLogin = async () => {
     const pin = mpin.join('');
-    if (!mobile.trim()) return Alert.alert('Error', 'Enter mobile number');
-    if (pin.length !== 4) return Alert.alert('Error', 'Enter 4-digit MPIN');
+    if (!mobile.trim()) return Alert.alert(t('common.error'), t('login.errorEnterMobile'));
+    if (pin.length !== 4) return Alert.alert(t('common.error'), t('login.errorEnterMpin'));
 
     try {
       setLoading(true);
@@ -56,10 +58,10 @@ export default function LoginScreen({ navigation, route }: any) {
         await login(token, userData);
         // navigation auto-switches to Home
       } else {
-        Alert.alert('Error', 'No token received');
+        Alert.alert(t('common.error'), t('login.noTokenReceived'));
       }
     } catch (err: any) {
-      Alert.alert('Login failed', err?.response?.data?.message || 'Try again');
+      Alert.alert(t('login.loginFailedTitle'), err?.response?.data?.message || t('login.tryAgain'));
     } finally {
       setLoading(false);
     }
@@ -81,18 +83,18 @@ export default function LoginScreen({ navigation, route }: any) {
 
     // mid-way → ask
     Alert.alert(
-      'Continue Signup?',
-      'You have an incomplete registration. Continue where you left off?',
+      t('login.continueSignupTitle'),
+      t('login.continueSignupMessage'),
       [
         {
-          text: 'Start New',
+          text: t('login.startNew'),
           style: 'destructive',
           onPress: async () => {
             await AsyncStorage.removeItem('onboardingToken');
             navigation.navigate('SignupProfileFor');
           },
         },
-        { text: 'Continue', onPress: () => navigation.navigate(resumeScreen as never) },
+        { text: t('login.continueLabel'), onPress: () => navigation.navigate(resumeScreen as never) },
       ]
     );
   };
@@ -107,10 +109,10 @@ export default function LoginScreen({ navigation, route }: any) {
             resizeMode="contain"
           />
 
-          <Text style={styles.label}>Mobile / Email login</Text>
+          <Text style={styles.label}>{t('login.mobileEmailLabel')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter mobile number or email id"
+            placeholder={t('login.mobilePlaceholder')}
             placeholderTextColor="#999"
             value={mobile}
             onChangeText={setMobile}
@@ -118,7 +120,7 @@ export default function LoginScreen({ navigation, route }: any) {
             autoCapitalize="none"
           />
 
-          <Text style={styles.label}>Enter your MPIN</Text>
+          <Text style={styles.label}>{t('login.mpinLabel')}</Text>
           <View style={styles.mpinRow}>
             {mpin.map((digit, i) => (
               <TextInput
@@ -140,7 +142,7 @@ export default function LoginScreen({ navigation, route }: any) {
             style={styles.forgotWrap}
             onPress={() => navigation.navigate('ForgotMpin')}
           >
-            <Text style={styles.forgot}>Forgot MPIN?</Text>
+            <Text style={styles.forgot}>{t('login.forgotMpin')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -151,7 +153,7 @@ export default function LoginScreen({ navigation, route }: any) {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.loginText}>Log In</Text>
+              <Text style={styles.loginText}>{t('login.logIn')}</Text>
             )}
           </TouchableOpacity>
 
@@ -159,13 +161,13 @@ export default function LoginScreen({ navigation, route }: any) {
             style={styles.otpBtn}
             onPress={() => navigation.navigate('LoginOtp', { mobile })}
           >
-            <Text style={styles.otpText}>Log In with OTP</Text>
+            <Text style={styles.otpText}>{t('login.logInWithOtp')}</Text>
           </TouchableOpacity>
 
           <View style={styles.signupRow}>
-            <Text style={styles.signupText}>Don't have a Account ? </Text>
+            <Text style={styles.signupText}>{t('login.noAccount')}</Text>
             <TouchableOpacity onPress={handleSignup}>
-              <Text style={styles.signupLink}>Sign up</Text>
+              <Text style={styles.signupLink}>{t('login.signUp')}</Text>
             </TouchableOpacity>
           </View>
         </View>

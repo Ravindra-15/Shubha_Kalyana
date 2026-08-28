@@ -4,6 +4,7 @@ import {
   Text,
   Image,
   ScrollView,
+  RefreshControl,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
@@ -46,6 +47,7 @@ import { startChat } from '../../api/chat';
 import type { PaymentOrderResult } from '../../utils/paymentBreakup';
 import { isProfileSaved, removeSavedProfile, saveProfile } from '../../utils/savedProfiles';
 import { useFocusEffect } from '@react-navigation/native';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 if (
   Platform.OS === 'android' &&
@@ -220,16 +222,12 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
     }, [profileId])
   );
 
-  useEffect(() => {
-    (async () => {
+  const loadProfile = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
       try {
         const res = await getPartnerProfile(profileId);
         setData(res);
-        console.log('PROFILE ACCESS:', JSON.stringify(res?.access));
-        console.log(
-          'SAMPLE ADDR:',
-          JSON.stringify(res?.profile?.address?.current),
-        );
 
         // load unlock price + access status
         try {
@@ -283,16 +281,27 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           }
         } catch {}
       } catch (err: any) {
-        Alert.alert(
-          'Error',
-          err?.response?.data?.message || 'Could not load profile',
-        );
-        navigation.goBack();
+        if (silent) {
+          Alert.alert('Error', 'Could not refresh profile');
+        } else {
+          Alert.alert(
+            'Error',
+            err?.response?.data?.message || 'Could not load profile',
+          );
+          navigation.goBack();
+        }
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
-    })();
-  }, [navigation, profileId]);
+    },
+    [navigation, profileId],
+  );
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  const { refreshing, onRefresh } = usePullToRefresh(() => loadProfile(true));
 
   const sendRequest = async () => {
     try {
@@ -536,6 +545,9 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 30 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#D20236']} tintColor="#D20236" />
+        }
       >
         {/* Cover photo */}
         <View style={styles.coverWrap}>

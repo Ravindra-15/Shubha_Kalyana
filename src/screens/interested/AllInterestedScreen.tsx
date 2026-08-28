@@ -18,6 +18,7 @@ import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess, getUnlockPrice } from '../../api/membershipPayment';
 import { isProfileFullyVerified } from '../../api/profile';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 const getAge = (dob?: string) => {
   if (!dob) return null;
@@ -109,6 +110,8 @@ export default function AllInterestedScreen({ navigation, route }: any) {
     if (!loading && hasNext) load(page + 1, false);
   };
 
+  const { refreshing, onRefresh } = usePullToRefresh(() => load(1, true));
+
   const sendRequest = async (profileId: string) => {
     try {
       await apiClient.post(`/relationship/requests/${profileId}`, {});
@@ -183,6 +186,8 @@ export default function AllInterestedScreen({ navigation, route }: any) {
             showsVerticalScrollIndicator={false}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
             renderItem={({ item }) => (
               <ProfileCard
                 profile={item}

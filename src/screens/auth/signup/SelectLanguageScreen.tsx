@@ -3,19 +3,22 @@ import {
   View,
   Text,
   TouchableOpacity,
+  ScrollView,
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const LANGUAGES = [
-  { label: 'Kannada', native: 'ಕ', value: 'kn' },
-  { label: 'English', native: 'En', value: 'en' },
-  { label: 'Hindi', native: 'हि', value: 'hi' },
-];
+import { useTranslation } from 'react-i18next';
+import { LANGUAGES } from '../../../constants/languages';
 
 export default function SelectLanguageScreen({ navigation }: any) {
+  const { t, i18n } = useTranslation();
   const [selected, setSelected] = useState('en');
+
+  const selectLanguage = (value: string) => {
+    setSelected(value);
+    i18n.changeLanguage(value);
+  };
 
   const handleNext = async () => {
     await AsyncStorage.setItem('appLanguage', selected);
@@ -26,15 +29,19 @@ export default function SelectLanguageScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>
-          Select <Text style={styles.titleRed}>Language</Text>
+          {t('selectLanguage.titleLine1')} <Text style={styles.titleRed}>{t('selectLanguage.titleLine2')}</Text>
         </Text>
 
-        <View style={styles.list}>
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        >
           {LANGUAGES.map((lang) => (
             <TouchableOpacity
               key={lang.value}
               style={styles.option}
-              onPress={() => setSelected(lang.value)}
+              onPress={() => selectLanguage(lang.value)}
             >
               <View style={styles.optionLeft}>
                 <View
@@ -48,12 +55,10 @@ export default function SelectLanguageScreen({ navigation }: any) {
               <Text style={styles.optionNative}>{lang.native}</Text>
             </TouchableOpacity>
           ))}
-        </View>
-
-        <View style={styles.spacer} />
+        </ScrollView>
 
         <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
-          <Text style={styles.nextText}>Next →</Text>
+          <Text style={styles.nextText}>{t('selectLanguage.next')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -65,7 +70,8 @@ const styles = StyleSheet.create({
   content: { flex: 1, paddingHorizontal: 24, paddingTop: 40, paddingBottom: 30 },
   title: { fontSize: 24, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 50 },
   titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
-  list: { gap: 12 },
+  list: { flex: 1 },
+  listContent: { gap: 12, paddingBottom: 12 },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -87,7 +93,6 @@ const styles = StyleSheet.create({
   radioActive: { borderColor: '#D20236', backgroundColor: '#D20236' },
   optionLabel: { fontSize: 15, color: '#333', fontFamily: 'Outfit-SemiBold' },
   optionNative: { fontSize: 14, color: '#D20236', fontFamily: 'Outfit-Bold' },
-  spacer: { flex: 1 },
   nextBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,
