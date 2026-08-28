@@ -48,6 +48,7 @@ export default function SignupContactScreen({ navigation }: any) {
   const [emailCooldown, setEmailCooldown] = useState(0);
 
   const [submitting, setSubmitting] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   useEffect(() => {
     if (mobileCooldown <= 0) return;
@@ -92,6 +93,9 @@ export default function SignupContactScreen({ navigation }: any) {
       setMobileVerifying(true);
       const res = await apiClient.post('/onboarding/contact/mobile/verify-otp', {
         mobile: mobile.trim(),
+        // Server validation expects `otp`, the controller reads `code` —
+        // send both so it passes validation and reaches the right value.
+        otp: mobileOtpValue,
         code: mobileOtpValue,
       });
       const resData = res.data?.data || {};
@@ -145,6 +149,10 @@ export default function SignupContactScreen({ navigation }: any) {
     try {
       setEmailVerifying(true);
       const res = await apiClient.post('/onboarding/contact/email/verify-otp', {
+        email: email.trim().toLowerCase(),
+        // Server validation expects `otp`, the controller reads `code` —
+        // send both so it passes validation and reaches the right value.
+        otp: emailOtpValue,
         code: emailOtpValue,
       });
       const resData = res.data?.data || {};
@@ -168,6 +176,11 @@ export default function SignupContactScreen({ navigation }: any) {
     if (!mobileVerified || !emailVerified) {
       scrollToError(!mobileVerified ? ['mobile'] : ['email'], ['mobile', 'email']);
       Alert.alert('Required', 'Please verify both mobile number and email');
+      return;
+    }
+
+    if (!agreedToTerms) {
+      Alert.alert('Required', 'Please agree to the Privacy Policy and Terms & Conditions to continue');
       return;
     }
 
@@ -373,10 +386,26 @@ export default function SignupContactScreen({ navigation }: any) {
           {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
           {emailVerified && <Text style={styles.verifiedText}>✓ Email verified</Text>}
 
+          <TouchableOpacity style={styles.checkRow} onPress={() => setAgreedToTerms(!agreedToTerms)}>
+            <View style={[styles.checkbox, agreedToTerms && styles.checkboxActive]}>
+              {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+            <Text style={styles.checkLabel}>
+              By creating an account, you agree to our{' '}
+              <Text style={styles.checkLink} onPress={() => navigation.navigate('PrivacyPolicy')}>
+                Privacy Policy
+              </Text>{' '}
+              and{' '}
+              <Text style={styles.checkLink} onPress={() => navigation.navigate('TermsAndConditions')}>
+                T&C
+              </Text>
+            </Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
-            style={[styles.continueBtn, (!mobileVerified || !emailVerified) && styles.continueBtnDisabled]}
+            style={[styles.continueBtn, (!mobileVerified || !emailVerified || !agreedToTerms) && styles.continueBtnDisabled]}
             onPress={handleSubmit}
-            disabled={submitting || !mobileVerified || !emailVerified}
+            disabled={submitting || !mobileVerified || !emailVerified || !agreedToTerms}
           >
             {submitting ? (
               <ActivityIndicator color="#fff" />
@@ -462,4 +491,10 @@ const styles = StyleSheet.create({
   continueBtnDisabled: { backgroundColor: '#f0a8b8' },
   continueText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
+  checkRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 20, marginBottom: 4 },
+  checkbox: { width: 22, height: 22, borderRadius: 4, borderWidth: 1.5, borderColor: '#ccc', alignItems: 'center', justifyContent: 'center', marginRight: 10, marginTop: 2 },
+  checkboxActive: { borderColor: '#D20236', backgroundColor: '#D20236' },
+  checkmark: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
+  checkLabel: { flex: 1, fontSize: 13, color: '#555', lineHeight: 19 },
+  checkLink: { color: '#D20236', fontFamily: 'Outfit-SemiBold' },
 });

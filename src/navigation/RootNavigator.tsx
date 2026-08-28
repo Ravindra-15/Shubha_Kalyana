@@ -79,6 +79,7 @@ export default function RootNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator
+        key={token ? 'app' : 'auth'}
         screenOptions={{ headerShown: false }}
         initialRouteName={initialRouteName}
       >
@@ -139,6 +140,8 @@ export default function RootNavigator() {
               name="SignupContact"
               component={SignupContactScreen}
             />
+            <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
+            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
             <Stack.Screen
               name="Qualification"
               component={QualificationScreen}
