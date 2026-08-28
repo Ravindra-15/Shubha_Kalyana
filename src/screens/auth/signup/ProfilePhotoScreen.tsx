@@ -15,6 +15,7 @@ import ProgressBar from '../../../components/ProgressBar';
 import apiClient from '../../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { validateProfilePhotoAsset } from '../../../utils/profilePhotoValidation';
+import { requestCameraPermission, showCameraPermissionAlert } from '../../../utils/cameraPermission';
 
 const guidelineItems = [
   {
@@ -79,6 +80,11 @@ export default function ProfilePhotoScreen({ navigation }: any) {
   };
 
   const openCamera = async () => {
+    const status = await requestCameraPermission();
+    if (status !== 'granted') {
+      showCameraPermissionAlert(status);
+      return;
+    }
     setPicking(true);
     const result = await launchCamera({ mediaType: 'photo', quality: 0.8 });
     handleResult(result);

@@ -9,8 +9,6 @@ import {
   Image,
   Alert,
   BackHandler,
-  PermissionsAndroid,
-  Platform,
   Modal,
   FlatList,
 } from 'react-native';
@@ -26,6 +24,7 @@ import {
   X,
 } from 'lucide-react-native';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
+import { requestCameraPermission, showCameraPermissionAlert } from '../../utils/cameraPermission';
 import KeyboardWrapper from '../../components/KeyboardWrapper';
 import SearchableDropdown from '../../components/SearchableDropdown';
 import {
@@ -720,28 +719,11 @@ export default function EditProfileScreen({ navigation }: any) {
     ]);
   };
 
-  const requestCameraPermission = async () => {
-    if (Platform.OS !== 'android') return true;
-
-    const permission = PermissionsAndroid.PERMISSIONS.CAMERA;
-    const alreadyGranted = await PermissionsAndroid.check(permission);
-    if (alreadyGranted) return true;
-
-    const result = await PermissionsAndroid.request(permission, {
-      title: 'Camera Permission',
-      message: 'Allow Shubha Kalyana to use your camera to take a profile photo.',
-      buttonPositive: 'Allow',
-      buttonNegative: 'Cancel',
-    });
-
-    return result === PermissionsAndroid.RESULTS.GRANTED;
-  };
-
   const openCamera = async () => {
     try {
-      const hasPermission = await requestCameraPermission();
-      if (!hasPermission) {
-        Alert.alert('Permission Required', 'Please allow camera access to take a profile photo.');
+      const status = await requestCameraPermission();
+      if (status !== 'granted') {
+        showCameraPermissionAlert(status);
         return;
       }
 
