@@ -33,6 +33,8 @@ const resources = {
         forgotMpin: 'Forgot MPIN?',
         logIn: 'Log In',
         logInWithOtp: 'Log In with OTP',
+        loginSuccessful: 'Log In Succesful',
+        redirecting: "Please wait You'll be Redirected to Homepage",
         noAccount: "Don't have a Account ? ",
         signUp: 'Sign up',
         errorEnterMobile: 'Enter mobile number',

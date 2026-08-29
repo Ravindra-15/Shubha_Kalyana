@@ -10,6 +10,7 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import KeyboardWrapper from '../../components/KeyboardWrapper';
@@ -22,6 +23,7 @@ export default function LoginScreen({ navigation, route }: any) {
   const [mobile, setMobile] = useState('');
   const [mpin, setMpin] = useState(['', '', '', '']);
   const [loading, setLoading] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   const { login } = useAuth();
   const mpinRefs = useRef<Array<TextInput | null>>([]);
 
@@ -55,15 +57,19 @@ export default function LoginScreen({ navigation, route }: any) {
       const token = res.data?.data?.accessToken;
       const userData = res.data?.data?.user;
       if (token) {
-        await login(token, userData);
-        // navigation auto-switches to Home
+        setLoading(false);
+        setLoginSuccess(true);
+        setTimeout(async () => {
+          await login(token, userData);
+          // navigation auto-switches to Home
+        }, 1500);
       } else {
+        setLoading(false);
         Alert.alert(t('common.error'), t('login.noTokenReceived'));
       }
     } catch (err: any) {
-      Alert.alert(t('login.loginFailedTitle'), err?.response?.data?.message || t('login.tryAgain'));
-    } finally {
       setLoading(false);
+      Alert.alert(t('login.loginFailedTitle'), err?.response?.data?.message || t('login.tryAgain'));
     }
   };
 
@@ -134,6 +140,8 @@ export default function LoginScreen({ navigation, route }: any) {
                 keyboardType="number-pad"
                 maxLength={1}
                 secureTextEntry
+                placeholder="*"
+                placeholderTextColor="#bbb"
               />
             ))}
           </View>
@@ -172,6 +180,32 @@ export default function LoginScreen({ navigation, route }: any) {
           </View>
         </View>
       </KeyboardWrapper>
+
+      <Modal visible={loginSuccess} transparent animationType="fade">
+        <View style={styles.successOverlay}>
+          <View style={styles.successCard}>
+            <View style={styles.iconWrapper}>
+              <View style={[styles.dot, styles.dotTopLeft]} />
+              <View style={[styles.dot, styles.dotTopRight]} />
+              <View style={[styles.dot, styles.dotLeft]} />
+              <View style={[styles.dot, styles.dotRight]} />
+              <View style={[styles.dot, styles.dotBottomLeft]} />
+              <View style={styles.iconCircle}>
+                <Image
+                  source={require('../../assets/images/cingratsUsericon.png')}
+                  style={styles.iconImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
+
+            <Text style={styles.successTitle}>{t('login.loginSuccessful')}</Text>
+            <Text style={styles.successSubtitle}>{t('login.redirecting')}</Text>
+
+            <ActivityIndicator color="#333" size="small" style={{ marginTop: 10 }} />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -181,34 +215,34 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { paddingHorizontal: 24, paddingVertical: 40, flexGrow: 1, justifyContent: 'center' },
   logo: { width: 180, height: 130, alignSelf: 'center', marginBottom: 40 },
-  label: { fontSize: 14, color: '#333', marginBottom: 8, fontFamily: 'Outfit-Medium' },
+  label: { fontSize: 16, color: '#333', marginBottom: 8, fontFamily: 'Outfit-Medium' },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 18,
     fontSize: 15,
     marginBottom: 24,
     color: '#000',
   },
   mpinRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   mpinBox: {
-    width: 60,
+    width: 65,
     height: 56,
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
+    borderRadius: 12,
     textAlign: 'center',
     fontSize: 20,
     color: '#000',
   },
   forgotWrap: { alignSelf: 'flex-end', marginBottom: 24 },
-  forgot: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-Medium' },
+  forgot: { color: '#D20236', fontSize: 14, fontFamily: 'Outfit-Medium' },
   loginBtn: {
     backgroundColor: '#D20236',
-    borderRadius: 8,
-    paddingVertical: 15,
+    borderRadius: 14,
+    paddingVertical: 18,
     alignItems: 'center',
     marginBottom: 14,
   },
@@ -216,13 +250,56 @@ const styles = StyleSheet.create({
   otpBtn: {
     borderWidth: 1,
     borderColor: '#D20236',
-    borderRadius: 8,
-    paddingVertical: 15,
+    borderRadius: 14,
+    paddingVertical: 18,
     alignItems: 'center',
     marginBottom: 20,
   },
-  otpText: { color: '#D20236', fontSize: 16, fontFamily: 'Outfit-SemiBold' },
+  otpText: { color: '#000', fontSize: 16, fontFamily: 'Outfit-Medium'},
   signupRow: { flexDirection: 'row', justifyContent: 'center' },
-  signupText: { color: '#333', fontSize: 14 },
-  signupLink: { color: '#D20236', fontSize: 14, fontFamily: 'Outfit-Bold' },
+  signupText: { color: '#333', fontSize: 16,fontFamily: 'Outfit-Medium' },
+  signupLink: { color: '#D20236', fontSize: 16, fontFamily: 'Outfit-Medium' },
+  successOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    paddingHorizontal: 30,
+  },
+  successCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  iconWrapper: {
+    width: 150,
+    height: 150,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  iconCircle: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: '#D20236',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconImage: { width: 50, height: 50 },
+  dot: {
+    position: 'absolute',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#D9D9D9',
+  },
+  dotTopLeft: { top: 8, left: 20 },
+  dotTopRight: { top: 8, right: 20 },
+  dotLeft: { top: 68, left: 0 },
+  dotRight: { top: 68, right: 0 },
+  dotBottomLeft: { bottom: 10, left: 30 },
+  successTitle: { fontSize: 22, fontFamily: 'Outfit-Bold', color: '#D20236', marginBottom: 10 },
+  successSubtitle: { fontSize: 15, color: '#333', textAlign: 'center' },
 });
