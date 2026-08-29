@@ -88,7 +88,7 @@ export default function ProfileCard({
   </TouchableOpacity>
 
   {onRemove && (
-    <TouchableOpacity style={styles.linkBtn} onPress={onRemove}>
+<TouchableOpacity style={styles.removeBtn} onPress={onRemove}>
       <Text style={styles.removeText}>
         {removeLabel || 'Remove from Interested'}
       </Text>
@@ -124,11 +124,11 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     marginTop: -10,
   },
-  matchText: { color: '#fff', fontSize: 11, fontFamily: 'Outfit-Bold' },
+  matchText: { color: '#fff', fontSize: 13, fontFamily: 'Outfit' },
   info: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   name: { fontSize: 16, fontFamily: 'Outfit-Bold', color: '#000' },
-  detail: { fontSize: 13, color: '#666', marginTop: 2 },
+  detail: { fontSize: 15, color: '#666', marginTop: 2 },
   actionBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,
@@ -141,17 +141,20 @@ const styles = StyleSheet.create({
 bottomRow: {
   flexDirection: 'row',
   alignItems: 'center',
-  justifyContent: 'space-between',
   marginTop: 8,
   marginLeft: 100,
 },
 linkBtn: {
-  flex: 1,
   flexDirection: 'row',
   alignItems: 'center',
   justifyContent: 'center',
   gap: 5,
+  marginRight: 20,
 },
-  linkText: { fontSize: 15, color: '#666' },
-  removeText: { fontSize: 15, color: '#D20236', fontFamily: 'Outfit-SemiBold' },
+removeBtn: {
+  marginLeft: 'auto',
+  flexShrink: 1,
+},
+  linkText: { fontSize: 14, color: '#666' },
+  removeText: { fontSize: 12, color: '#D20236', fontFamily: 'Outfit-SemiBold' },
 });

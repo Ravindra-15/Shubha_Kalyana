@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -25,6 +26,7 @@ import {
   MessageCircle,
   Bookmark,
   MoreVertical,
+  Heart,
 } from 'lucide-react-native';
 import { getPartnerProfile, isProfileFullyVerified } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
@@ -206,6 +208,8 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const [showReportSubmitted, setShowReportSubmitted] = useState(false);
   const [blocking, setBlocking] = useState(false);
   const [reportChatId, setReportChatId] = useState('');
+  const [saveAnimVisible, setSaveAnimVisible] = useState(false);
+  const saveAnimValue = useRef(new Animated.Value(0)).current;
 
   useFocusEffect(
     useCallback(() => {
@@ -330,6 +334,15 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
     }
   };
 
+  const playSaveAnimation = () => {
+    setSaveAnimVisible(true);
+    saveAnimValue.setValue(0);
+    Animated.sequence([
+      Animated.spring(saveAnimValue, { toValue: 1, useNativeDriver: true, friction: 4 }),
+      Animated.timing(saveAnimValue, { toValue: 0, duration: 350, delay: 350, useNativeDriver: true }),
+    ]).start(() => setSaveAnimVisible(false));
+  };
+
   const toggleSavedProfile = async () => {
     if (savingProfile || !profileId) return;
 
@@ -338,15 +351,12 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       const nextSaved = !saved;
       if (nextSaved) {
         await saveProfile(profileId);
+        playSaveAnimation();
       } else {
         await removeSavedProfile(profileId);
       }
 
       setSaved(nextSaved);
-      Alert.alert(
-        nextSaved ? 'Saved' : 'Removed',
-        nextSaved ? 'Profile saved' : 'Profile removed from saved',
-      );
     } catch {
       Alert.alert('Error', 'Could not update saved profile');
     } finally {
@@ -610,8 +620,8 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         <Text style={styles.headerTitle}>Profile Details</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity
-            onPress={toggleSavedProfile}
-            disabled={savingProfile}
+            onPress={() => navigation.navigate('SavedProfiles')}
+            accessibilityLabel="Saved Profiles"
           >
             <Bookmark
               color="#D20236"
@@ -744,6 +754,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               style={[styles.sendBtn, !canChat && styles.sendBtnDisabled]}
               onPress={openChat}
             >
+              <Heart color="#fff" size={17} />
               <Text style={styles.sendText}>{canChat ? 'Chat Now' : 'Unlock to Chat'}</Text>
             </TouchableOpacity>
           ) : (
@@ -752,20 +763,40 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               onPress={sendRequest}
               disabled={!!requestStatus}
             >
+              <Heart color="#fff" size={17} />
               <Text style={styles.sendText}>
                 {requestStatus === 'PENDING' ? 'Request Sent' : 'Send Request'}
               </Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity
-            style={styles.saveBtn}
-            onPress={toggleSavedProfile}
-            disabled={savingProfile}
-          >
-            <Text style={styles.saveText}>
-              {saved ? 'Remove Saved Profile' : 'Save Profile'}
-            </Text>
-          </TouchableOpacity>
+          <View>
+            <TouchableOpacity
+              style={styles.saveBtn}
+              onPress={toggleSavedProfile}
+              disabled={savingProfile}
+            >
+              <Text style={styles.saveText}>
+                {saved ? 'Remove Saved Profile' : 'Save Profile'}
+              </Text>
+            </TouchableOpacity>
+            {saveAnimVisible ? (
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.saveAnimHeart,
+                  {
+                    opacity: saveAnimValue,
+                    transform: [
+                      { scale: saveAnimValue.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.4] }) },
+                      { translateY: saveAnimValue.interpolate({ inputRange: [0, 1], outputRange: [0, -18] }) },
+                    ],
+                  },
+                ]}
+              >
+                <Heart color="#D20236" fill="#D20236" size={30} />
+              </Animated.View>
+            ) : null}
+          </View>
         </View>
 
         {/* Contact Details */}
@@ -1014,7 +1045,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#D20236',
     borderRadius: 8,
     paddingVertical: 15,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   sendText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   saveBtn: {
@@ -1025,6 +1059,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   saveText: { color: '#333', fontSize: 15, fontFamily: 'Outfit-SemiBold' },
+  saveAnimHeart: {
+    position: 'absolute',
+    top: 10,
+    alignSelf: 'center',
+  },
   section: { backgroundColor: '#fff', marginTop: 10, paddingHorizontal: 16 },
   sectionHead: {
     flexDirection: 'row',
