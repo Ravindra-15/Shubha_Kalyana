@@ -139,6 +139,10 @@ export default function NotificationScreen({ navigation }: any) {
     const profileId = n.data?.profileId;
     if (profileId) {
       navigation.navigate('ProfileDetail', { profileId });
+      return;
+    }
+    if (String(n.type || '').toUpperCase().includes('PAYMENT')) {
+      navigation.navigate('PaymentHistory');
     }
   };
 
@@ -175,6 +179,7 @@ export default function NotificationScreen({ navigation }: any) {
             const { Icon, color } = typeConfig(item.type);
             const unread = !item.readAt;
             const hasProfile = !!item.data?.profileId;
+            const isPayment = String(item.type || '').toUpperCase().includes('PAYMENT');
             const avatarUri = item.data?.viewerPhoto
               ? resolveImageUrl(item.data.viewerPhoto)
               : '';
@@ -200,6 +205,9 @@ export default function NotificationScreen({ navigation }: any) {
                     <Text style={styles.time}>{timeAgo(item.createdAt)}</Text>
                     {hasProfile && (
                       <Text style={styles.viewLink}>View Profile</Text>
+                    )}
+                    {!hasProfile && isPayment && (
+                      <Text style={styles.viewLink}>View Payment History</Text>
                     )}
                   </View>
                 </View>
