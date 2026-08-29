@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, Search, Heart, MessageCircle, User } from 'lucide-react-native';
 import HomeScreen from '../screens/home/HomeScreen';
@@ -7,7 +7,7 @@ import AllInterestedScreen from '../screens/interested/AllInterestedScreen';
 import ChatListScreen from '../screens/chat/ChatListScreen';
 import { useChat } from '../context/ChatContext';
 import ProfileScreen from '../screens/profile/ProfileScreen';
-import { getMyFullProfile } from '../api/profile';
+import { getMyFullProfile, getNavbarCounts } from '../api/profile';
 import { getActiveMembership } from '../api/membership';
 import VerificationPromptModal from '../components/VerificationPromptModal';
 import AadhaarVerificationModal from '../components/AadhaarVerificationModal';
@@ -33,6 +33,13 @@ export default function MainTabs({ navigation }: any) {
     useState<VerificationPromptStatus | null>(null);
   const [aadhaarPromptVisible, setAadhaarPromptVisible] = useState(false);
   const [aadhaarPhotoVerified, setAadhaarPhotoVerified] = useState(false);
+  const [interestCount, setInterestCount] = useState(0);
+
+  useEffect(() => {
+    getNavbarCounts()
+      .then((counts) => setInterestCount(counts.interestCount))
+      .catch(() => {});
+  }, []);
 
   const showVerificationPrompt = useCallback(async () => {
     try {
@@ -112,6 +119,7 @@ export default function MainTabs({ navigation }: any) {
           options={{
             title: 'Interests',
             tabBarIcon: InterestsTabIcon,
+            tabBarBadge: interestCount > 0 ? interestCount : undefined,
           }}
         />
         <Tab.Screen

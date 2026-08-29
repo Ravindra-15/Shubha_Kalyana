@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   ArrowLeft,
   MoreVertical,
@@ -122,6 +123,16 @@ export default function ConversationScreen({ route, navigation }: any) {
     };
   }, [chatId, profileId, refreshUnreadCount]);
 
+  // Re-mark as read on the way out too, in case a message arrived just
+  // before leaving — keeps the chat-list badge and tab count in sync.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        markChatRead(chatId).then(refreshUnreadCount);
+      };
+    }, [chatId, refreshUnreadCount])
+  );
+
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -179,6 +190,7 @@ export default function ConversationScreen({ route, navigation }: any) {
         return [...prev, msg];
       });
       emitMarkRead(chatId);
+      markChatRead(chatId).then(refreshUnreadCount);
     };
     const onSent = (msg: any) => {
       setMessages(prev =>

@@ -53,6 +53,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     refreshUnreadCount();
 
     let mounted = true;
+    let cleanupSocket: (() => void) | undefined;
+
     (async () => {
       const sock = await connectSocket();
       if (!sock || !mounted) return;
@@ -63,14 +65,21 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       sock.on('new_message', onNewMessage);
       sock.on('message_read', onRead);
 
-      return () => {
+      cleanupSocket = () => {
         sock.off('new_message', onNewMessage);
         sock.off('message_read', onRead);
       };
     })();
 
+    // Safety net: a socket event can occasionally be missed (reconnects,
+    // background/foreground transitions) — a light poll keeps the badge
+    // from getting stuck instead of relying on push alone.
+    const interval = setInterval(refreshUnreadCount, 30_000);
+
     return () => {
       mounted = false;
+      cleanupSocket?.();
+      clearInterval(interval);
     };
   }, [user, refreshUnreadCount]);
 

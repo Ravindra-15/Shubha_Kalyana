@@ -5,6 +5,16 @@ export const getPartnerProfile = async (id: string) => {
   return res.data?.data || null;
 };
 
+export const getNavbarCounts = async () => {
+  const res = await apiClient.get('/user/me/navbar-counts');
+  const data = res.data?.data || {};
+  return {
+    interestCount: Number(data.interestCount || 0),
+    connectionCount: Number(data.connectionCount || 0),
+    chatUnreadCount: Number(data.chatUnreadCount || 0),
+  };
+};
+
 export const getProfileViewersSummary = async () => {
   const res = await apiClient.get('/relationship/profile-viewers/me/count');
   const data = res.data?.data || {};

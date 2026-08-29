@@ -9,7 +9,7 @@ import {
 } from 'lucide-react-native';
 import apiClient from '../../api/client';
 import { getActiveMembership } from '../../api/membership';
-import { getProfileViewersSummary, isProfileFullyVerified } from '../../api/profile';
+import { getProfileViewersSummary, getNavbarCounts, isProfileFullyVerified } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
@@ -56,13 +56,15 @@ export default function ProfileScreen({ navigation }: any) {
     profileViewersCount: 0,
     totalProfileViews: 0,
   });
+  const [connectionCount, setConnectionCount] = useState(0);
 
   const load = useCallback(async () => {
     try {
-      const [profileRes, membershipRes, viewerSummaryRes] = await Promise.all([
+      const [profileRes, membershipRes, viewerSummaryRes, navbarCountsRes] = await Promise.all([
         apiClient.get('/user/me/profile'),
         getActiveMembership(),
         getProfileViewersSummary().catch(() => null),
+        getNavbarCounts().catch(() => null),
       ]);
       setUser(profileRes.data?.data?.user);
       setProfile(profileRes.data?.data?.profile);
@@ -71,6 +73,7 @@ export default function ProfileScreen({ navigation }: any) {
         profileViewersCount: Number(viewerSummaryRes?.profileViewersCount || 0),
         totalProfileViews: Number(viewerSummaryRes?.totalProfileViews || 0),
       });
+      setConnectionCount(Number(navbarCountsRes?.connectionCount || 0));
     } catch {
       // keep screen usable even if one call fails
     } finally {
@@ -124,7 +127,7 @@ export default function ProfileScreen({ navigation }: any) {
     { label: 'Edit Profile', Icon: Edit3, onPress: () => navigation.navigate('EditProfile') },
     { label: 'Saved Profiles', Icon: Bookmark, onPress: () => navigation.navigate('SavedProfiles') },
     { label: `Profile Viewers (${viewerSummary.profileViewersCount})`, Icon: Eye, onPress: () => navigation.navigate('ProfileViewers') },
-    { label: 'Connections', Icon: Users, onPress: () => navigation.navigate('Requests', { initialTab: 'Accepted' }) },
+    { label: `Connections (${connectionCount})`, Icon: Users, onPress: () => navigation.navigate('Requests', { initialTab: 'Accepted' }) },
     { label: 'Payment History', Icon: CreditCard, onPress: () => navigation.navigate('PaymentHistory') },
     { label: 'Download Receipts', Icon: Download, onPress: () => navigation.navigate('PaymentHistory') },
     { label: 'Interests', Icon: Heart, onPress: () => navigation.navigate('AllInterested', { pushed: true }) },

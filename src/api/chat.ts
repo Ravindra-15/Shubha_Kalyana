@@ -34,7 +34,9 @@ export const sendMessageApi = async (
 export const markChatRead = async (chatId: string) => {
   try {
     await apiClient.patch(`/chat/${chatId}/read`);
-  } catch {}
+  } catch (err) {
+    console.log('markChatRead failed:', chatId, err);
+  }
 };
 
 // block / unblock the other user
