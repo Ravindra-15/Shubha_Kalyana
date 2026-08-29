@@ -24,6 +24,7 @@ import {
   Mail,
   MessageCircle,
   Bookmark,
+  MoreVertical,
 } from 'lucide-react-native';
 import { getPartnerProfile, isProfileFullyVerified } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
@@ -32,6 +33,9 @@ import { LayoutAnimation, Platform, UIManager } from 'react-native';
 import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import PaymentBreakupModal from '../../components/PaymentBreakupModal';
+import ConfirmDialog from '../../components/ConfirmDialog';
+import ReportUserModal from '../../components/ReportUserModal';
+import ReportSubmittedModal from '../../components/ReportSubmittedModal';
 import { openRazorpayOrder } from '../../utils/razorpayCheckout';
 import {
   createProfileUnlockOrder,
@@ -43,7 +47,7 @@ import {
   getSingleProfileUnlockLimitMessage,
   isFreePlanSingleUnlockLimitReached,
 } from '../../utils/singleProfileUnlockAccess';
-import { startChat } from '../../api/chat';
+import { startChat, blockChatUser } from '../../api/chat';
 import type { PaymentOrderResult } from '../../utils/paymentBreakup';
 import { isProfileSaved, removeSavedProfile, saveProfile } from '../../utils/savedProfiles';
 import { useFocusEffect } from '@react-navigation/native';
@@ -196,6 +200,12 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const [savingProfile, setSavingProfile] = useState(false);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
+  const [optionsMenuOpen, setOptionsMenuOpen] = useState(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showReportSubmitted, setShowReportSubmitted] = useState(false);
+  const [blocking, setBlocking] = useState(false);
+  const [reportChatId, setReportChatId] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -368,6 +378,47 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not start chat');
     }
   };
+
+  const openOptionsMenu = () => setOptionsMenuOpen((open) => !open);
+
+  const handleBlockAndReport = async () => {
+    setOptionsMenuOpen(false);
+    const otherUserId = data?.user?._id;
+    if (!otherUserId) {
+      Alert.alert('Error', 'Could not identify user');
+      return;
+    }
+    try {
+      let chatId = reportChatId;
+      if (!chatId) {
+        const { chat } = await startChat(otherUserId);
+        chatId = chat._id;
+        setReportChatId(chatId);
+      }
+      setShowBlockConfirm(true);
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not start this action');
+    }
+  };
+
+  const confirmBlock = async () => {
+    try {
+      setBlocking(true);
+      await blockChatUser(reportChatId);
+      setShowBlockConfirm(false);
+      setShowReportModal(true);
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not block user');
+    } finally {
+      setBlocking(false);
+    }
+  };
+
+  const handleReportSubmitted = () => {
+    setShowReportModal(false);
+    setShowReportSubmitted(true);
+  };
+
   const handleUnlock = async () => {
     if (isFreePlanSingleUnlockLimitReached(access)) {
       Alert.alert('Payment', getSingleProfileUnlockLimitMessage(access));
@@ -463,6 +514,13 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
     .filter(Boolean)
     .join(' ');
   const age = getAge(basic.dob);
+  const matchStatus = access?.isConnected
+    ? 'connected'
+    : access?.relationshipStatus === 'PENDING_SENT'
+      ? 'sent'
+      : access?.relationshipStatus === 'PENDING_RECEIVED'
+        ? 'received'
+        : null;
   const photo =
     profile.photos?.find((p: any) => p.isProfilePhoto)?.url ||
     profile.photos?.[0]?.url ||
@@ -524,22 +582,67 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         onClose={closePaymentBreakup}
         onPurchase={confirmUnlockPayment}
       />
+      <ConfirmDialog
+        visible={showBlockConfirm}
+        title="Block This User?"
+        message="You will no longer receive messages or interactions from this profile."
+        confirmLabel="Block User"
+        loading={blocking}
+        onClose={() => setShowBlockConfirm(false)}
+        onConfirm={confirmBlock}
+      />
+      <ReportUserModal
+        visible={showReportModal}
+        chatId={reportChatId}
+        onClose={() => setShowReportModal(false)}
+        onSubmitted={handleReportSubmitted}
+      />
+      <ReportSubmittedModal
+        visible={showReportSubmitted}
+        buttonLabel="Done"
+        onBackToChat={() => setShowReportSubmitted(false)}
+      />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <ArrowLeft color="#000" size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile Details</Text>
-        <TouchableOpacity
-          onPress={toggleSavedProfile}
-          disabled={savingProfile}
-        >
-          <Bookmark
-            color="#D20236"
-            size={24}
-            fill={saved ? '#D20236' : 'transparent'}
-          />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={toggleSavedProfile}
+            disabled={savingProfile}
+          >
+            <Bookmark
+              color="#D20236"
+              size={24}
+              fill={saved ? '#D20236' : 'transparent'}
+            />
+          </TouchableOpacity>
+
+          {matchStatus === 'connected' ? (
+            <View>
+              <TouchableOpacity onPress={openOptionsMenu} accessibilityLabel="Profile options">
+                <MoreVertical color="#000" size={22} />
+              </TouchableOpacity>
+
+              {optionsMenuOpen ? (
+                <>
+                  <TouchableOpacity
+                    style={styles.menuBackdrop}
+                    activeOpacity={1}
+                    onPress={() => setOptionsMenuOpen(false)}
+                  />
+                  <View style={styles.optionsMenu}>
+                    <TouchableOpacity style={styles.optionsMenuItem} onPress={handleBlockAndReport}>
+                      <Text style={styles.optionsMenuText}>Block & Report User</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
       </View>
 
       <ScrollView
@@ -549,6 +652,40 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#D20236']} tintColor="#D20236" />
         }
       >
+        {matchStatus ? (
+          <View style={styles.matchBanner}>
+            <Image
+              source={require('../../assets/images/unlock-illustration.png')}
+              style={styles.matchBannerImage}
+              resizeMode="contain"
+            />
+            <View>
+              {matchStatus === 'connected' ? (
+                <>
+                  <Text style={styles.matchBannerTitle}>It's a Match !</Text>
+                  <Text style={styles.matchBannerText}>
+                    {name} has accepted your interest. You can now start your conversation.
+                  </Text>
+                </>
+              ) : matchStatus === 'sent' ? (
+                <>
+                  <Text style={styles.matchBannerTitle}>Request Sent</Text>
+                  <Text style={styles.matchBannerText}>
+                    Your request is waiting for {name}'s response. We'll let you know once they accept.
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.matchBannerTitle}>New Request!</Text>
+                  <Text style={styles.matchBannerText}>
+                    {name} wants to connect with you. Review your requests to respond.
+                  </Text>
+                </>
+              )}
+            </View>
+          </View>
+        ) : null}
+
         {/* Cover photo */}
         <View style={styles.coverWrap}>
           {photo ? (
@@ -794,6 +931,51 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   headerTitle: { fontSize: 17, fontFamily: 'Outfit-Bold', color: '#000' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 18 },
+  menuBackdrop: {
+    position: 'absolute',
+    top: -1000,
+    left: -1000,
+    right: -1000,
+    bottom: -1000,
+  },
+  optionsMenu: {
+    position: 'absolute',
+    top: 30,
+    right: 0,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingVertical: 4,
+    minWidth: 190,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    zIndex: 20,
+  },
+  optionsMenuItem: { paddingHorizontal: 16, paddingVertical: 12 },
+  optionsMenuText: { fontSize: 14, fontFamily: 'Outfit-Medium', color: '#D20236' },
+  matchBanner: {
+    margin: 16,
+    marginBottom: 0,
+    borderRadius: 12,
+    backgroundColor: '#D9043D',
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    overflow: 'hidden',
+  },
+  matchBannerImage: {
+    position: 'absolute',
+    alignSelf: 'center',
+    top: '50%',
+    marginTop: -60,
+    width: 160,
+    height: 120,
+    opacity: 0.15,
+  },
+  matchBannerTitle: { color: '#fff', fontSize: 18, fontFamily: 'Outfit-Bold' },
+  matchBannerText: { color: 'rgba(255,255,255,0.9)', fontSize: 13, marginTop: 4, lineHeight: 19 },
   coverWrap: { height: 320, position: 'relative' },
   cover: { width: '100%', height: '100%' },
   coverPlaceholder: { backgroundColor: '#ccc' },

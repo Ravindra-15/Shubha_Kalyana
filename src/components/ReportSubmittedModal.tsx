@@ -5,9 +5,10 @@ import { Ban } from 'lucide-react-native';
 type Props = {
   visible: boolean;
   onBackToChat: () => void;
+  buttonLabel?: string;
 };
 
-export default function ReportSubmittedModal({ visible, onBackToChat }: Props) {
+export default function ReportSubmittedModal({ visible, onBackToChat, buttonLabel = 'Back to Chat' }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onBackToChat}>
       <View style={styles.overlay}>
@@ -20,7 +21,7 @@ export default function ReportSubmittedModal({ visible, onBackToChat }: Props) {
             Thank you for helping us maintain a safe and respectful platform. Our support team will review the report.
           </Text>
           <TouchableOpacity style={styles.btn} onPress={onBackToChat}>
-            <Text style={styles.btnText}>Back to Chat</Text>
+            <Text style={styles.btnText}>{buttonLabel}</Text>
           </TouchableOpacity>
         </View>
       </View>
