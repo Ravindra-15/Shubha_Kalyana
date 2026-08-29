@@ -5,8 +5,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
+  Image,
 } from 'react-native';
-import { UserCheck, X } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 
 type Props = {
   visible: boolean;
@@ -29,8 +30,19 @@ export default function WelcomePopup({ visible, onClose, userName }: Props) {
             <X color="#999" size={22} />
           </TouchableOpacity>
 
-          <View style={styles.iconCircle}>
-            <UserCheck color="#fff" size={44} />
+          <View style={styles.iconWrapper}>
+            <View style={[styles.dot, styles.dotTopLeft]} />
+            <View style={[styles.dot, styles.dotTopRight]} />
+            <View style={[styles.dot, styles.dotLeft]} />
+            <View style={[styles.dot, styles.dotRight]} />
+            <View style={[styles.dot, styles.dotBottomLeft]} />
+            <View style={styles.iconCircle}>
+              <Image
+                source={require('../../assets/images/cingratsUsericon.png')}
+                style={styles.iconImage}
+                resizeMode="contain"
+              />
+            </View>
           </View>
 
           <Text style={styles.congrats}>Congratulations !</Text>
@@ -60,6 +72,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeBtn: { position: 'absolute', top: 16, right: 16, padding: 4 },
+  iconWrapper: {
+    width: 150,
+    height: 150,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
   iconCircle: {
     width: 110,
     height: 110,
@@ -67,8 +86,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#D20236',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
   },
+  iconImage: {
+    width: 40,
+    height: 40,
+  },
+  dot: {
+    position: 'absolute',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#D9D9D9',
+  },
+  dotTopLeft: { top: 8, left: 20 },
+  dotTopRight: { top: 8, right: 20 },
+  dotLeft: { top: 68, left: 0 },
+  dotRight: { top: 68, right: 0 },
+  dotBottomLeft: { bottom: 10, left: 30 },
   congrats: { fontSize: 24, fontFamily: 'Outfit-Bold', color: '#D20236', marginBottom: 10 },
   subtitle: { fontSize: 15, color: '#333', marginBottom: 30, textAlign: 'center' },
   browseBtn: {
