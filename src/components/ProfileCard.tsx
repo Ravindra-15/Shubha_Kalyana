@@ -63,29 +63,38 @@ export default function ProfileCard({
         </View>
       </View>
 
-      <View style={styles.bottomRow}>
-        <TouchableOpacity style={styles.linkBtn} onPress={onView}>
-          <Eye color="#666" size={15} />
-          <Text style={styles.linkText}>View</Text>
-        </TouchableOpacity>
-        {showInterested && (
-          <TouchableOpacity style={styles.linkBtn} onPress={onInterested}>
-            <Heart
-              color={profileIsInterested ? '#D20236' : '#666'}
-              fill={profileIsInterested ? '#D20236' : 'transparent'}
-              size={15}
-            />
-            <Text style={[styles.linkText, profileIsInterested && { color: '#D20236' }]}>
-              {profileIsInterested ? 'Interested' : 'Interest'}
-            </Text>
-          </TouchableOpacity>
-        )}
-        {onRemove && (
-          <TouchableOpacity style={styles.linkBtn} onPress={onRemove}>
-            <Text style={styles.removeText}>{removeLabel || 'Remove from Interested'}</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+<View style={styles.bottomRow}>
+  {showInterested && (
+    <TouchableOpacity style={styles.linkBtn} onPress={onInterested}>
+      <Heart
+        color={profileIsInterested ? '#D20236' : '#666'}
+        fill={profileIsInterested ? '#D20236' : 'transparent'}
+        size={15}
+      />
+      <Text
+        style={[
+          styles.linkText,
+          profileIsInterested && { color: '#D20236' },
+        ]}
+      >
+        {profileIsInterested ? 'Interested' : 'Interest'}
+      </Text>
+    </TouchableOpacity>
+  )}
+
+  <TouchableOpacity style={styles.linkBtn} onPress={onView}>
+    <Eye color="#666" size={15} />
+    <Text style={styles.linkText}>View</Text>
+  </TouchableOpacity>
+
+  {onRemove && (
+    <TouchableOpacity style={styles.linkBtn} onPress={onRemove}>
+      <Text style={styles.removeText}>
+        {removeLabel || 'Remove from Interested'}
+      </Text>
+    </TouchableOpacity>
+  )}
+</View>
     </View>
   );
 }
@@ -106,16 +115,16 @@ const styles = StyleSheet.create({
   },
   topRow: { flexDirection: 'row' },
   avatarWrap: { alignItems: 'center', marginRight: 14 },
-  avatar: { width: 72, height: 72, borderRadius: 36 },
+  avatar: { width: 86, height: 86, borderRadius: 43 },
   avatarPlaceholder: { backgroundColor: '#eee' },
   matchBadge: {
     backgroundColor: '#1a7f37',
     borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
     marginTop: -10,
   },
-  matchText: { color: '#fff', fontSize: 10, fontFamily: 'Outfit-Bold' },
+  matchText: { color: '#fff', fontSize: 11, fontFamily: 'Outfit-Bold' },
   info: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   name: { fontSize: 16, fontFamily: 'Outfit-Bold', color: '#000' },
@@ -129,16 +138,20 @@ const styles = StyleSheet.create({
   },
   actionBtnDisabled: { backgroundColor: '#e69aab' },
   actionText: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 20,
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#f5f5f5',
-  },
-  linkBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  linkText: { fontSize: 13, color: '#666' },
-  removeText: { fontSize: 13, color: '#D20236', fontFamily: 'Outfit-SemiBold' },
+bottomRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginTop: 8,
+  marginLeft: 100,
+},
+linkBtn: {
+  flex: 1,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 5,
+},
+  linkText: { fontSize: 15, color: '#666' },
+  removeText: { fontSize: 15, color: '#D20236', fontFamily: 'Outfit-SemiBold' },
 });
