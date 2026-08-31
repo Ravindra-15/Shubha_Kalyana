@@ -26,8 +26,12 @@ export default function ReviewProfileScreen({ navigation }: any) {
 
         <View style={styles.content}>
           <Text style={styles.title}>
-            We are reviewing your{'\n'}profile{' '}
-            <Text style={styles.titleRed}>, stay tuned !</Text>
+            Your profile has been created,{' '}
+            <Text style={styles.titleRed}>Congratulations!</Text>
+          </Text>
+
+          <Text style={styles.subtitle}>
+            We are reviewing your profile, stay tuned.
           </Text>
 
           <Image
@@ -60,9 +64,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit-Regular',
     color: '#000',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 10,
   },
   titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
+  subtitle: {
+    fontSize: 15,
+    fontFamily: 'Outfit-Regular',
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
   reviewImage: {
     width: 260,
     height: 260,
