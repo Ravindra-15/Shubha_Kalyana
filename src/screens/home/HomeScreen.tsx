@@ -340,7 +340,11 @@ export default function HomeScreen({ navigation }: any) {
   const loadPlan = async () => {
     const membership = await getActiveMembership();
     // active paid membership has a plan name; otherwise Free
-    const name = membership?.plan?.name || membership?.planName;
+    const name =
+      membership?.planSnapshot?.planName ||
+      membership?.plan?.planName ||
+      membership?.plan?.name ||
+      membership?.planName;
     setPlanName(name || 'Free Plan');
   };
 
