@@ -10,10 +10,18 @@ export async function connectSocket(): Promise<Socket | null> {
   if (socket?.connected) return socket;
 
   const token = await AsyncStorage.getItem('token');
-  if (!token) return null;
+  console.log('[SOCKET] connectSocket() called. SOCKET_URL:', SOCKET_URL, '| token present:', Boolean(token));
+  if (!token) {
+    console.log('[SOCKET] No token in AsyncStorage — aborting connect.');
+    return null;
+  }
 
   socket = io(SOCKET_URL, {
-    transports: ['websocket', 'polling'],
+    // Start with polling (plain HTTPS long-polling) and let it upgrade to
+    // websocket opportunistically. On some mobile networks/devices a raw
+    // WebSocket handshake fails outright (TransportError) even though
+    // regular HTTPS works fine — polling-first avoids that entirely.
+    transports: ['polling', 'websocket'],
     auth: { token },
     reconnection: true,
     reconnectionAttempts: 5,
@@ -21,11 +29,16 @@ export async function connectSocket(): Promise<Socket | null> {
   });
 
   socket.on('connect', () => {
+    console.log('[SOCKET] connected! id:', socket?.id);
     socket?.emit('join_user');
   });
 
+  socket.on('disconnect', (reason) => {
+    console.log('[SOCKET] disconnected. reason:', reason);
+  });
+
   socket.on('connect_error', (err: any) => {
-    console.log('SOCKET ERROR:', err.message, '| data:', JSON.stringify(err.data), '| type:', err.type);
+    console.log('[SOCKET] connect_error:', err.message, '| data:', JSON.stringify(err.data), '| type:', err.type);
   });
 
   return socket;
