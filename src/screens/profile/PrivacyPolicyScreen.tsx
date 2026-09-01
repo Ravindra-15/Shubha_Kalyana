@@ -3,6 +3,93 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 
+type Section = {
+  heading: string;
+  paragraphs?: string[];
+  bullets?: string[];
+  additionalParagraphs?: string[];
+};
+
+// Kept in sync with the web app's Privacy Policy content
+// (matrimony-user/src/features/static/StaticInfoPage.jsx -> pageContent.privacy).
+const SECTIONS: Section[] = [
+  {
+    heading: '1. Introduction',
+    paragraphs: [
+      'Shubhakalyana.com is an online matrimonial portal dedicated to providing matchmaking services. This Privacy Policy applies to all websites and mobile applications operated under Shubhakalyana.com.',
+      'By accessing or using our platform, you consent to the collection, use, storage, and processing of your information in accordance with this Privacy Policy. If you do not agree, please refrain from using our website or apps.',
+    ],
+  },
+  {
+    heading: '2. Information We Collect',
+    paragraphs: ['We may collect the following information from members and visitors:'],
+    bullets: [
+      'Personal details: name, date of birth, email, phone number, mailing address, zip/pin code.',
+      'Profile content: photos, videos, educational qualifications.',
+      'Identity proof documents (with explicit consent) for verification purposes.',
+      'Login credentials: user-specified password.',
+      'Payment details: billing address, credit/debit card information, cheque/demand draft tracking.',
+      'Device and technical data: device ID, log files, geographic location, specifications.',
+      'Social login data: information shared via Facebook, Google, LinkedIn, or other platforms.',
+      'Cookies: used to store login information and enhance user experience.',
+    ],
+  },
+  {
+    heading: '3. Use of Information',
+    paragraphs: ['Your information may be used for:'],
+    bullets: [
+      'Authentication and account access.',
+      'Verification and fraud prevention.',
+      'Data analysis, usage trends, and marketing research.',
+      'Improving services and personalization.',
+      'Communication and customer support.',
+    ],
+  },
+  {
+    heading: '4. Sharing of Information',
+    paragraphs: ['We may share your information with:'],
+    bullets: [
+      'Affiliates, associates, and subsidiaries for service delivery.',
+      'Regulators and law enforcement agencies when required by law.',
+      'Verification agencies, gateway service providers, and anti-fraud partners.',
+      'Third parties during corporate transactions such as merger, acquisition, reorganization, or asset sale.',
+    ],
+    additionalParagraphs: [
+      'We are not responsible for the privacy practices of linked third-party websites or apps.',
+    ],
+  },
+  {
+    heading: '5. Data Retention',
+    paragraphs: ['We retain user information:'],
+    bullets: [
+      'For as long as you subscribe to our services.',
+      'To enforce agreements, perform audits, resolve disputes, establish legal defenses, and comply with applicable laws.',
+    ],
+  },
+  {
+    heading: '6. Security Measures',
+    paragraphs: [
+      'We implement organizational and technical safeguards to protect your personal information.',
+      'While we strive to ensure security, please note that no system can guarantee 100% protection over the internet.',
+    ],
+  },
+  {
+    heading: '7. Changes to Privacy Policy',
+    paragraphs: [
+      'We may update this Privacy Policy from time to time without prior notice. All changes will be reflected on the Privacy Policy page.',
+    ],
+  },
+  {
+    heading: '8. Grievance Redressal',
+    paragraphs: [
+      'For any concerns, please contact our Grievance Officer:',
+      'grievanceofficer@shubhakalyana.com',
+      'Available: Monday to Saturday, 10 AM – 6 PM IST (excluding Sundays and public holidays).',
+      'The Grievance Officer is appointed as per Section 5(9) of the Information Technology (Reasonable Security Practices and Procedures and Sensitive Personal Data or Information) Rules, 2011.',
+    ],
+  },
+];
+
 export default function PrivacyPolicyScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -15,65 +102,30 @@ export default function PrivacyPolicyScreen({ navigation }: any) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.updated}>Last updated: January 2026</Text>
+        {SECTIONS.map((section, index) => (
+          <View key={index}>
+            <Text style={styles.heading}>{section.heading}</Text>
 
-        <Text style={styles.heading}>1. Information We Collect</Text>
-        <Text style={styles.body}>
-          We collect information you provide during signup and profile creation, including your name, contact
-          details, photos, Aadhaar details, and preferences, to help you find suitable matches.
-        </Text>
+            {section.paragraphs?.map((paragraph, i) => (
+              <Text key={i} style={styles.body}>
+                {paragraph}
+              </Text>
+            ))}
 
-        <Text style={styles.heading}>2. How We Use Your Information</Text>
-        <Text style={styles.body}>
-          Your information is used to create your profile, verify your identity, match you with other users,
-          process payments, and improve our services. We do not sell your personal data to third parties.
-        </Text>
+            {section.bullets?.map((bullet, i) => (
+              <View key={i} style={styles.bulletRow}>
+                <Text style={styles.bulletDot}>{'•'}</Text>
+                <Text style={styles.bulletText}>{bullet}</Text>
+              </View>
+            ))}
 
-        <Text style={styles.heading}>3. Aadhaar & Identity Data</Text>
-        <Text style={styles.body}>
-          Aadhaar details are collected solely for identity verification purposes and are stored securely.
-          This information is never shared publicly on your profile.
-        </Text>
-
-        <Text style={styles.heading}>4. Contact Information Sharing</Text>
-        <Text style={styles.body}>
-          Your mobile number and email are only revealed to other users after mutual connection or when a
-          profile is unlocked, in accordance with your membership access level.
-        </Text>
-
-        <Text style={styles.heading}>5. Data Security</Text>
-        <Text style={styles.body}>
-          We use industry-standard security measures, including encrypted storage and secure payment processing,
-          to protect your personal information.
-        </Text>
-
-        <Text style={styles.heading}>6. Your Rights</Text>
-        <Text style={styles.body}>
-          You can edit your profile information at any time. You may also request account deletion, after
-          which your data will be handled according to our data retention policy.
-        </Text>
-
-        <Text style={styles.heading}>7. Cookies & Tracking</Text>
-        <Text style={styles.body}>
-          Our app may use device identifiers and analytics tools to improve performance and user experience.
-        </Text>
-
-        <Text style={styles.heading}>8. Third-Party Services</Text>
-        <Text style={styles.body}>
-          We use trusted third-party services for payments and cloud storage. These providers are bound by
-          their own privacy and security obligations.
-        </Text>
-
-        <Text style={styles.heading}>9. Changes to This Policy</Text>
-        <Text style={styles.body}>
-          We may update this Privacy Policy periodically. Continued use of the app after changes constitutes
-          acceptance of the updated policy.
-        </Text>
-
-        <Text style={styles.heading}>10. Contact Us</Text>
-        <Text style={styles.body}>
-          For privacy-related questions, reach out to us at support@shubhakalyanam.com.
-        </Text>
+            {section.additionalParagraphs?.map((paragraph, i) => (
+              <Text key={`extra-${i}`} style={styles.body}>
+                {paragraph}
+              </Text>
+            ))}
+          </View>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -87,7 +139,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   scroll: { padding: 20, paddingBottom: 40 },
-  updated: { fontSize: 12, color: '#999', marginBottom: 20 },
   heading: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#000', marginTop: 18, marginBottom: 8 },
-  body: { fontSize: 13, color: '#555', lineHeight: 20 },
+  body: { fontSize: 13, color: '#555', lineHeight: 20, marginBottom: 6 },
+  bulletRow: { flexDirection: 'row', marginBottom: 6, paddingRight: 4 },
+  bulletDot: { fontSize: 13, color: '#555', lineHeight: 20, marginRight: 8 },
+  bulletText: { flex: 1, fontSize: 13, color: '#555', lineHeight: 20 },
 });
