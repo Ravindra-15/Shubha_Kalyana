@@ -10,7 +10,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -78,7 +77,6 @@ export default function ConversationScreen({ route, navigation }: any) {
   const [canSendMessage, setCanSendMessage] = useState(true);
   const [sendRestrictionReason, setSendRestrictionReason] = useState('');
   const [chatProfileId, setChatProfileId] = useState(profileId || '');
-  const [refreshing, setRefreshing] = useState(false);
 
   // load history + set up socket + attach listeners (kept in one effect so
   // listener registration always runs against an actually-connected socket
@@ -218,35 +216,6 @@ export default function ConversationScreen({ route, navigation }: any) {
       };
     }, [chatId, refreshUnreadCount])
   );
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      const data = await getMessages(chatId, 1);
-      setMessages(data.messages || []);
-      setChatBlocked(Boolean(data.chat?.isRestricted));
-      setBlockedByMe(Boolean(data.chat?.blockedByMe));
-      setCanSendMessage(data.chat?.canSendMessage !== false);
-      setSendRestrictionReason(data.chat?.sendRestrictionReason || '');
-      setChatProfileId(data.chat?.oppositeProfileId || profileId || '');
-
-      const sock = await connectSocket();
-      if (sock) {
-        joinChat(chatId);
-        emitMarkRead(chatId);
-        const onlineUserIds = await joinUser();
-        setOnline(
-          Boolean(receiverId) &&
-            onlineUserIds.some((id) => String(id) === String(receiverId)),
-        );
-      }
-      await markChatRead(chatId);
-      refreshUnreadCount();
-    } catch {
-    } finally {
-      setRefreshing(false);
-    }
-  };
 
   // autoscroll on new messages
   useEffect(() => {
@@ -491,14 +460,6 @@ export default function ConversationScreen({ route, navigation }: any) {
               showsVerticalScrollIndicator={false}
               ListHeaderComponent={<Text style={styles.todayDivider}>Today</Text>}
               style={{ flex: 1 }}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  colors={['#D20236']}
-                  tintColor="#D20236"
-                />
-              }
             />
           )}
         </View>

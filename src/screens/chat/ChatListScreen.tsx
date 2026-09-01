@@ -9,6 +9,7 @@ import { getChatList } from '../../api/chat';
 import { connectSocket } from '../../services/socket';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import BottomNav from '../../components/BottomNav';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 const timeAgo = (dateStr?: string) => {
   if (!dateStr) return '';
@@ -84,6 +85,8 @@ export default function ChatListScreen({ navigation, route }: any) {
     }, [])
   );
 
+  const { refreshing, onRefresh } = usePullToRefresh(load);
+
   const filtered = chats.filter((c) => {
     if (!search.trim()) return true;
     const name = `${c.oppositeUser?.firstName || ''} ${c.oppositeUser?.lastName || ''}`.toLowerCase();
@@ -136,6 +139,8 @@ export default function ChatListScreen({ navigation, route }: any) {
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           renderItem={({ item }) => {
             const isOnline = onlineIds.has(String(item.oppositeUser?._id));
             const name = `${item.oppositeUser?.firstName || ''} ${item.oppositeUser?.lastName || ''}`.trim();
