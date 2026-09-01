@@ -29,7 +29,7 @@ import type { PaymentOrderResult } from '../../utils/paymentBreakup';
 import { getSingleProfileUnlockLimitMessage } from '../../utils/singleProfileUnlockAccess';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
-const TABS = ['Received', 'Sent', 'Accepted', 'Pending'] as const;
+const TABS = ['Received', 'Sent', 'Accepted'] as const;
 type Tab = (typeof TABS)[number];
 type RequestDirection = 'received' | 'sent' | 'accepted';
 
@@ -200,9 +200,6 @@ export default function RequestsScreen({ navigation, route }: any) {
       } else if (which === 'Sent') {
         res = await apiClient.get('/relationship/requests/sent', { params: { status: 'PENDING', limit: 50 } });
         setItems((res.data?.data?.requests || []).map((r: any) => mapCard(r, 'sent')));
-      } else if (which === 'Pending') {
-        res = await apiClient.get('/relationship/requests/pending', { params: { limit: 50 } });
-        setItems((res.data?.data?.requests || []).map((r: any) => mapCard(r)));
       } else {
         // Accepted requests are represented by active connections.
         res = await apiClient.get('/relationship/connections/me', { params: { limit: 50 } });
@@ -383,17 +380,10 @@ export default function RequestsScreen({ navigation, route }: any) {
     navigation.navigate('ProfileDetail', { profileId });
 
   const renderRequestItem = ({ item }: { item: any }) => {
-    const isPendingTab = tab === 'Pending';
-    const isReceivedRequest =
-      tab === 'Received' || (isPendingTab && item.direction === 'received');
+    const isReceivedRequest = tab === 'Received';
     const isAcceptedConnection = tab === 'Accepted';
     const requestBusy = actingId === item.requestId;
     const connectionBusy = actingId === item.connectionId;
-    const metaLabel = isPendingTab
-      ? item.direction === 'received'
-        ? 'Received request'
-        : 'Sent request'
-      : undefined;
 
     if (isReceivedRequest) {
       return (
@@ -404,7 +394,6 @@ export default function RequestsScreen({ navigation, route }: any) {
           onView={() => openProfile(item.profileId)}
           accepting={requestBusy && actingAction === 'accept'}
           rejecting={requestBusy && actingAction === 'reject'}
-          metaLabel={metaLabel}
         />
       );
     }
@@ -417,7 +406,6 @@ export default function RequestsScreen({ navigation, route }: any) {
         onRemove={() => removeConnection(item.connectionId, item.name)}
         onView={() => openProfile(item.profileId)}
         busy={isAcceptedConnection ? connectionBusy : requestBusy}
-        metaLabel={metaLabel}
       />
     );
   };

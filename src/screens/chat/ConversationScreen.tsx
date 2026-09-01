@@ -80,98 +80,17 @@ export default function ConversationScreen({ route, navigation }: any) {
   const [chatProfileId, setChatProfileId] = useState(profileId || '');
   const [refreshing, setRefreshing] = useState(false);
 
-  // load history + set up socket
+  // load history + set up socket + attach listeners (kept in one effect so
+  // listener registration always runs against an actually-connected socket
+  // instead of racing the async connectSocket() call in a separate effect)
   useEffect(() => {
     let mounted = true;
-    (async () => {
-      console.log('OPENING CHAT ID:', chatId);
-      // history
-      try {
-        const data = await getMessages(chatId, 1);
-        console.log('HISTORY:', JSON.stringify(data));
-        if (mounted) {
-          const msgs = data.messages || [];
-          console.log('PARSED COUNT:', msgs.length);
-          setMessages(msgs);
-          setChatBlocked(Boolean(data.chat?.isRestricted));
-          setBlockedByMe(Boolean(data.chat?.blockedByMe));
-          setCanSendMessage(data.chat?.canSendMessage !== false);
-          setSendRestrictionReason(data.chat?.sendRestrictionReason || '');
-          setChatProfileId(data.chat?.oppositeProfileId || profileId || '');
-        }
-      } catch {
-      } finally {
-        if (mounted) setLoading(false);
-      }
-
-      // socket
-      const sock = await connectSocket();
-      if (sock) {
-        joinChat(chatId);
-        emitMarkRead(chatId);
-        const onlineUserIds = await joinUser();
-        if (mounted && receiverId && onlineUserIds.some((id) => String(id) === String(receiverId))) {
-          setOnline(true);
-        }
-      }
-      await markChatRead(chatId);
-      refreshUnreadCount();
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, [chatId, profileId, refreshUnreadCount]);
-
-  // Re-mark as read on the way out too, in case a message arrived just
-  // before leaving — keeps the chat-list badge and tab count in sync.
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        markChatRead(chatId).then(refreshUnreadCount);
-      };
-    }, [chatId, refreshUnreadCount])
-  );
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      const data = await getMessages(chatId, 1);
-      setMessages(data.messages || []);
-      setChatBlocked(Boolean(data.chat?.isRestricted));
-      setBlockedByMe(Boolean(data.chat?.blockedByMe));
-      setCanSendMessage(data.chat?.canSendMessage !== false);
-      setSendRestrictionReason(data.chat?.sendRestrictionReason || '');
-      setChatProfileId(data.chat?.oppositeProfileId || profileId || '');
-
-      const sock = await connectSocket();
-      if (sock) {
-        joinChat(chatId);
-        emitMarkRead(chatId);
-        const onlineUserIds = await joinUser();
-        setOnline(
-          Boolean(receiverId) &&
-            onlineUserIds.some((id) => String(id) === String(receiverId)),
-        );
-      }
-      await markChatRead(chatId);
-      refreshUnreadCount();
-    } catch {
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  // socket listeners
-  useEffect(() => {
-    const sock = getSocket();
-    if (!sock) return;
+    let sockRef: ReturnType<typeof getSocket> = null;
 
     const onNew = (payload: any) => {
       const msg = payload?.message || payload;
       if (String(msg.chatId) !== String(chatId)) return;
       setMessages(prev => {
-        // already exists (by clientMessageId or _id) → merge, don't duplicate
         const exists = prev.some(
           m =>
             (msg.clientMessageId &&
@@ -226,26 +145,108 @@ export default function ConversationScreen({ route, navigation }: any) {
       if (String(data.userId) === String(receiverId)) setOnline(false);
     };
 
-    sock.on('new_message', onNew);
-    sock.on('message_sent', onSent);
-    sock.on('message_delivered', onDelivered);
-    sock.on('message_read', onRead);
-    sock.on('user_typing', onTyping);
-    sock.on('user_stop_typing', onStopTyping);
-    sock.on('user_online', onOnline);
-    sock.on('user_offline', onOffline);
+    (async () => {
+      console.log('OPENING CHAT ID:', chatId);
+      // history
+      try {
+        const data = await getMessages(chatId, 1);
+        console.log('HISTORY:', JSON.stringify(data));
+        if (mounted) {
+          const msgs = data.messages || [];
+          console.log('PARSED COUNT:', msgs.length);
+          setMessages(msgs);
+          setChatBlocked(Boolean(data.chat?.isRestricted));
+          setBlockedByMe(Boolean(data.chat?.blockedByMe));
+          setCanSendMessage(data.chat?.canSendMessage !== false);
+          setSendRestrictionReason(data.chat?.sendRestrictionReason || '');
+          setChatProfileId(data.chat?.oppositeProfileId || profileId || '');
+        }
+      } catch {
+      } finally {
+        if (mounted) setLoading(false);
+      }
+
+      // socket
+      const sock = await connectSocket();
+      if (sock) {
+        sockRef = sock;
+        joinChat(chatId);
+        emitMarkRead(chatId);
+        const onlineUserIds = await joinUser();
+        if (mounted && receiverId && onlineUserIds.some((id) => String(id) === String(receiverId))) {
+          setOnline(true);
+        }
+
+        if (mounted) {
+          sock.on('new_message', onNew);
+          sock.on('message_sent', onSent);
+          sock.on('message_delivered', onDelivered);
+          sock.on('message_read', onRead);
+          sock.on('user_typing', onTyping);
+          sock.on('user_stop_typing', onStopTyping);
+          sock.on('user_online', onOnline);
+          sock.on('user_offline', onOffline);
+        } else {
+          sock.off('new_message', onNew);
+        }
+      }
+      await markChatRead(chatId);
+      refreshUnreadCount();
+    })();
 
     return () => {
-      sock.off('new_message', onNew);
-      sock.off('message_sent', onSent);
-      sock.off('message_delivered', onDelivered);
-      sock.off('message_read', onRead);
-      sock.off('user_typing', onTyping);
-      sock.off('user_stop_typing', onStopTyping);
-      sock.off('user_online', onOnline);
-      sock.off('user_offline', onOffline);
+      mounted = false;
+      if (sockRef) {
+        sockRef.off('new_message', onNew);
+        sockRef.off('message_sent', onSent);
+        sockRef.off('message_delivered', onDelivered);
+        sockRef.off('message_read', onRead);
+        sockRef.off('user_typing', onTyping);
+        sockRef.off('user_stop_typing', onStopTyping);
+        sockRef.off('user_online', onOnline);
+        sockRef.off('user_offline', onOffline);
+      }
     };
-  }, [chatId, myId, receiverId]);
+  }, [chatId, profileId, refreshUnreadCount, myId, receiverId]);
+
+  // Re-mark as read on the way out too, in case a message arrived just
+  // before leaving — keeps the chat-list badge and tab count in sync.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        markChatRead(chatId).then(refreshUnreadCount);
+      };
+    }, [chatId, refreshUnreadCount])
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const data = await getMessages(chatId, 1);
+      setMessages(data.messages || []);
+      setChatBlocked(Boolean(data.chat?.isRestricted));
+      setBlockedByMe(Boolean(data.chat?.blockedByMe));
+      setCanSendMessage(data.chat?.canSendMessage !== false);
+      setSendRestrictionReason(data.chat?.sendRestrictionReason || '');
+      setChatProfileId(data.chat?.oppositeProfileId || profileId || '');
+
+      const sock = await connectSocket();
+      if (sock) {
+        joinChat(chatId);
+        emitMarkRead(chatId);
+        const onlineUserIds = await joinUser();
+        setOnline(
+          Boolean(receiverId) &&
+            onlineUserIds.some((id) => String(id) === String(receiverId)),
+        );
+      }
+      await markChatRead(chatId);
+      refreshUnreadCount();
+    } catch {
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // autoscroll on new messages
   useEffect(() => {

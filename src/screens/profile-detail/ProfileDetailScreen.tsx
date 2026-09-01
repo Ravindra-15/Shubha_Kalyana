@@ -210,6 +210,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const [reportChatId, setReportChatId] = useState('');
   const [saveAnimVisible, setSaveAnimVisible] = useState(false);
   const saveAnimValue = useRef(new Animated.Value(0)).current;
+  const [acceptingRequest, setAcceptingRequest] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -331,6 +332,33 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         'Error',
         err?.response?.data?.message || 'Could not send request',
       );
+    }
+  };
+
+  const acceptIncomingRequest = async () => {
+    if (!access?.pendingRequestId) return;
+    setAcceptingRequest(true);
+    try {
+      await apiClient.patch(`/relationship/requests/${access.pendingRequestId}/accept`);
+      setRequestStatus('ACCEPTED');
+      const acc = await getProfileAccess(profileId);
+      setAccess(acc);
+      setCanChat(
+        Boolean(
+          acc?.shouldBlurSensitiveFields === false ||
+            acc?.canViewContactNumber ||
+            acc?.isProfileSingleUnlocked ||
+            acc?.isMembershipProfileUnlocked,
+        ),
+      );
+    } catch (err: any) {
+      if (err?.response?.status === 402) {
+        setShowUnlock(true);
+        return;
+      }
+      Alert.alert('Error', err?.response?.data?.message || 'Could not accept request');
+    } finally {
+      setAcceptingRequest(false);
     }
   };
 
@@ -756,6 +784,17 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             >
               <Heart color="#fff" size={17} />
               <Text style={styles.sendText}>{canChat ? 'Chat Now' : 'Unlock to Chat'}</Text>
+            </TouchableOpacity>
+          ) : matchStatus === 'received' ? (
+            <TouchableOpacity
+              style={styles.sendBtn}
+              onPress={acceptIncomingRequest}
+              disabled={acceptingRequest}
+            >
+              <Heart color="#fff" size={17} />
+              <Text style={styles.sendText}>
+                {acceptingRequest ? 'Accepting...' : 'Accept Request'}
+              </Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity

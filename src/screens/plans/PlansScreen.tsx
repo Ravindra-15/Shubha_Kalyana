@@ -218,7 +218,9 @@ export default function PlansScreen({ navigation, route }: any) {
       await load(); // refresh active membership
       const promptShown = await showVerificationPrompt();
       if (!promptShown) {
-        Alert.alert('Success', `${payment.plan.planName} activated successfully!`);
+        Alert.alert('Success', `${payment.plan.planName} activated successfully!`, [
+          { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
+        ]);
       }
     } else {
       Alert.alert('Payment', result.message || 'Payment failed');
@@ -278,7 +280,16 @@ export default function PlansScreen({ navigation, route }: any) {
 
     if (result.success) {
       await loadProfileUnlockOffer();
-      Alert.alert('Unlocked', 'Profile access unlocked successfully');
+      Alert.alert('Unlocked', 'Profile access unlocked successfully', [
+        {
+          text: 'OK',
+          onPress: () => {
+            if (targetProfileId) {
+              navigation.navigate('ProfileDetail', { profileId: targetProfileId });
+            }
+          },
+        },
+      ]);
     } else {
       Alert.alert('Payment', result.message || 'Payment failed');
     }
