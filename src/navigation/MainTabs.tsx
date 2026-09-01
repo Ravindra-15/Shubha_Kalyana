@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, Search, Heart, MessageCircle, User } from 'lucide-react-native';
 import HomeScreen from '../screens/home/HomeScreen';
@@ -33,12 +34,30 @@ export default function MainTabs({ navigation }: any) {
     useState<VerificationPromptStatus | null>(null);
   const [aadhaarPromptVisible, setAadhaarPromptVisible] = useState(false);
   const [aadhaarPhotoVerified, setAadhaarPhotoVerified] = useState(false);
-  const [interestCount, setInterestCount] = useState(0);
+  const [newInterestCount, setNewInterestCount] = useState(0);
+
+  const INTEREST_SEEN_COUNT_KEY = 'lastSeenInterestCount';
 
   useEffect(() => {
-    getNavbarCounts()
-      .then((counts) => setInterestCount(counts.interestCount))
+    Promise.all([
+      getNavbarCounts(),
+      AsyncStorage.getItem(INTEREST_SEEN_COUNT_KEY),
+    ])
+      .then(([counts, storedSeenCount]) => {
+        const seenCount = Number(storedSeenCount || 0);
+        setNewInterestCount(Math.max(0, counts.interestCount - seenCount));
+      })
       .catch(() => {});
+  }, []);
+
+  const markInterestsSeen = useCallback(async () => {
+    try {
+      const { interestCount } = await getNavbarCounts();
+      await AsyncStorage.setItem(INTEREST_SEEN_COUNT_KEY, String(interestCount));
+      setNewInterestCount(0);
+    } catch {
+      // If this fails, the badge simply stays as-is until the next successful check.
+    }
   }, []);
 
   const showVerificationPrompt = useCallback(async () => {
@@ -116,10 +135,15 @@ export default function MainTabs({ navigation }: any) {
         <Tab.Screen
           name="InterestsTab"
           component={AllInterestedScreen}
+          listeners={{
+            focus: () => {
+              markInterestsSeen().catch(() => {});
+            },
+          }}
           options={{
             title: 'Interests',
             tabBarIcon: InterestsTabIcon,
-            tabBarBadge: interestCount > 0 ? interestCount : undefined,
+            tabBarBadge: newInterestCount > 0 ? newInterestCount : undefined,
           }}
         />
         <Tab.Screen

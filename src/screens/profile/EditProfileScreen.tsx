@@ -396,6 +396,9 @@ export default function EditProfileScreen({ navigation }: any) {
   const [pendingDobDay, setPendingDobDay] = useState('');
   const [pendingDobMonth, setPendingDobMonth] = useState('');
   const [pendingDobYear, setPendingDobYear] = useState('');
+  // Height's request-change input needs 2 separate fields (feet/inches), not one string.
+  const [pendingHeightFeet, setPendingHeightFeet] = useState('');
+  const [pendingHeightInches, setPendingHeightInches] = useState('');
   // Tracks which locked fields currently have their "Request Change" input open.
   const [openRequestFields, setOpenRequestFields] = useState<Record<string, boolean>>({});
 
@@ -1310,8 +1313,50 @@ export default function EditProfileScreen({ navigation }: any) {
             requestedValue={changeRequests.find((r) => r.field === 'height' && r.status === 'PENDING')?.requestedValue}
             isRequestOpen={!!openRequestFields.height}
             requestValue={pendingChangeValues.height || ''}
-            onOpenRequest={() => openRequestChange('height', `${heightFeet}' ${heightInches}"`)}
+            onOpenRequest={() => {
+              openRequestChange('height', `${heightFeet}' ${heightInches}"`);
+              setPendingHeightFeet(heightFeet);
+              setPendingHeightInches(heightInches);
+            }}
             onChangeRequestValue={(value) => setPendingChangeValue('height', value)}
+            requestInput={
+              <View style={styles.row}>
+                <View style={styles.half}>
+                  <View style={styles.unitInputWrap}>
+                    <TextInput
+                      style={[styles.input, styles.unitInput]}
+                      placeholder="Feet"
+                      placeholderTextColor="#999"
+                      value={pendingHeightFeet}
+                      onChangeText={(text) => {
+                        setPendingHeightFeet(text);
+                        setPendingChangeValue('height', `${text}' ${pendingHeightInches}"`);
+                      }}
+                      keyboardType="number-pad"
+                      maxLength={1}
+                    />
+                    <Text style={styles.unitLabel}>Ft</Text>
+                  </View>
+                </View>
+                <View style={styles.half}>
+                  <View style={styles.unitInputWrap}>
+                    <TextInput
+                      style={[styles.input, styles.unitInput]}
+                      placeholder="Inches"
+                      placeholderTextColor="#999"
+                      value={pendingHeightInches}
+                      onChangeText={(text) => {
+                        setPendingHeightInches(text);
+                        setPendingChangeValue('height', `${pendingHeightFeet}' ${text}"`);
+                      }}
+                      keyboardType="number-pad"
+                      maxLength={2}
+                    />
+                    <Text style={styles.unitLabel}>In</Text>
+                  </View>
+                </View>
+              </View>
+            }
           >
             <Text style={styles.label}>Height</Text>
             <View style={styles.row}>
@@ -1383,6 +1428,14 @@ export default function EditProfileScreen({ navigation }: any) {
             requestValue={pendingChangeValues.maritalStatus || ''}
             onOpenRequest={() => openRequestChange('maritalStatus', maritalStatus)}
             onChangeRequestValue={(value) => setPendingChangeValue('maritalStatus', value)}
+            requestInput={
+              <SearchableDropdown
+                placeholder="Select marital status"
+                value={pendingChangeValues.maritalStatus || ''}
+                options={MARITAL_STATUS}
+                onSelect={(value) => setPendingChangeValue('maritalStatus', value)}
+              />
+            }
           >
             <Text style={styles.label}>Marital Status</Text>
             <SearchableDropdown
