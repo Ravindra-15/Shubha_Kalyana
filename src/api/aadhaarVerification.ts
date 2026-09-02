@@ -14,3 +14,24 @@ export const verifyAadhaarWithMobile = async ({
 
   return res.data?.data || null;
 };
+
+export const requestAadhaarOtp = async (aadhaarNumber: string) => {
+  const res = await apiClient.post('/aadhaar-verification/otp/request', {
+    aadhaarNumber,
+    consent: true,
+  });
+
+  return res.data?.data || null;
+};
+
+export const confirmAadhaarOtp = async (otp: string) => {
+  const res = await apiClient.post('/aadhaar-verification/otp/confirm', { otp });
+
+  return res.data?.data || null;
+};
+
+export const getAadhaarVerificationStatus = async () => {
+  const res = await apiClient.get('/aadhaar-verification/status');
+
+  return res.data?.data || null;
+};
