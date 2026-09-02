@@ -39,6 +39,8 @@ export default function HomeScreen({ navigation }: any) {
   const [firstName, setFirstName] = useState('');
   const [showWelcome, setShowWelcome] = useState(false);
   const [planName, setPlanName] = useState('Free Plan');
+  const [hasActivePlan, setHasActivePlan] = useState(false);
+  const [unlocksRemaining, setUnlocksRemaining] = useState(0);
   const [matches, setMatches] = useState<any[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
@@ -346,6 +348,11 @@ export default function HomeScreen({ navigation }: any) {
       membership?.plan?.name ||
       membership?.planName;
     setPlanName(name || 'Free Plan');
+    setHasActivePlan(Boolean(membership));
+
+    const accessLimit = Number(membership?.planSnapshot?.accessLimit || 0);
+    const unlocksUsed = Number(membership?.usage?.profileUnlocksUsed || 0);
+    setUnlocksRemaining(Math.max(accessLimit - unlocksUsed, 0));
   };
 
   const loadUser = async () => {
@@ -450,7 +457,7 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* Plan card */}
         <LinearGradient
-          colors={['#D20236', '#8B0020']}
+          colors={['#FF0004', '#E7000B', '#E60076']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.planCard}
@@ -460,11 +467,21 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={styles.planTitle}>{planName}</Text>
           </View>
           <Text style={styles.planSubtitle}>
-            Unlock full profile access and premium features
+            {hasActivePlan
+              ? `Explore matches! You have ${unlocksRemaining} unlock${unlocksRemaining === 1 ? '' : 's'} remaining`
+              : 'Unlock full profile access and premium features'}
           </Text>
-          <TouchableOpacity style={styles.upgradeBtn} activeOpacity={0.85} onPress={() => navigation.navigate('Plans')}>
-            <Text style={styles.upgradeText}>Upgrade Now</Text>
-            <ArrowRight color="#D20236" size={16} />
+          <TouchableOpacity
+            style={styles.upgradeBtn}
+            activeOpacity={0.85}
+            onPress={() =>
+              hasActivePlan
+                ? navigation.navigate('AllMatches', { pushed: true })
+                : navigation.navigate('Plans')
+            }
+          >
+            <Text style={styles.upgradeText}>{hasActivePlan ? 'Explore Now' : 'Upgrade Now'}</Text>
+            <ArrowRight color="#E60076" size={18} />
           </TouchableOpacity>
         </LinearGradient>
 
@@ -685,7 +702,7 @@ const styles = StyleSheet.create({
   planTitle: { color: '#fff', fontSize: 17, fontFamily: 'Outfit-Bold', marginLeft: 8 },
   planSubtitle: {
     color: '#ffe0e6',
-    fontSize: 13,
+    fontSize: 14,
     marginBottom: 16,
     lineHeight: 18,
   },
@@ -700,8 +717,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   upgradeText: {
-    color: '#D20236',
-    fontSize: 14,
+    color: '#E60076',
+    fontSize: 15,
     fontFamily: 'Outfit-Bold',
     marginRight: 6,
   },
