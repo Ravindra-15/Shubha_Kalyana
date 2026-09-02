@@ -11,11 +11,7 @@ import {
   View,
 } from 'react-native';
 import { AlertCircle, Camera, CheckCircle, Fingerprint, Smartphone, X } from 'lucide-react-native';
-import {
-  requestAadhaarOtp,
-  confirmAadhaarOtp,
-  getAadhaarVerificationStatus,
-} from '../api/aadhaarVerification';
+import { verifyAadhaarWithMobile } from '../api/aadhaarVerification';
 
 type Props = {
   visible: boolean;
@@ -25,27 +21,12 @@ type Props = {
   onVerifyPhoto?: () => void;
 };
 
-type Step = 'checking' | 'aadhaar' | 'otp' | 'success';
-
 const digitsOnly = (value = '') => String(value).replace(/\D/g, '');
 
 const formatAadhaar = (value = '') =>
   digitsOnly(value)
     .slice(0, 12)
     .replace(/(\d{4})(?=\d)/g, '$1 ');
-
-// A failed axios request with no `response` means the request never reached
-// the server (offline, DNS, timeout) — that's a network error, not the
-// provider rejecting anything, so it should never be shown as "verification
-// failed" and should never move the user off the step they were on.
-const isNetworkError = (error: any) => !error?.response;
-
-const getErrorMessage = (error: any, fallback: string) => {
-  if (isNetworkError(error)) {
-    return 'Network error. Please check your connection and try again.';
-  }
-  return error?.response?.data?.message || error?.message || fallback;
-};
 
 export default function AadhaarVerificationModal({
   visible,
@@ -54,98 +35,60 @@ export default function AadhaarVerificationModal({
   onVerified,
   onVerifyPhoto,
 }: Props) {
-  const [step, setStep] = useState<Step>('checking');
   const [aadhaarNumber, setAadhaarNumber] = useState('');
-  const [otp, setOtp] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     if (!visible) {
-      setStep('checking');
+      setStatus('idle');
+      setMessage('');
       setAadhaarNumber('');
-      setOtp('');
-      setError('');
-      setLoading(false);
-      return;
+      setMobileNumber('');
     }
-
-    // Resume in place: if a previous attempt already sent an OTP and the
-    // user closed the modal before entering it, that attempt is still
-    // "pending" on the server — pick up right at the OTP step instead of
-    // making them start over. If it's already verified, just show success.
-    (async () => {
-      try {
-        const status = await getAadhaarVerificationStatus();
-        if (status?.status === 'VERIFIED') {
-          setStep('success');
-        } else if (status?.status === 'OTP_SENT') {
-          setStep('otp');
-        } else {
-          setStep('aadhaar');
-        }
-      } catch {
-        // Status check failing shouldn't block verification — just start fresh.
-        setStep('aadhaar');
-      }
-    })();
   }, [visible]);
+
+  const loading = status === 'submitting';
+  const success = status === 'success';
 
   const close = () => {
     if (!loading) onClose();
   };
 
-  const sendOtp = async () => {
-    const normalized = digitsOnly(aadhaarNumber);
-    if (normalized.length !== 12) {
-      setError('Enter a valid 12-digit Aadhaar number.');
+  const submit = async () => {
+    const normalizedAadhaar = digitsOnly(aadhaarNumber);
+    const normalizedMobile = digitsOnly(mobileNumber);
+
+    if (normalizedAadhaar.length !== 12) {
+      setStatus('error');
+      setMessage('Enter a valid 12-digit Aadhaar number.');
+      return;
+    }
+
+    if (normalizedMobile.length < 10) {
+      setStatus('error');
+      setMessage('Enter the mobile number linked with Aadhaar.');
       return;
     }
 
     try {
-      setLoading(true);
-      setError('');
-      await requestAadhaarOtp(normalized);
-      setStep('otp');
-    } catch (err: any) {
-      // A network error here means nothing was sent — the user is still on
-      // the Aadhaar-number step and can just retry, nothing is "pending" yet.
-      setError(getErrorMessage(err, 'Could not send Aadhaar OTP.'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const changeAadhaarNumber = () => {
-    setStep('aadhaar');
-    setOtp('');
-    setError('');
-  };
-
-  const verifyOtp = async () => {
-    const normalizedOtp = digitsOnly(otp);
-    if (normalizedOtp.length < 4) {
-      setError('Enter the OTP sent to the Aadhaar-linked mobile number.');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError('');
-      await confirmAadhaarOtp(normalizedOtp);
+      setStatus('submitting');
+      setMessage('');
+      await verifyAadhaarWithMobile({
+        aadhaarNumber: normalizedAadhaar,
+        mobileNumber: normalizedMobile,
+      });
       try {
         await onVerified?.();
       } catch {
-        // Verification succeeded; a refresh failure should not show as a failure.
+        // Verification succeeded; refresh failures should not be shown as Aadhaar failures.
       }
-      setStep('success');
-    } catch (err: any) {
-      // Network errors leave the verification "pending" on the server (no
-      // attempt was consumed) — stay on this step so the user can just retry
-      // instead of losing their place or being told it "failed".
-      setError(getErrorMessage(err, 'Aadhaar OTP verification failed.'));
-    } finally {
-      setLoading(false);
+      setStatus('success');
+      setMessage('Aadhaar verified successfully.');
+    } catch (error: any) {
+      setStatus('error');
+      setMessage(error?.response?.data?.message || error?.message || 'Aadhaar verification failed.');
     }
   };
 
@@ -159,123 +102,59 @@ export default function AadhaarVerificationModal({
           <View style={styles.header}>
             <View style={styles.headerText}>
               <Text style={styles.eyebrow}>Aadhaar Verification</Text>
-              <Text style={styles.title}>
-                {step === 'otp' ? 'Enter OTP' : 'Verify Aadhaar'}
-              </Text>
+              <Text style={styles.title}>Verify Aadhaar</Text>
             </View>
             <TouchableOpacity style={styles.closeBtn} onPress={close} disabled={loading}>
               <X color="#666" size={18} />
             </TouchableOpacity>
           </View>
 
-          {step === 'checking' && (
-            <View style={styles.checkingBox}>
-              <ActivityIndicator color="#D20236" />
+          <View style={styles.body}>
+            <Text style={styles.label}>Aadhaar number</Text>
+            <View style={styles.inputWrap}>
+              <Fingerprint color="#999" size={18} />
+              <TextInput
+                value={aadhaarNumber}
+                onChangeText={(text) => setAadhaarNumber(formatAadhaar(text))}
+                editable={!loading && !success}
+                keyboardType="number-pad"
+                placeholder="1234 5678 9012"
+                placeholderTextColor="#aaa"
+                style={styles.input}
+              />
             </View>
-          )}
 
-          {step === 'aadhaar' && (
-            <>
-              <View style={styles.body}>
-                <Text style={styles.label}>Aadhaar number</Text>
-                <View style={styles.inputWrap}>
-                  <Fingerprint color="#999" size={18} />
-                  <TextInput
-                    value={aadhaarNumber}
-                    onChangeText={(text) => setAadhaarNumber(formatAadhaar(text))}
-                    editable={!loading}
-                    keyboardType="number-pad"
-                    placeholder="1234 5678 9012"
-                    placeholderTextColor="#aaa"
-                    style={styles.input}
-                  />
-                </View>
+            <Text style={styles.label}>Linked mobile number</Text>
+            <View style={styles.inputWrap}>
+              <Smartphone color="#999" size={18} />
+              <TextInput
+                value={mobileNumber}
+                onChangeText={(text) => setMobileNumber(digitsOnly(text).slice(0, 15))}
+                editable={!loading && !success}
+                keyboardType="number-pad"
+                placeholder="10-digit mobile number"
+                placeholderTextColor="#aaa"
+                style={styles.input}
+              />
+            </View>
 
-                {error ? (
-                  <View style={[styles.messageBox, styles.errorBox]}>
-                    <AlertCircle color="#D20236" size={17} />
-                    <Text style={[styles.messageText, styles.errorText]}>{error}</Text>
-                  </View>
-                ) : null}
-              </View>
-
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  style={[styles.primaryBtn, loading && styles.disabledBtn]}
-                  onPress={sendOtp}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Fingerprint color="#fff" size={17} />
-                  )}
-                  <Text style={styles.primaryText}>{loading ? 'Sending OTP...' : 'Send OTP'}</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
-
-          {step === 'otp' && (
-            <>
-              <View style={styles.body}>
-                <Text style={styles.helperText}>
-                  Enter the OTP sent to the mobile number linked with this Aadhaar.
-                </Text>
-                <Text style={styles.label}>OTP</Text>
-                <View style={styles.inputWrap}>
-                  <Smartphone color="#999" size={18} />
-                  <TextInput
-                    value={otp}
-                    onChangeText={(text) => setOtp(digitsOnly(text).slice(0, 6))}
-                    editable={!loading}
-                    keyboardType="number-pad"
-                    placeholder="6-digit OTP"
-                    placeholderTextColor="#aaa"
-                    style={styles.input}
-                  />
-                </View>
-
-                {error ? (
-                  <View style={[styles.messageBox, styles.errorBox]}>
-                    <AlertCircle color="#D20236" size={17} />
-                    <Text style={[styles.messageText, styles.errorText]}>{error}</Text>
-                  </View>
-                ) : null}
-
-                <TouchableOpacity onPress={changeAadhaarNumber} disabled={loading}>
-                  <Text style={styles.linkText}>Wrong Aadhaar number? Change it</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  style={[styles.primaryBtn, loading && styles.disabledBtn]}
-                  onPress={verifyOtp}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Fingerprint color="#fff" size={17} />
-                  )}
-                  <Text style={styles.primaryText}>{loading ? 'Verifying...' : 'Verify'}</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
-
-          {step === 'success' && (
-            <>
-              <View style={styles.body}>
-                <View style={[styles.messageBox, styles.successBox]}>
+            {message ? (
+              <View style={[styles.messageBox, success ? styles.successBox : styles.errorBox]}>
+                {success ? (
                   <CheckCircle color="#1a7f37" size={17} />
-                  <Text style={[styles.messageText, styles.successText]}>
-                    Aadhaar verified successfully.
-                  </Text>
-                </View>
+                ) : (
+                  <AlertCircle color="#D20236" size={17} />
+                )}
+                <Text style={[styles.messageText, success ? styles.successText : styles.errorText]}>
+                  {message}
+                </Text>
               </View>
-              <View style={styles.actions}>
+            ) : null}
+          </View>
+
+          <View style={styles.actions}>
+            {success ? (
+              <>
                 {!photoVerified && onVerifyPhoto ? (
                   <TouchableOpacity style={styles.primaryBtn} onPress={onVerifyPhoto}>
                     <Camera color="#fff" size={17} />
@@ -285,9 +164,22 @@ export default function AadhaarVerificationModal({
                 <TouchableOpacity style={styles.laterBtn} onPress={close}>
                   <Text style={styles.laterText}>Done</Text>
                 </TouchableOpacity>
-              </View>
-            </>
-          )}
+              </>
+            ) : (
+              <TouchableOpacity
+                style={[styles.primaryBtn, loading && styles.disabledBtn]}
+                onPress={submit}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Fingerprint color="#fff" size={17} />
+                )}
+                <Text style={styles.primaryText}>{loading ? 'Verifying...' : 'Verify'}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -336,9 +228,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkingBox: { paddingVertical: 40, alignItems: 'center' },
   body: { paddingHorizontal: 20, paddingTop: 16, gap: 9 },
-  helperText: { color: '#555', fontSize: 13, fontFamily: 'Outfit-Regular', marginBottom: 2 },
   label: { color: '#222', fontSize: 13, fontFamily: 'Outfit-ExtraBold' },
   inputWrap: {
     minHeight: 48,
@@ -352,13 +242,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   input: { flex: 1, color: '#000', fontSize: 15, fontFamily: 'Outfit-Bold', paddingVertical: 0 },
-  linkText: {
-    color: '#D20236',
-    fontSize: 13,
-    fontFamily: 'Outfit-Bold',
-    marginTop: 2,
-    marginBottom: 6,
-  },
   messageBox: {
     borderRadius: 10,
     paddingHorizontal: 12,
