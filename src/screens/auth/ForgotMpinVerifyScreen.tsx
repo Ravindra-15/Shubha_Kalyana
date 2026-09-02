@@ -11,14 +11,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { sendChangeMpinOtp, verifyForgotMpinOtp } from '../../api/settings';
 
-const RESEND_SECONDS = 15;
+const RESEND_SECONDS = 60;
 
 export default function ForgotMpinVerifyScreen({ navigation, route }: any) {
   const identifier: string = route?.params?.identifier || '';
   const isEmail = identifier.includes('@');
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [devOtp, setDevOtp] = useState(route?.params?.devOtp || '');
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
@@ -35,9 +34,8 @@ export default function ForgotMpinVerifyScreen({ navigation, route }: any) {
   const resendOtp = async () => {
     try {
       setSending(true);
-      const res = await sendChangeMpinOtp(identifier);
+      await sendChangeMpinOtp(identifier);
       setTimer(RESEND_SECONDS);
-      setDevOtp(res?.devOtp || '');
     } catch (err: any) {
       setOtpError(err?.response?.data?.message || 'Could not resend OTP');
     } finally {
@@ -106,7 +104,6 @@ export default function ForgotMpinVerifyScreen({ navigation, route }: any) {
         </View>
 
         {otpError ? <Text style={styles.errorText}>{otpError}</Text> : null}
-        {devOtp ? <Text style={styles.devOtp}>Testing OTP: {devOtp}</Text> : null}
 
         <View style={styles.resendRow}>
           {timer > 0 ? (
@@ -183,17 +180,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit-SemiBold',
     textAlign: 'center',
     marginTop: 10,
-  },
-  devOtp: {
-    backgroundColor: '#fff8e1',
-    borderColor: '#ffe082',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 13,
-    color: '#8a6d00',
-    marginTop: 14,
-    textAlign: 'center',
   },
   resendRow: { alignItems: 'flex-end', marginTop: 12, paddingHorizontal: 8 },
   timer: { color: '#D20236', fontSize: 14, fontFamily: 'Outfit-SemiBold' },

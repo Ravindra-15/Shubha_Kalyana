@@ -27,7 +27,6 @@ export default function ChangeEmailScreen({ navigation }: any) {
   const [resendAt, setResendAt] = useState(0);
   const [resendIn, setResendIn] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
-  const [devOtpMsg, setDevOtpMsg] = useState('');
   const otpRefs = useRef<Array<TextInput | null>>([]);
 
   useEffect(() => {
@@ -86,18 +85,10 @@ export default function ChangeEmailScreen({ navigation }: any) {
     }
     try {
       setLoading(true);
-      const result = await sendEmailOtp(email);
-      console.log('SEND EMAIL OTP RESULT:', JSON.stringify(result));
+      await sendEmailOtp(email);
       setStep('OTP');
       setResendAt(Date.now() + 60 * 1000);
-      const devOtp = result?.devOtp;
-      if (devOtp) {
-        setOtp(String(devOtp).split(''));
-        setDevOtpMsg(`Test OTP: ${devOtp} (auto-filled below)`);
-      } else {
-        setOtp(['', '', '', '', '', '']);
-        setDevOtpMsg('');
-      }
+      setOtp(['', '', '', '', '', '']);
     } catch (err: any) {
       const message = err?.response?.data?.message || 'Could not send verification code';
       setErrorMsg(message);
@@ -115,17 +106,10 @@ export default function ChangeEmailScreen({ navigation }: any) {
     setErrorMsg('');
     const email = newEmail.trim().toLowerCase();
     try {
-      const result = await sendEmailOtp(email);
+      await sendEmailOtp(email);
       setResendAt(Date.now() + 60 * 1000);
-      const devOtp = result?.devOtp;
-      if (devOtp) {
-        setOtp(String(devOtp).split(''));
-        setDevOtpMsg(`Test OTP: ${devOtp} (auto-filled below)`);
-      } else {
-        setOtp(['', '', '', '', '', '']);
-        setDevOtpMsg('');
-        otpRefs.current[0]?.focus();
-      }
+      setOtp(['', '', '', '', '', '']);
+      otpRefs.current[0]?.focus();
     } catch (err: any) {
       const message = err?.response?.data?.message || 'Could not resend code';
       setErrorMsg(message);
@@ -237,7 +221,6 @@ export default function ChangeEmailScreen({ navigation }: any) {
 
                 <Text style={styles.label}>Enter Verification Code</Text>
                 <Text style={styles.hint}>We've sent a 6-digit code to your new email</Text>
-                {!!devOtpMsg && <Text style={styles.devOtpText}>{devOtpMsg}</Text>}
 
                 <View style={styles.otpRow}>
                   {otp.map((digit, i) => (
@@ -313,7 +296,6 @@ const styles = StyleSheet.create({
   content: { flex: 1, paddingHorizontal: 20, paddingTop: 10 },
   label: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#333', marginBottom: 8, marginTop: 16 },
   hint: { fontSize: 12, color: '#888', marginBottom: 6 },
-  devOtpText: { fontSize: 12, color: '#1a7f37', fontFamily: 'Outfit-SemiBold', marginBottom: 14 },
   readonlyBox: {
     backgroundColor: '#f5f5f5', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 13,
   },

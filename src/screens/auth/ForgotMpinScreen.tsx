@@ -22,8 +22,8 @@ export default function ForgotMpinScreen({ navigation }: any) {
 
     try {
       setLoading(true);
-      const res = await sendChangeMpinOtp(value);
-      navigation.navigate('ForgotMpinVerify', { identifier: value, devOtp: res?.devOtp || '' });
+      await sendChangeMpinOtp(value);
+      navigation.navigate('ForgotMpinVerify', { identifier: value });
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not send OTP');
     } finally {

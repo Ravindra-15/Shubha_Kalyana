@@ -35,7 +35,6 @@ export default function SignupContactScreen({ navigation }: any) {
   const [mobileVerified, setMobileVerified] = useState(false);
   const [mobileSending, setMobileSending] = useState(false);
   const [mobileVerifying, setMobileVerifying] = useState(false);
-  const [mobileDevOtp, setMobileDevOtp] = useState('');
   const [mobileCooldown, setMobileCooldown] = useState(0);
   const [userId, setUserId] = useState('');
 
@@ -44,7 +43,6 @@ export default function SignupContactScreen({ navigation }: any) {
   const [emailVerified, setEmailVerified] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
   const [emailVerifying, setEmailVerifying] = useState(false);
-  const [emailDevOtp, setEmailDevOtp] = useState('');
   const [emailCooldown, setEmailCooldown] = useState(0);
 
   const [submitting, setSubmitting] = useState(false);
@@ -78,9 +76,8 @@ export default function SignupContactScreen({ navigation }: any) {
       const res = await apiClient.post('/onboarding/contact/mobile/send-otp', {
         mobile: mobile.trim(),
       });
-      setMobileDevOtp(res.data?.data?.devOtp || '');
       setMobileOtpSent(true);
-      setMobileCooldown(15);
+      setMobileCooldown(60);
     } catch (err: any) {
       setErrors((e) => ({ ...e, mobile: err?.response?.data?.message || 'Unable to send OTP' }));
     } finally {
@@ -135,7 +132,6 @@ export default function SignupContactScreen({ navigation }: any) {
       const res = await apiClient.post('/onboarding/contact/email/send-otp', {
         email: email.trim().toLowerCase(),
       });
-      setEmailDevOtp(res.data?.data?.devOtp || '');
       setEmailOtpSent(true);
       setEmailCooldown(15);
     } catch (err: any) {
@@ -304,9 +300,6 @@ export default function SignupContactScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
           )}
-          {mobileDevOtp ? (
-            <Text style={styles.devOtp}>Testing OTP: {mobileDevOtp}</Text>
-          ) : null}
           {errors.mobile ? <Text style={styles.errorText}>{errors.mobile}</Text> : null}
           {mobileVerified && <Text style={styles.verifiedText}>✓ Mobile verified</Text>}
 
@@ -380,9 +373,6 @@ export default function SignupContactScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
           )}
-          {emailDevOtp ? (
-            <Text style={styles.devOtp}>Testing OTP: {emailDevOtp}</Text>
-          ) : null}
           {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
           {emailVerified && <Text style={styles.verifiedText}>✓ Email verified</Text>}
 
@@ -469,16 +459,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   cooldownText: { color: '#999', fontSize: 14, fontFamily: 'Outfit-SemiBold' },
-  devOtp: {
-    backgroundColor: '#fff8e1',
-    borderColor: '#ffe082',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 13,
-    color: '#8a6d00',
-    marginBottom: 10,
-  },
   errorText: { color: '#D20236', fontSize: 13, marginBottom: 10 },
   verifiedText: { color: '#2e7d32', fontSize: 14, fontFamily: 'Outfit-SemiBold', marginBottom: 10 },
   continueBtn: {

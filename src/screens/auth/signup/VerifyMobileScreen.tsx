@@ -34,35 +34,14 @@ export default function VerifyMobileScreen({ navigation }: any) {
     return () => clearTimeout(id);
   }, [timer]);
 
-  //   const sendOtp = async () => {
-  //     try {
-  //       setSending(true);
-  //       const res = await apiClient.post('/onboarding/otp/send', { purpose: 'MOBILE_VERIFY' });
-  //       setTimer(60);
-  //       const devOtp = res.data?.data?.devOtp;
-  //       if (devOtp) {
-  //         Alert.alert('Test OTP', `Your OTP is: ${devOtp}`);
-  //         setOtp(String(devOtp).split('').slice(0, 6));
-  //       }
-  //     } catch (err: any) {
-  //       Alert.alert('Error', err?.response?.data?.message || 'Could not send OTP');
-  //     } finally {
-  //       setSending(false);
-  //     }
-  //   };
-
   const sendOtp = async () => {
     try {
       setSending(true);
-      const res = await apiClient.post('/onboarding/otp/send', {
+      await apiClient.post('/onboarding/otp/send', {
         purpose: 'MOBILE_VERIFY',
       });
       setTimer(60);
-      const devOtp = res.data?.data?.devOtp;
-      if (devOtp) {
-        Alert.alert('Test OTP', `Your OTP is: ${devOtp}`);
-        setOtp(String(devOtp).split('').slice(0, 6));
-      }
+      setOtp(['', '', '', '', '', '']);
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Could not send OTP';
       // already verified → skip ahead to MPIN

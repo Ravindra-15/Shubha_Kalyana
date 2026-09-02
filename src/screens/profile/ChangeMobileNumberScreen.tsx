@@ -36,7 +36,6 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
   const [resendAt, setResendAt] = useState(0); // timestamp (ms) when resend becomes available
   const [resendIn, setResendIn] = useState(0); // derived seconds remaining, for display only
   const [errorMsg, setErrorMsg] = useState('');
-  const [devOtpMsg, setDevOtpMsg] = useState('');
   const otpRefs = useRef<Array<TextInput | null>>([]);
 
   useEffect(() => {
@@ -98,17 +97,10 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
     }
     try {
       setLoading(true);
-      const result = await sendChangeMobileOtp(newMobile);
+      await sendChangeMobileOtp(newMobile);
       setStep('OTP');
       setResendAt(Date.now() + 60 * 1000);
-      const devOtp = result?.devOtp;
-      if (devOtp) {
-        setOtp(String(devOtp).split(''));
-        setDevOtpMsg(`Test OTP: ${devOtp} (auto-filled below)`);
-      } else {
-        setOtp(['', '', '', '', '', '']);
-        setDevOtpMsg('');
-      }
+      setOtp(['', '', '', '', '', '']);
     } catch (err: any) {
       const message = err?.response?.data?.message || 'Could not send OTP';
       setErrorMsg(message);
@@ -126,17 +118,10 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
     if (resendIn > 0) return;
     setErrorMsg('');
     try {
-      const result = await sendChangeMobileOtp(newMobile);
+      await sendChangeMobileOtp(newMobile);
       setResendAt(Date.now() + 60 * 1000);
-      const devOtp = result?.devOtp;
-      if (devOtp) {
-        setOtp(String(devOtp).split(''));
-        setDevOtpMsg(`Test OTP: ${devOtp} (auto-filled below)`);
-      } else {
-        setOtp(['', '', '', '', '', '']);
-        setDevOtpMsg('');
-        otpRefs.current[0]?.focus();
-      }
+      setOtp(['', '', '', '', '', '']);
+      otpRefs.current[0]?.focus();
     } catch (err: any) {
       const message = err?.response?.data?.message || 'Could not resend OTP';
       setErrorMsg(message);
@@ -256,7 +241,6 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
 
               <Text style={styles.label}>Enter Verification Code</Text>
               <Text style={styles.hint}>We've sent a 6-digit code to your new number</Text>
-              {!!devOtpMsg && <Text style={styles.devOtpText}>{devOtpMsg}</Text>}
 
               <View style={styles.otpRow}>
                 {otp.map((digit, i) => (
@@ -354,7 +338,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   hint: { fontSize: 12, color: '#888', marginBottom: 14 },
-  devOtpText: { fontSize: 12, color: '#1a7f37', fontFamily: 'Outfit-SemiBold', marginBottom: 14 },
   readonlyBox: {
     backgroundColor: '#f5f5f5',
     borderRadius: 10,

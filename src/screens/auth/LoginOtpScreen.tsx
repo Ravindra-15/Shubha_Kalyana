@@ -32,16 +32,11 @@ export default function LoginOtpScreen({ route, navigation }: any) {
     if (!num.trim()) return Alert.alert('Error', 'Enter mobile number');
     try {
       setLoading(true);
-      const res = await apiClient.post('/auth/mobile/login/otp/send', {
+      await apiClient.post('/auth/mobile/login/otp/send', {
         mobile: num.trim(),
       });
       setSent(true);
-      const devOtp = res.data?.data?.devOtp;
-      if (devOtp) {
-        Alert.alert('Test OTP', `Your OTP is: ${devOtp}`);
-        // auto-fill for testing
-        setOtp(String(devOtp).split(''));
-      }
+      setOtp(['', '', '', '', '', '']);
     } catch (err: any) {
       Alert.alert('Failed', err?.response?.data?.message || 'Could not send OTP');
     } finally {
