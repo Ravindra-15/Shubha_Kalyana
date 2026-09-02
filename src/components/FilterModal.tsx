@@ -34,7 +34,20 @@ const MARITAL_STATUS = [
   { label: 'Awaiting Divorce', value: 'AWAITING_DIVORCE' },
 ];
 const EDUCATION = ['B.Tech', 'B.E', 'B.Sc', 'B.Com', 'B.A', 'BBA', 'BCA', 'MBBS', 'M.Tech', 'M.Sc', 'MBA', 'MCA', 'PhD', 'Diploma'];
-const PROFESSION = ['Engineer', 'Doctor', 'Teacher', 'Business', 'Government Job', 'Lawyer', 'CA', 'Software', 'Banker'];
+// Kept in sync with the profession options shown during onboarding
+// (matrimony-user/src/onboarding/onboardingOptions.js -> professionOptions).
+const PROFESSION = [
+  'Software Engineer',
+  'Senior Software Engineer',
+  'Team Lead',
+  'Project Manager',
+  'Doctor',
+  'Teacher',
+  'Professor',
+  'Lawyer',
+  'Business Owner',
+  'Government Officer',
+];
 
 const DEFAULT: Filters = {
   minAge: 24, maxAge: 30, religion: '', caste: [], subCaste: [], maritalStatus: '', education: [], profession: [], preferredLocation: [], workingLocation: [],
