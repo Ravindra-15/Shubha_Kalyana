@@ -133,7 +133,7 @@ export default function SignupContactScreen({ navigation }: any) {
         email: email.trim().toLowerCase(),
       });
       setEmailOtpSent(true);
-      setEmailCooldown(15);
+      setEmailCooldown(60);
     } catch (err: any) {
       setErrors((e) => ({ ...e, email: err?.response?.data?.message || 'Unable to send OTP' }));
     } finally {
