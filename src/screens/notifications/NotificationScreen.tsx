@@ -42,6 +42,15 @@ const typeImage = (type: string) => {
   return null;
 };
 
+// label for the profile-link shown on a notification, based on what it's actually about
+const profileLinkLabel = (type: string) => {
+  const t = (type || '').toUpperCase();
+  if (t === 'CHAT_MESSAGE') return 'View Message';
+  if (t === 'INTEREST_RECEIVED') return 'View Interest';
+  if (t === 'CONNECTION_REQUEST_RECEIVED') return 'View Request';
+  return 'View Profile';
+};
+
 // icon + color per notification type, for everything else (falls back to a lucide icon)
 const typeConfig = (type: string) => {
   const t = (type || '').toUpperCase();
@@ -147,13 +156,31 @@ export default function NotificationScreen({ navigation }: any) {
       );
       markNotificationRead(n._id);
     }
-    // navigate if it references a profile
+    // navigate to whichever screen is actually relevant to this notification
+    const type = String(n.type || '').toUpperCase();
     const profileId = n.data?.profileId;
+
+    if (type === 'CHAT_MESSAGE' && n.data?.chatId) {
+      navigation.navigate('Conversation', {
+        chatId: n.data.chatId,
+        receiverId: n.data.senderId,
+        profileId,
+        photo: n.data.senderPhoto,
+      });
+      return;
+    }
+
+    if (type === 'CONNECTION_REQUEST_RECEIVED') {
+      navigation.navigate('Requests', { initialTab: 'Received' });
+      return;
+    }
+
     if (profileId) {
       navigation.navigate('ProfileDetail', { profileId });
       return;
     }
-    if (String(n.type || '').toUpperCase().includes('PAYMENT')) {
+
+    if (type.includes('PAYMENT')) {
       navigation.navigate('PaymentHistory');
     }
   };
@@ -218,7 +245,7 @@ export default function NotificationScreen({ navigation }: any) {
                   <View style={styles.metaRow}>
                     <Text style={styles.time}>{timeAgo(item.createdAt)}</Text>
                     {hasProfile && (
-                      <Text style={styles.viewLink}>View Profile</Text>
+                      <Text style={styles.viewLink}>{profileLinkLabel(item.type)}</Text>
                     )}
                     {!hasProfile && isPayment && (
                       <Text style={styles.viewLink}>View Payment History</Text>
