@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -247,7 +248,19 @@ export default function AllMatchesScreen({ navigation, route }: any) {
               onInterested={() => toggleInterest(item.profileId, item.isInterested)}
             />
           )}
-          ListEmptyComponent={<Text style={styles.empty}>No matches found</Text>}
+          ListEmptyComponent={
+            <View style={styles.emptyWrap}>
+              <Image
+                source={require('../../assets/images/noMatches.png')}
+                style={styles.emptyImage}
+                resizeMode="contain"
+              />
+              <Text style={styles.emptyTitle}>Sorry !</Text>
+              <Text style={styles.emptyText}>
+                No matches found in <Text style={styles.emptyTextBold}>Selected Filters</Text>
+              </Text>
+            </View>
+          }
           ListFooterComponent={
             loading && !initialLoading ? (
               <ActivityIndicator color="#D20236" style={{ marginVertical: 20 }} />
@@ -305,5 +318,9 @@ const styles = StyleSheet.create({
   filterBadgeText: { color: '#fff', fontSize: 10, fontFamily: 'Outfit-Bold' },
   countText: { fontSize: 12, color: '#999', paddingHorizontal: 16, marginBottom: 8 },
   list: { paddingHorizontal: 16, paddingBottom: 20 },
-  empty: { textAlign: 'center', color: '#999', marginTop: 40 },
+  emptyWrap: { alignItems: 'center', justifyContent: 'center', marginTop: 40, paddingHorizontal: 24 },
+  emptyImage: { width: 220, height: 220, marginBottom: 16 },
+  emptyTitle: { fontSize: 20, fontFamily: 'Outfit-Bold', color: '#D20236', marginBottom: 6 },
+  emptyText: { fontSize: 14, color: '#333', textAlign: 'center' },
+  emptyTextBold: { fontFamily: 'Outfit-Bold', color: '#000' },
 });

@@ -12,7 +12,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   ArrowLeft,
-  BadgeCheck,
   Heart,
   UserPlus,
   CreditCard,
@@ -29,12 +28,25 @@ import {
 } from '../../api/notification';
 import { resolveImageUrl } from '../../utils/imageUrl';
 
-// icon + color per notification type
+const profileVerifiedBadge = require('../../assets/images/profileVerifiedBadge.png');
+const paymentSuccessful = require('../../assets/images/paymentSuccessful.png');
+const membershipExpired = require('../../assets/images/membershipExpired.png');
+
+// icon image per notification type, for the types with a dedicated exported badge
+const typeImage = (type: string) => {
+  const t = (type || '').toUpperCase();
+  if (t.includes('APPROVED') || t.includes('VERIFIED')) return profileVerifiedBadge;
+  if (t.includes('MEMBERSHIP') && (t.includes('EXPIR') || t.includes('FAILED')))
+    return membershipExpired;
+  if (t.includes('PAYMENT') && t.includes('SUCCESS')) return paymentSuccessful;
+  return null;
+};
+
+// icon + color per notification type, for everything else (falls back to a lucide icon)
 const typeConfig = (type: string) => {
   const t = (type || '').toUpperCase();
-  if (t.includes('APPROVED') || t.includes('VERIFIED'))
-    return { Icon: BadgeCheck, color: '#1a7f37' };
-  if (t.includes('ACCEPTED')) return { Icon: BadgeCheck, color: '#1a7f37' };
+  if (t.includes('APPROVED') || t.includes('VERIFIED') || t.includes('ACCEPTED'))
+    return { Icon: Bell, color: '#1a7f37' };
   if (t.includes('REQUEST')) return { Icon: UserPlus, color: '#D20236' };
   if (t.includes('INTEREST')) return { Icon: Heart, color: '#D20236' };
   if (t.includes('PAYMENT') || t.includes('MEMBERSHIP'))
@@ -177,12 +189,12 @@ export default function NotificationScreen({ navigation }: any) {
           onRefresh={onRefresh}
           renderItem={({ item }) => {
             const { Icon, color } = typeConfig(item.type);
+            const badgeImage = typeImage(item.type);
             const unread = !item.readAt;
             const hasProfile = !!item.data?.profileId;
             const isPayment = String(item.type || '').toUpperCase().includes('PAYMENT');
-            const avatarUri = item.data?.viewerPhoto
-              ? resolveImageUrl(item.data.viewerPhoto)
-              : '';
+            const rawPhoto = item.data?.viewerPhoto || item.data?.senderPhoto || '';
+            const avatarUri = rawPhoto ? resolveImageUrl(rawPhoto) : '';
             return (
               <TouchableOpacity
                 style={[styles.card, unread && styles.cardUnread]}
@@ -191,6 +203,8 @@ export default function NotificationScreen({ navigation }: any) {
               >
                 {avatarUri ? (
                   <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                ) : badgeImage ? (
+                  <Image source={badgeImage} style={styles.badgeIcon} resizeMode="contain" />
                 ) : (
                   <View
                     style={[styles.iconWrap, { backgroundColor: `${color}18` }]}
@@ -279,6 +293,10 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 21,
     backgroundColor: '#f0f0f0',
+  },
+  badgeIcon: {
+    width: 42,
+    height: 42,
   },
   body: { flex: 1 },
   title: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#000' },
