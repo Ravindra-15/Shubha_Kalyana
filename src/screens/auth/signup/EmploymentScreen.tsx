@@ -136,7 +136,7 @@ export default function EmploymentScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={10} total={17} />
+          <ProgressBar step={10} total={16} />
 
           <Text style={styles.title}>
             Add your{'\n'}<Text style={styles.titleRed}>Employment Details</Text>

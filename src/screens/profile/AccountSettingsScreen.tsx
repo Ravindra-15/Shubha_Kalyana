@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ArrowLeft, Edit3, Phone, Mail, Lock, CreditCard, Trash2, LogOut, ChevronRight,
+  ArrowLeft, Edit3, Phone, Mail, CreditCard, Trash2, LogOut, ChevronRight,
 } from 'lucide-react-native';
 import BottomNav from '../../components/BottomNav';
 import { useAuth } from '../../context/AuthContext';
@@ -29,7 +29,6 @@ export default function AccountSettingsScreen({ navigation }: any) {
       items: [
         { label: 'Change Mobile Number', Icon: Phone, onPress: () => navigation.navigate('ChangeMobileNumber') },
         { label: 'Change Email', Icon: Mail, onPress: () => navigation.navigate('ChangeEmail') },
-        { label: 'Change MPIN', Icon: Lock, onPress: () => navigation.navigate('ChangeMpin') },
       ],
     },
     {

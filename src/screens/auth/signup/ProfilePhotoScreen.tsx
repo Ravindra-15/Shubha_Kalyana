@@ -165,7 +165,7 @@ export default function ProfilePhotoScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          <ProgressBar step={14} total={17} />
+          <ProgressBar step={13} total={16} />
 
           <Text style={styles.title}>
             Almost there! Let's add your <Text style={styles.titleRed}>photo</Text>

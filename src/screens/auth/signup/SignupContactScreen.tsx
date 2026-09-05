@@ -223,7 +223,7 @@ export default function SignupContactScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={4} total={17} />
+          <ProgressBar step={4} total={16} />
 
         <View style={styles.iconCircle}>
           <Image

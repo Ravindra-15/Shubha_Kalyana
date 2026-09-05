@@ -140,7 +140,7 @@ export default function FamilyDetailsScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={7} total={17} />
+          <ProgressBar step={7} total={16} />
 
           <Text style={styles.title}>
             Enter your{'\n'}<Text style={styles.titleRed}>Family Details</Text>

@@ -66,7 +66,7 @@ export default function QualificationScreen({ navigation }: any) {
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
 
-        <ProgressBar step={6} total={17} />
+        <ProgressBar step={6} total={16} />
 
         <Text style={styles.title}>
           Select your{'\n'}<Text style={styles.titleRed}>Qualification</Text>

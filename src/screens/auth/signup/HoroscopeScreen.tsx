@@ -84,7 +84,7 @@ export default function HoroscopeScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={8} total={17} />
+          <ProgressBar step={8} total={16} />
 
           <Text style={styles.title}>
             Your <Text style={styles.titleRed}>Horoscope</Text>

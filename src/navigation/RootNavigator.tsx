@@ -7,9 +7,6 @@ import SplashScreen from '../screens/onboarding/SplashScreen';
 import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import LoginOtpScreen from '../screens/auth/LoginOtpScreen';
-import ForgotMpinScreen from '../screens/auth/ForgotMpinScreen';
-import ForgotMpinVerifyScreen from '../screens/auth/ForgotMpinVerifyScreen';
-import ForgotMpinResetScreen from '../screens/auth/ForgotMpinResetScreen';
 import MainTabs from './MainTabs';
 import SelectLanguageScreen from '../screens/auth/signup/SelectLanguageScreen';
 import SignupProfileForScreen from '../screens/auth/signup/SignupProfileForScreen';
@@ -24,7 +21,6 @@ import PartnerPreferenceScreen from '../screens/auth/signup/PartnerPreferenceScr
 import HoroscopeScreen from '../screens/auth/signup/HoroscopeScreen';
 import AddressDetailsScreen from '../screens/auth/signup/AddressDetailsScreen';
 import AboutYouScreen from '../screens/auth/signup/AboutYouScreen';
-import SetupMpinScreen from '../screens/auth/signup/SetupMpinScreen';
 import ProfilePhotoScreen from '../screens/auth/signup/ProfilePhotoScreen';
 import HobbiesScreen from '../screens/auth/signup/HobbiesScreen';
 import UploadAadhaarScreen from '../screens/auth/signup/UploadAadhaarScreen';
@@ -39,7 +35,6 @@ import ConversationScreen from '../screens/chat/ConversationScreen';
 import SettingsScreen from '../screens/profile/SettingsScreen';
 import AccountSettingsScreen from '../screens/profile/AccountSettingsScreen';
 import ChangeMobileNumberScreen from '../screens/profile/ChangeMobileNumberScreen';
-import ChangeMpinScreen from '../screens/profile/ChangeMpinScreen';
 import PaymentHistoryScreen from '../screens/profile/PaymentHistoryScreen';
 import DeleteAccountScreen from '../screens/profile/DeleteAccountScreen';
 import ChangeEmailScreen from '../screens/profile/ChangeEmailScreen';
@@ -101,7 +96,6 @@ export default function RootNavigator() {
             <Stack.Screen name="Settings" component={SettingsScreen} />
             <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
             <Stack.Screen name="ChangeMobileNumber" component={ChangeMobileNumberScreen} />
-            <Stack.Screen name="ChangeMpin" component={ChangeMpinScreen} />
             <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
             <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
             <Stack.Screen name="ChangeEmail" component={ChangeEmailScreen} />
@@ -126,9 +120,6 @@ export default function RootNavigator() {
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="LoginOtp" component={LoginOtpScreen} />
-            <Stack.Screen name="ForgotMpin" component={ForgotMpinScreen} />
-            <Stack.Screen name="ForgotMpinVerify" component={ForgotMpinVerifyScreen} />
-            <Stack.Screen name="ForgotMpinReset" component={ForgotMpinResetScreen} />
             <Stack.Screen name="SelectLanguage" component={SelectLanguageScreen} />
             <Stack.Screen
               name="SignupProfileFor"
@@ -165,7 +156,6 @@ export default function RootNavigator() {
               name="PartnerPreference"
               component={PartnerPreferenceScreen}
             />
-            <Stack.Screen name="SetupMpin" component={SetupMpinScreen} />
             <Stack.Screen name="ProfilePhoto" component={ProfilePhotoScreen} />
             <Stack.Screen name="Hobbies" component={HobbiesScreen} />
             <Stack.Screen

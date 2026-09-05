@@ -36,10 +36,6 @@ const FAQS = [
     q: 'How do I delete my account?',
     a: 'Go to Profile > Settings > Account Settings > Delete Account, select a reason, and submit your request. Our team will process it shortly.',
   },
-  {
-    q: 'I forgot my MPIN. What do I do?',
-    a: 'On the login screen, tap "Forgot MPIN" and follow the OTP verification steps to reset it.',
-  },
 ];
 
 export default function FaqsScreen({ navigation }: any) {

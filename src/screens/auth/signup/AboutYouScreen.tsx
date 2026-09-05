@@ -68,7 +68,7 @@ export default function AboutYouScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={11} total={17} />
+          <ProgressBar step={11} total={16} />
 
           <Text style={styles.title}>
             About <Text style={styles.titleRed}>Yourself</Text>

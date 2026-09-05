@@ -109,7 +109,7 @@ const visibleCastes = religion
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
 
-        <ProgressBar step={3} total={17} />
+        <ProgressBar step={3} total={16} />
 
         <View style={styles.iconCircle}>
           <Image

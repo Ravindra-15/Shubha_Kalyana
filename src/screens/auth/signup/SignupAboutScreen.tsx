@@ -154,7 +154,7 @@ const dd = parseInt(day, 10);
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
 
-        <ProgressBar step={2} total={17} />
+        <ProgressBar step={2} total={16} />
 
         <View style={styles.iconCircle}>
           <Image

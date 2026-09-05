@@ -192,7 +192,7 @@ const submit = async (skip = false) => {
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
 
-        <ProgressBar step={5} total={17} />
+        <ProgressBar step={5} total={16} />
 
         <Text style={styles.title}>
           Martial <Text style={styles.titleRed}>Status</Text>

@@ -44,9 +44,9 @@ export default function VerifyMobileScreen({ navigation }: any) {
       setOtp(['', '', '', '', '', '']);
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Could not send OTP';
-      // already verified → skip ahead to MPIN
+      // already verified → skip ahead
       if (/already verified/i.test(msg)) {
-        navigation.replace('SetupMpin');
+        navigation.replace('ProfilePhoto');
         return;
       }
       Alert.alert('Error', msg);
@@ -72,7 +72,7 @@ export default function VerifyMobileScreen({ navigation }: any) {
       setVerifying(true);
       await apiClient.post('/onboarding/otp/verify', { code });
       setVerified(true);
-      setTimeout(() => navigation.navigate('SetupMpin'), 1200);
+      setTimeout(() => navigation.navigate('ProfilePhoto'), 1200);
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Invalid OTP');
     } finally {

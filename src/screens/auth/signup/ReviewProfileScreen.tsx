@@ -22,7 +22,7 @@ export default function ReviewProfileScreen({ navigation }: any) {
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
 
-        <ProgressBar step={17} total={17} />
+        <ProgressBar step={16} total={16} />
 
         <View style={styles.content}>
           <Text style={styles.title}>

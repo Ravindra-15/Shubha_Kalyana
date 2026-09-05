@@ -68,7 +68,7 @@ export default function HobbiesScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={15} total={17} />
+          <ProgressBar step={14} total={16} />
 
           <Text style={styles.title}>
             Add your Hobbies and{'\n'}<Text style={styles.titleRed}>Interests</Text>

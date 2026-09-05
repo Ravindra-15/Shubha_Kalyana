@@ -71,7 +71,7 @@ const SECTIONS: Section[] = [
   {
     heading: 'Account Security & Member Responsibilities',
     bullets: [
-      'Members are solely responsible for maintaining the confidentiality of their login credentials, including user ID, password, and MPIN.',
+      'Members are solely responsible for maintaining the confidentiality of their login credentials, including their user ID and OTP.',
       'All activities carried out under a Member’s account shall be deemed to have been conducted by the Member.',
       'Members must promptly notify Shubha Kalyana Matrimony in writing of any actual or suspected unauthorized access to or use of their account.',
     ],

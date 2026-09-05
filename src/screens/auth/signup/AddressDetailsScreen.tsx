@@ -199,7 +199,7 @@ export default function AddressDetailsScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={9} total={17} />
+          <ProgressBar step={9} total={16} />
 
           <Text style={styles.title}>Where do you <Text style={styles.titleRed}>Live</Text></Text>
 

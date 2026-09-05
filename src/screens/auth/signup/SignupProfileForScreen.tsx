@@ -19,8 +19,8 @@ const PROFILE_OPTIONS = [
   { label: 'My Son', value: 'My Son' },
   { label: 'Daughter', value: 'My Daughter' },
   { label: 'Sister', value: 'My Sister' },
-  { label: 'Friend', value: 'My Friend' },
   { label: 'Brother', value: 'My Brother' },
+  { label: 'Friend', value: 'My Friend' },
 ];
 
 const GENDER_OPTIONS = [
@@ -88,7 +88,7 @@ export default function SignupProfileForScreen({ navigation }: any) {
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
 
-        <ProgressBar step={1} total={17} />
+        <ProgressBar step={1} total={16} />
 
         <View style={styles.iconCircle}>
           <Image

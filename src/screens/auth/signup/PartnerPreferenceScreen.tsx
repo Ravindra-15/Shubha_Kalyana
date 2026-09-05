@@ -92,7 +92,7 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
 
   const goToNextStep = async () => {
     const resumeScreen = await getResumeScreen();
-    navigation.navigate((resumeScreen as never) || 'SetupMpin');
+    navigation.navigate((resumeScreen as never) || 'ProfilePhoto');
   };
 
   const submit = async (skip = false) => {
@@ -145,7 +145,7 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={12} total={17} />
+          <ProgressBar step={12} total={16} />
 
           <Text style={styles.title}>
             Select your{'\n'}<Text style={styles.titleRed}>Partner Preferences</Text>
