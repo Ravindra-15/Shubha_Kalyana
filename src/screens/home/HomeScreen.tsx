@@ -202,6 +202,7 @@ export default function HomeScreen({ navigation }: any) {
       matchPercentage,
       matchPercent: matchPercentage,
       verified: Boolean(item.profile?.verified || isProfileFullyVerified(item.profile)),
+      bothHaveActivePlans: Boolean(item.bothHaveActivePlans),
     };
   };
 

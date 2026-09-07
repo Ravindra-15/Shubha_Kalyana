@@ -441,6 +441,9 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         ? 'received'
         : null;
   const bothHaveActivePlans = Boolean(access?.bothHaveActivePlans);
+  const myUnlockDone = Boolean(
+    access?.isMembershipProfileUnlocked || access?.isProfileSingleUnlocked,
+  );
   const primaryAction =
     requestStatus === 'ACCEPTED'
       ? canChat
@@ -450,9 +453,11 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         ? 'acceptRequest'
         : requestStatus === 'PENDING'
           ? 'requestSent'
-          : bothHaveActivePlans
-            ? 'viewContact'
-            : 'sendRequest';
+          : myUnlockDone
+            ? 'waitingForChat'
+            : bothHaveActivePlans
+              ? 'viewContact'
+              : 'sendRequest';
   const photo =
     profile.photos?.find((p: any) => p.isProfilePhoto)?.url ||
     profile.photos?.[0]?.url ||
@@ -675,6 +680,19 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               <Text style={styles.sendText}>
                 {unlockingContact ? 'Unlocking...' : 'View Contact'}
               </Text>
+            </TouchableOpacity>
+          ) : primaryAction === 'waitingForChat' ? (
+            <TouchableOpacity
+              style={[styles.sendBtn, styles.sendBtnDisabled]}
+              onPress={() =>
+                Alert.alert(
+                  'Almost there',
+                  `Once ${name} also views your contact, you'll be able to chat.`,
+                )
+              }
+            >
+              <Heart color="#fff" size={17} />
+              <Text style={styles.sendText}>Chat Now</Text>
             </TouchableOpacity>
           ) : primaryAction === 'acceptRequest' ? (
             <TouchableOpacity
