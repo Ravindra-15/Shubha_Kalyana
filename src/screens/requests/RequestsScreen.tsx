@@ -18,29 +18,12 @@ import BottomNav from '../../components/BottomNav';
 import RequestCard from '../../components/RequestCard';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
-import PaymentBreakupModal from '../../components/PaymentBreakupModal';
-import {
-  createProfileUnlockOrder,
-  getProfileAccess,
-  getUnlockPrice,
-} from '../../api/membershipPayment';
-import { openRazorpayOrder } from '../../utils/razorpayCheckout';
-import type { PaymentOrderResult } from '../../utils/paymentBreakup';
-import { getSingleProfileUnlockLimitMessage } from '../../utils/singleProfileUnlockAccess';
+import { getProfileAccess } from '../../api/membershipPayment';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 const TABS = ['Received', 'Sent', 'Accepted'] as const;
 type Tab = (typeof TABS)[number];
 type RequestDirection = 'received' | 'sent' | 'accepted';
-
-type PendingPayment = {
-  orderResult: PaymentOrderResult;
-  title: string;
-  description: string;
-  itemLabel: string;
-  requestId: string;
-  profile: any;
-};
 
 const getAge = (dob?: string) => {
   if (!dob) return null;
@@ -181,10 +164,6 @@ export default function RequestsScreen({ navigation, route }: any) {
   const [actingId, setActingId] = useState('');
   const [actingAction, setActingAction] = useState('');
   const [accessPrompt, setAccessPrompt] = useState<any | null>(null);
-  const [unlockPrice, setUnlockPrice] = useState(99);
-  const [unlockingRequestId, setUnlockingRequestId] = useState('');
-  const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
-  const [confirmingPayment, setConfirmingPayment] = useState(false);
 
   useEffect(() => {
     setTab(getInitialTab(route));
@@ -222,19 +201,9 @@ export default function RequestsScreen({ navigation, route }: any) {
   const { refreshing, onRefresh } = usePullToRefresh(() => load(tab, true));
 
   const showAccessRequired = async (profile: any) => {
-    const [accessResult, priceResult] = await Promise.allSettled([
-      profile.profileId ? getProfileAccess(profile.profileId) : Promise.resolve(null),
-      getUnlockPrice(),
-    ]);
+    const access = profile.profileId ? await getProfileAccess(profile.profileId) : null;
 
-    setAccessPrompt({
-      profile,
-      access: accessResult.status === 'fulfilled' ? accessResult.value : null,
-    });
-
-    if (priceResult.status === 'fulfilled') {
-      setUnlockPrice(priceResult.value?.amount || 99);
-    }
+    setAccessPrompt({ profile, access });
   };
 
   const accept = async (profile: any) => {
@@ -306,74 +275,6 @@ export default function RequestsScreen({ navigation, route }: any) {
         },
       ],
     );
-  };
-
-  const unlockPromptProfile = async () => {
-    const prompt = accessPrompt;
-    if (!prompt?.profile?.profileId || !prompt?.profile?.requestId) return;
-
-    try {
-      setUnlockingRequestId(prompt.profile.requestId);
-      const orderResult = await createProfileUnlockOrder(prompt.profile.profileId);
-      if (!orderResult?.order?.gatewayOrderId || !orderResult?.keyId) {
-        Alert.alert('Payment', 'Could not create payment order');
-        return;
-      }
-
-      setAccessPrompt(null);
-      setPendingPayment({
-        orderResult,
-        title: 'Profile Unlock',
-        description: `Review the GST breakup before unlocking ${prompt.profile.name || 'this profile'}.`,
-        itemLabel: 'Profile unlock fee',
-        requestId: prompt.profile.requestId,
-        profile: prompt.profile,
-      });
-    } catch (err: any) {
-      const payload = err?.response?.data;
-      Alert.alert(
-        'Payment',
-        payload?.code === 'SINGLE_PROFILE_UNLOCK_LIMIT_REACHED'
-          ? getSingleProfileUnlockLimitMessage(payload)
-          : payload?.message || 'Could not create payment order',
-      );
-    } finally {
-      setUnlockingRequestId('');
-    }
-  };
-
-  const closePaymentBreakup = () => {
-    if (confirmingPayment) return;
-    setPendingPayment(null);
-  };
-
-  const confirmUnlockPayment = async () => {
-    const payment = pendingPayment;
-    if (!payment) return;
-
-    setConfirmingPayment(true);
-    const result = await openRazorpayOrder(payment.orderResult, 'Unlock Profile Access', {
-      name: payment.profile?.name,
-    });
-    setConfirmingPayment(false);
-    setPendingPayment(null);
-
-    if (!result.success) {
-      Alert.alert('Payment', result.message || 'Payment failed');
-      return;
-    }
-
-    try {
-      await apiClient.patch(`/relationship/requests/${payment.requestId}/accept`);
-      setItems((prev) => prev.filter((x) => x.requestId !== payment.requestId));
-      Alert.alert('Accepted', 'Request accepted successfully');
-    } catch (err: any) {
-      Alert.alert(
-        'Unlocked',
-        err?.response?.data?.message ||
-          'Profile unlocked, but the request could not be accepted. Please retry.',
-      );
-    }
   };
 
   const openProfile = (profileId: string) =>
@@ -464,7 +365,6 @@ export default function RequestsScreen({ navigation, route }: any) {
         variant="accept"
         name={accessPrompt?.profile?.name}
         access={accessPrompt?.access}
-        loading={unlockingRequestId === accessPrompt?.profile?.requestId}
         onClose={() => setAccessPrompt(null)}
         onUpgrade={() => {
           const profileId = accessPrompt?.profile?.profileId;
@@ -472,13 +372,6 @@ export default function RequestsScreen({ navigation, route }: any) {
           setAccessPrompt(null);
           navigation.navigate('Plans', profileId ? { profileId, profileName } : undefined);
         }}
-      />
-      <PaymentBreakupModal
-        visible={Boolean(pendingPayment)}
-        payment={pendingPayment}
-        loading={confirmingPayment}
-        onClose={closePaymentBreakup}
-        onPurchase={confirmUnlockPayment}
       />
       <BottomNav active="InterestsTab" />
     </SafeAreaView>

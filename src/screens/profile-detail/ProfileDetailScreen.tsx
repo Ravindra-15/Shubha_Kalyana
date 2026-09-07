@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -34,24 +33,15 @@ import apiClient from '../../api/client';
 import { LayoutAnimation, Platform, UIManager } from 'react-native';
 import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
-import PaymentBreakupModal from '../../components/PaymentBreakupModal';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import ReportUserModal from '../../components/ReportUserModal';
 import ReportSubmittedModal from '../../components/ReportSubmittedModal';
-import { openRazorpayOrder } from '../../utils/razorpayCheckout';
 import {
-  createProfileUnlockOrder,
-  getUnlockPrice,
+  unlockProfileWithMembership,
   getProfileAccess,
   revealContact,
 } from '../../api/membershipPayment';
-import {
-  getSingleProfileUnlockLimitMessage,
-  isFreePlanSingleUnlockLimitReached,
-} from '../../utils/singleProfileUnlockAccess';
 import { startChat, blockChatUser } from '../../api/chat';
-import type { PaymentOrderResult } from '../../utils/paymentBreakup';
-import { isProfileSaved, removeSavedProfile, saveProfile } from '../../utils/savedProfiles';
 import { useFocusEffect } from '@react-navigation/native';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
@@ -75,13 +65,6 @@ const getAge = (dob?: string) => {
   const m = t.getMonth() - b.getMonth();
   if (m < 0 || (m === 0 && t.getDate() < b.getDate())) a--;
   return a;
-};
-
-type PendingPayment = {
-  orderResult: PaymentOrderResult;
-  title: string;
-  description: string;
-  itemLabel: string;
 };
 
 // A row that shows value OR a lock if blurred
@@ -190,52 +173,20 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const { profileId } = route.params || {};
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [saved, setSaved] = useState(false);
   const [showSentModal, setShowSentModal] = useState(false);
   const [requestStatus, setRequestStatus] = useState<string | null>(null);
   const [showUnlock, setShowUnlock] = useState(false);
-  const [unlockPrice, setUnlockPrice] = useState(99);
-  const [paying, setPaying] = useState(false);
   const [access, setAccess] = useState<any>(null);
   const [contact, setContact] = useState<any>(null);
   const [canChat, setCanChat] = useState(false);
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
-  const [confirmingPayment, setConfirmingPayment] = useState(false);
+  const [unlockingContact, setUnlockingContact] = useState(false);
   const [optionsMenuOpen, setOptionsMenuOpen] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showReportSubmitted, setShowReportSubmitted] = useState(false);
   const [blocking, setBlocking] = useState(false);
   const [reportChatId, setReportChatId] = useState('');
-  const [saveAnimVisible, setSaveAnimVisible] = useState(false);
-  const saveAnimValue = useRef(new Animated.Value(0)).current;
   const [acceptingRequest, setAcceptingRequest] = useState(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-
-      const loadSavedStatus = async () => {
-        if (!profileId) {
-          setSaved(false);
-          return;
-        }
-        try {
-          const nextSaved = await isProfileSaved(profileId);
-          if (active) setSaved(nextSaved);
-        } catch {
-          if (active) setSaved(false);
-        }
-      };
-
-      loadSavedStatus();
-
-      return () => {
-        active = false;
-      };
-    }, [profileId])
-  );
 
   const loadProfile = useCallback(
     async (silent = false) => {
@@ -244,13 +195,9 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         const res = await getPartnerProfile(profileId);
         setData(res);
 
-        // load unlock price + access status
+        // load access status
         try {
-          const [price, acc] = await Promise.all([
-            getUnlockPrice(),
-            getProfileAccess(profileId),
-          ]);
-          setUnlockPrice(price.amount || 99);
+          const acc = await getProfileAccess(profileId);
           setAccess(acc);
           setCanChat(
             Boolean(
@@ -362,39 +309,40 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
     }
   };
 
-  const playSaveAnimation = () => {
-    setSaveAnimVisible(true);
-    saveAnimValue.setValue(0);
-    Animated.sequence([
-      Animated.spring(saveAnimValue, { toValue: 1, useNativeDriver: true, friction: 4 }),
-      Animated.timing(saveAnimValue, { toValue: 0, duration: 350, delay: 350, useNativeDriver: true }),
-    ]).start(() => setSaveAnimVisible(false));
-  };
-
-  const toggleSavedProfile = async () => {
-    if (savingProfile || !profileId) return;
-
+  const handleViewContact = async () => {
     try {
-      setSavingProfile(true);
-      const nextSaved = !saved;
-      if (nextSaved) {
-        await saveProfile(profileId);
-        playSaveAnimation();
-      } else {
-        await removeSavedProfile(profileId);
+      setUnlockingContact(true);
+      await unlockProfileWithMembership(profileId);
+      const [fresh, acc, c] = await Promise.all([
+        getPartnerProfile(profileId),
+        getProfileAccess(profileId),
+        revealContact(profileId),
+      ]);
+      setData(fresh);
+      setAccess(acc);
+      setContact(c);
+      setCanChat(
+        Boolean(
+          acc?.shouldBlurSensitiveFields === false ||
+            acc?.canViewContactNumber ||
+            acc?.isProfileSingleUnlocked ||
+            acc?.isMembershipProfileUnlocked,
+        ),
+      );
+    } catch (err: any) {
+      if (err?.response?.status === 402) {
+        setShowUnlock(true);
+        return;
       }
-
-      setSaved(nextSaved);
-    } catch {
-      Alert.alert('Error', 'Could not update saved profile');
+      Alert.alert('Error', err?.response?.data?.message || 'Could not view contact');
     } finally {
-      setSavingProfile(false);
+      setUnlockingContact(false);
     }
   };
 
   const openChat = async () => {
     if (!canChat) {
-      setShowUnlock(true);
+      await handleViewContact();
       return;
     }
     const otherUserId = data?.user?._id;
@@ -457,73 +405,6 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
     setShowReportSubmitted(true);
   };
 
-  const handleUnlock = async () => {
-    if (isFreePlanSingleUnlockLimitReached(access)) {
-      Alert.alert('Payment', getSingleProfileUnlockLimitMessage(access));
-      return;
-    }
-
-    setPaying(true);
-    try {
-      const orderResult = await createProfileUnlockOrder(profileId);
-      if (!orderResult?.order?.gatewayOrderId || !orderResult?.keyId) {
-        Alert.alert('Payment', 'Could not create payment order');
-        return;
-      }
-
-      setShowUnlock(false);
-      setPendingPayment({
-        orderResult,
-        title: 'Profile Unlock',
-        description: `Review the GST breakup before unlocking ${name || 'this profile'}.`,
-        itemLabel: 'Profile unlock fee',
-      });
-    } catch (err: any) {
-      const payload = err?.response?.data;
-      Alert.alert(
-        'Payment',
-        payload?.code === 'SINGLE_PROFILE_UNLOCK_LIMIT_REACHED'
-          ? getSingleProfileUnlockLimitMessage(payload)
-          : payload?.message || 'Could not create payment order',
-      );
-    } finally {
-      setPaying(false);
-    }
-  };
-
-  const closePaymentBreakup = () => {
-    if (confirmingPayment) return;
-    setPendingPayment(null);
-  };
-
-  const confirmUnlockPayment = async () => {
-    const payment = pendingPayment;
-    if (!payment) return;
-
-    setConfirmingPayment(true);
-    const result = await openRazorpayOrder(payment.orderResult, 'Unlock Profile Access', { name });
-    setConfirmingPayment(false);
-    setPendingPayment(null);
-
-    if (result.success) {
-      // refetch everything in parallel so all sections update together
-      try {
-        const [fresh, acc, c] = await Promise.all([
-          getPartnerProfile(profileId),
-          getProfileAccess(profileId),
-          revealContact(profileId),
-        ]);
-        setData(fresh);
-        setAccess(acc);
-        setContact(c);
-        setCanChat(true);
-      } catch {}
-      Alert.alert('Unlocked', 'Profile access unlocked successfully');
-    } else {
-      Alert.alert('Payment', result.message || 'Payment failed');
-    }
-  };
-
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -559,6 +440,19 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       : access?.relationshipStatus === 'PENDING_RECEIVED'
         ? 'received'
         : null;
+  const bothHaveActivePlans = Boolean(access?.bothHaveActivePlans);
+  const primaryAction =
+    requestStatus === 'ACCEPTED'
+      ? canChat
+        ? 'chat'
+        : 'viewContact'
+      : matchStatus === 'received'
+        ? 'acceptRequest'
+        : requestStatus === 'PENDING'
+          ? 'requestSent'
+          : bothHaveActivePlans
+            ? 'viewContact'
+            : 'sendRequest';
   const photo =
     profile.photos?.find((p: any) => p.isProfilePhoto)?.url ||
     profile.photos?.[0]?.url ||
@@ -613,13 +507,6 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           navigation.navigate('Plans', { profileId, profileName: name });
         }}
       />
-      <PaymentBreakupModal
-        visible={Boolean(pendingPayment)}
-        payment={pendingPayment}
-        loading={confirmingPayment}
-        onClose={closePaymentBreakup}
-        onPurchase={confirmUnlockPayment}
-      />
       <ConfirmDialog
         visible={showBlockConfirm}
         title="Block This User?"
@@ -651,11 +538,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             onPress={() => navigation.navigate('SavedProfiles')}
             accessibilityLabel="Saved Profiles"
           >
-            <Bookmark
-              color="#D20236"
-              size={24}
-              fill={saved ? '#D20236' : 'transparent'}
-            />
+            <Bookmark color="#D20236" size={24} fill="transparent" />
           </TouchableOpacity>
 
           {matchStatus === 'connected' ? (
@@ -775,17 +658,25 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           </View>
         </View>
 
-        {/* Action buttons */}
+        {/* Action button */}
         <View style={styles.actionWrap}>
-          {requestStatus === 'ACCEPTED' ? (
+          {primaryAction === 'chat' ? (
+            <TouchableOpacity style={styles.sendBtn} onPress={openChat}>
+              <Heart color="#fff" size={17} />
+              <Text style={styles.sendText}>Chat Now</Text>
+            </TouchableOpacity>
+          ) : primaryAction === 'viewContact' ? (
             <TouchableOpacity
-              style={[styles.sendBtn, !canChat && styles.sendBtnDisabled]}
-              onPress={openChat}
+              style={[styles.sendBtn, unlockingContact && styles.sendBtnDisabled]}
+              onPress={handleViewContact}
+              disabled={unlockingContact}
             >
               <Heart color="#fff" size={17} />
-              <Text style={styles.sendText}>{canChat ? 'Chat Now' : 'Unlock to Chat'}</Text>
+              <Text style={styles.sendText}>
+                {unlockingContact ? 'Unlocking...' : 'View Contact'}
+              </Text>
             </TouchableOpacity>
-          ) : matchStatus === 'received' ? (
+          ) : primaryAction === 'acceptRequest' ? (
             <TouchableOpacity
               style={styles.sendBtn}
               onPress={acceptIncomingRequest}
@@ -808,34 +699,6 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               </Text>
             </TouchableOpacity>
           )}
-          <View>
-            <TouchableOpacity
-              style={styles.saveBtn}
-              onPress={toggleSavedProfile}
-              disabled={savingProfile}
-            >
-              <Text style={styles.saveText}>
-                {saved ? 'Remove Saved Profile' : 'Save Profile'}
-              </Text>
-            </TouchableOpacity>
-            {saveAnimVisible ? (
-              <Animated.View
-                pointerEvents="none"
-                style={[
-                  styles.saveAnimHeart,
-                  {
-                    opacity: saveAnimValue,
-                    transform: [
-                      { scale: saveAnimValue.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.4] }) },
-                      { translateY: saveAnimValue.interpolate({ inputRange: [0, 1], outputRange: [0, -18] }) },
-                    ],
-                  },
-                ]}
-              >
-                <Heart color="#D20236" fill="#D20236" size={30} />
-              </Animated.View>
-            ) : null}
-          </View>
         </View>
 
         {/* Contact Details */}
@@ -846,7 +709,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             label="Whatsapp"
             value={contact?.mobile}
             isPremiumLocked={access?.shouldBlurSensitiveFields !== false}
-            onLockedPress={() => setShowUnlock(true)}
+            onLockedPress={handleViewContact}
           />
           <ContactRow
             Icon={Phone}
@@ -854,7 +717,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             label="Phone Number"
             value={contact?.mobile}
             isPremiumLocked={access?.shouldBlurSensitiveFields !== false}
-            onLockedPress={() => setShowUnlock(true)}
+            onLockedPress={handleViewContact}
           />
           <ContactRow
             Icon={Mail}
@@ -862,7 +725,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             label="Email ID"
             value={contact?.email}
             isPremiumLocked={access?.shouldBlurSensitiveFields !== false}
-            onLockedPress={() => setShowUnlock(true)}
+            onLockedPress={handleViewContact}
           />
         </Section>
 
@@ -899,24 +762,24 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           <Row
             label="Present Address"
             value={fmtAddr(addr.current)}
-            onLockedPress={() => setShowUnlock(true)}
+            onLockedPress={handleViewContact}
           />
           <Row
             label="Permanent Address"
             value={fmtAddr(addr.permanent)}
-            onLockedPress={() => setShowUnlock(true)}
+            onLockedPress={handleViewContact}
           />
         </Section>
 
         {/* Employment */}
         <Section title="Employment Details">
           <Row label="Profession" value={emp.designation} />
-          <Row label="Company Name" value={emp.companyName} onLockedPress={() => setShowUnlock(true)} />
+          <Row label="Company Name" value={emp.companyName} onLockedPress={handleViewContact} />
           <Row label="Company Type" value={emp.employedType?.replace(/_/g, ' ')} />
           <Row label="Annual Income" value={emp.annualIncome ? `₹${emp.annualIncome.toLocaleString('en-IN')}` : ''} />
           <Row label="Experience" value={emp.totalExperience ? `${emp.totalExperience} Years` : ''} />
-          <Row label="Work Location" value={emp.companyLocation} onLockedPress={() => setShowUnlock(true)} />
-          <Row label="LinkedIn Link" value={emp.linkedInProfile} onLockedPress={() => setShowUnlock(true)} />
+          <Row label="Work Location" value={emp.companyLocation} onLockedPress={handleViewContact} />
+          <Row label="LinkedIn Link" value={emp.linkedInProfile} onLockedPress={handleViewContact} />
         </Section>
 
         {/* Education */}
@@ -1090,19 +953,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sendText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
-  saveBtn: {
-    borderRadius: 8,
-    paddingVertical: 15,
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    marginTop: 10,
-  },
-  saveText: { color: '#333', fontSize: 15, fontFamily: 'Outfit-SemiBold' },
-  saveAnimHeart: {
-    position: 'absolute',
-    top: 10,
-    alignSelf: 'center',
-  },
   section: { backgroundColor: '#fff', marginTop: 10, paddingHorizontal: 16 },
   sectionHead: {
     flexDirection: 'row',

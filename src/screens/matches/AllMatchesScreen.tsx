@@ -18,7 +18,7 @@ import ProfileCard from '../../components/ProfileCard';
 import FilterModal, { Filters } from '../../components/FilterModal';
 import BottomNav from '../../components/BottomNav';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
-import { getProfileAccess, getUnlockPrice } from '../../api/membershipPayment';
+import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
 import { sortProfilesByMatchPercent } from '../../utils/matchSorting';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
@@ -36,7 +36,6 @@ export default function AllMatchesScreen({ navigation, route }: any) {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [accessPrompt, setAccessPrompt] = useState<{ profileId: string; name?: string; access: any } | null>(null);
-  const [unlockPrice, setUnlockPrice] = useState(99);
 
   const buildParams = useCallback(
     (pageNum: number) => {
@@ -131,22 +130,47 @@ export default function AllMatchesScreen({ navigation, route }: any) {
     } catch (err: any) {
       if (err?.response?.status === 402) {
         const name = profiles.find((p) => p.profileId === profileId)?.name;
-        const [accessResult, priceResult] = await Promise.allSettled([
-          getProfileAccess(profileId),
-          getUnlockPrice(),
-        ]);
-        setAccessPrompt({
-          profileId,
-          name,
-          access: accessResult.status === 'fulfilled' ? accessResult.value : null,
-        });
-        if (priceResult.status === 'fulfilled') {
-          setUnlockPrice(priceResult.value?.amount || 99);
-        }
+        const access = await getProfileAccess(profileId);
+        setAccessPrompt({ profileId, name, access });
         return;
       }
       Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
     }
+  };
+
+  const viewContact = async (profileId: string) => {
+    try {
+      await unlockProfileWithMembership(profileId);
+      navigation.navigate('ProfileDetail', { profileId });
+    } catch (err: any) {
+      if (err?.response?.status === 402) {
+        const name = profiles.find((p) => p.profileId === profileId)?.name;
+        const access = await getProfileAccess(profileId);
+        setAccessPrompt({ profileId, name, access });
+        return;
+      }
+      Alert.alert('Error', err?.response?.data?.message || 'Could not view contact');
+    }
+  };
+
+  const getCardActionProps = (p: any) => {
+    if (p.bothHaveActivePlans && !p.requestStatus) {
+      return {
+        actionLabel: 'View Contact',
+        actionDisabled: false,
+        onAction: () => viewContact(p.profileId),
+      };
+    }
+    return {
+      actionLabel:
+        p.requestStatus === 'PENDING'
+          ? 'Request Sent'
+          : p.requestStatus === 'ACCEPTED'
+          ? 'Connected'
+          : 'Send Request',
+      actionDisabled: !!p.requestStatus,
+      onAction: () => sendRequest(p.profileId),
+    };
   };
 
   const toggleInterest = async (profileId: string, currentlyInterested: boolean) => {
@@ -235,15 +259,7 @@ export default function AllMatchesScreen({ navigation, route }: any) {
           renderItem={({ item }) => (
             <ProfileCard
               profile={item}
-              actionLabel={
-                item.requestStatus === 'PENDING'
-                  ? 'Request Sent'
-                  : item.requestStatus === 'ACCEPTED'
-                  ? 'Connected'
-                  : 'Send Request'
-              }
-              actionDisabled={!!item.requestStatus}
-              onAction={() => sendRequest(item.profileId)}
+              {...getCardActionProps(item)}
               onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}
               onInterested={() => toggleInterest(item.profileId, item.isInterested)}
             />

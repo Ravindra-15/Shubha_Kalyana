@@ -1,11 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Image } from 'react-native';
 import { X, Lock, AlertCircle } from 'lucide-react-native';
-import {
-  getSingleProfileUnlockLimitMessage,
-  getSingleProfileUnlockRemainingLabel,
-  isFreePlanSingleUnlockLimitReached,
-} from '../utils/singleProfileUnlockAccess';
 
 type Props = {
   visible: boolean;
@@ -28,8 +23,6 @@ export default function UnlockAccessModal({
   onClose,
   onUpgrade,
 }: Props) {
-  const showSingleUnlockUsage = Boolean(access && !access.hasActiveMembership);
-  const singleUnlockLimitReached = isFreePlanSingleUnlockLimitReached(access);
   const isAcceptFlow = variant === 'accept';
 
   return (
@@ -52,19 +45,10 @@ export default function UnlockAccessModal({
             {isAcceptFlow ? 'Oops !' : 'Unlock Full Profile Access'}
           </Text>
           <Text style={styles.subtitle}>
-            {singleUnlockLimitReached
-              ? getSingleProfileUnlockLimitMessage(access)
-              : isAcceptFlow
-                ? `Access required to ${action === 'send' ? 'send a request to' : 'accept'} ${name || 'this profile'}.`
-                : `View contact details and start communicating with ${name || 'this profile'} securely.`}
+            {isAcceptFlow
+              ? `Access required to ${action === 'send' ? 'send a request to' : 'accept'} ${name || 'this profile'}.`
+              : `View contact details and start communicating with ${name || 'this profile'} securely.`}
           </Text>
-          {!isAcceptFlow && showSingleUnlockUsage ? (
-            <View style={styles.remainingBox}>
-              <Text style={styles.remainingText}>
-                {getSingleProfileUnlockRemainingLabel(access)}
-              </Text>
-            </View>
-          ) : null}
 
           {!isAcceptFlow ? (
             <View style={styles.benefitBox}>

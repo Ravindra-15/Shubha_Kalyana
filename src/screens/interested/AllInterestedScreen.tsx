@@ -16,7 +16,7 @@ import ProfileCard from '../../components/ProfileCard';
 import BottomNav from '../../components/BottomNav';
 import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
-import { getProfileAccess, getUnlockPrice } from '../../api/membershipPayment';
+import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
 import { isProfileFullyVerified } from '../../api/profile';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
@@ -54,6 +54,7 @@ const mapInterest = (item: any) => {
     matchPercentage,
     matchPercent: matchPercentage,
     verified: Boolean(p.verified || isProfileFullyVerified(p)),
+    bothHaveActivePlans: Boolean(item.bothHaveActivePlans),
   };
 };
 
@@ -66,7 +67,6 @@ export default function AllInterestedScreen({ navigation, route }: any) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [sentModal, setSentModal] = useState<{ show: boolean; name?: string }>({ show: false });
   const [accessPrompt, setAccessPrompt] = useState<{ profileId: string; name?: string; access: any } | null>(null);
-  const [unlockPrice, setUnlockPrice] = useState(99);
 
   const load = useCallback(async (pageNum: number, replace = false) => {
     if (loading) return;
@@ -123,22 +123,47 @@ export default function AllInterestedScreen({ navigation, route }: any) {
     } catch (err: any) {
       if (err?.response?.status === 402) {
         const name = items.find((p) => p.profileId === profileId)?.name;
-        const [accessResult, priceResult] = await Promise.allSettled([
-          getProfileAccess(profileId),
-          getUnlockPrice(),
-        ]);
-        setAccessPrompt({
-          profileId,
-          name,
-          access: accessResult.status === 'fulfilled' ? accessResult.value : null,
-        });
-        if (priceResult.status === 'fulfilled') {
-          setUnlockPrice(priceResult.value?.amount || 99);
-        }
+        const access = await getProfileAccess(profileId);
+        setAccessPrompt({ profileId, name, access });
         return;
       }
       Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
     }
+  };
+
+  const viewContact = async (profileId: string) => {
+    try {
+      await unlockProfileWithMembership(profileId);
+      navigation.navigate('ProfileDetail', { profileId });
+    } catch (err: any) {
+      if (err?.response?.status === 402) {
+        const name = items.find((p) => p.profileId === profileId)?.name;
+        const access = await getProfileAccess(profileId);
+        setAccessPrompt({ profileId, name, access });
+        return;
+      }
+      Alert.alert('Error', err?.response?.data?.message || 'Could not view contact');
+    }
+  };
+
+  const getCardActionProps = (p: any) => {
+    if (p.bothHaveActivePlans && !p.requestStatus) {
+      return {
+        actionLabel: 'View Contact',
+        actionDisabled: false,
+        onAction: () => viewContact(p.profileId),
+      };
+    }
+    return {
+      actionLabel:
+        p.requestStatus === 'PENDING'
+          ? 'Request Sent'
+          : p.requestStatus === 'ACCEPTED'
+          ? 'Connected'
+          : 'Send Request',
+      actionDisabled: !!p.requestStatus,
+      onAction: () => sendRequest(p.profileId),
+    };
   };
 
   const removeInterest = async (profileId: string) => {
@@ -191,15 +216,7 @@ export default function AllInterestedScreen({ navigation, route }: any) {
             renderItem={({ item }) => (
               <ProfileCard
                 profile={item}
-                actionLabel={
-                  item.requestStatus === 'PENDING'
-                    ? 'Request Sent'
-                    : item.requestStatus === 'ACCEPTED'
-                    ? 'Connected'
-                    : 'Send Request'
-                }
-                actionDisabled={!!item.requestStatus}
-                onAction={() => sendRequest(item.profileId)}
+                {...getCardActionProps(item)}
                 onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}
                 showInterested={false}
                 onRemove={() => removeInterest(item.profileId)}

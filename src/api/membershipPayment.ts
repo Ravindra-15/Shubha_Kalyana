@@ -1,16 +1,6 @@
 import apiClient from './client';
 
-// get the ₹99 unlock price
-export const getUnlockPrice = async () => {
-  try {
-    const res = await apiClient.get('/membership/profile-unlocks/price');
-    return res.data?.data || { amount: 99, currency: 'INR' };
-  } catch {
-    return { amount: 99, currency: 'INR' };
-  }
-};
-
-// get access status for a specific profile (isProfileSingleUnlocked, canViewProfile, etc.)
+// get access status for a specific profile (isMembershipProfileUnlocked, bothHaveActivePlans, etc.)
 export const getProfileAccess = async (profileId: string) => {
   try {
     const res = await apiClient.get(`/membership/access/profiles/${profileId}`);
@@ -20,10 +10,10 @@ export const getProfileAccess = async (profileId: string) => {
   }
 };
 
-// create the profile-unlock payment order
-export const createProfileUnlockOrder = async (targetProfileId: string) => {
-  const res = await apiClient.post('/membership/orders/profile-unlock', { targetProfileId });
-  return res.data?.data; // { order: { gatewayOrderId, amount, currency }, gateway, keyId }
+// spend one membership credit to unlock this profile's contact details
+export const unlockProfileWithMembership = async (profileId: string) => {
+  const res = await apiClient.post(`/membership/access/profiles/${profileId}/unlock-membership`);
+  return res.data?.data;
 };
 
 // verify payment after Razorpay success

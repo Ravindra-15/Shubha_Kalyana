@@ -27,7 +27,7 @@ import { resolveImageUrl } from '../../utils/imageUrl';
 import { useFocusEffect } from '@react-navigation/native';
 import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
-import { getProfileAccess, getUnlockPrice } from '../../api/membershipPayment';
+import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
 import { getUnreadCount } from '../../api/notification';
 import { sortProfilesByMatchPercent } from '../../utils/matchSorting';
 import { isProfileFullyVerified } from '../../api/profile';
@@ -53,22 +53,10 @@ export default function HomeScreen({ navigation }: any) {
   });
   const [unreadCount, setUnreadCount] = useState(0);
   const [accessPrompt, setAccessPrompt] = useState<{ profileId: string; name?: string; access: any; action: 'send' | 'accept' } | null>(null);
-  const [unlockPrice, setUnlockPrice] = useState(99);
 
   const showAccessRequired = async (profileId: string, name: string | undefined, action: 'send' | 'accept') => {
-    const [accessResult, priceResult] = await Promise.allSettled([
-      getProfileAccess(profileId),
-      getUnlockPrice(),
-    ]);
-    setAccessPrompt({
-      profileId,
-      name,
-      action,
-      access: accessResult.status === 'fulfilled' ? accessResult.value : null,
-    });
-    if (priceResult.status === 'fulfilled') {
-      setUnlockPrice(priceResult.value?.amount || 99);
-    }
+    const access = await getProfileAccess(profileId);
+    setAccessPrompt({ profileId, name, action, access });
   };
 
   useFocusEffect(
@@ -289,6 +277,42 @@ export default function HomeScreen({ navigation }: any) {
   const applyFilters = (filters: Filters | null) => {
     setActiveFilters(filters);
     loadMatches(filters);
+  };
+
+  const viewContact = async (profileId: string) => {
+    try {
+      await unlockProfileWithMembership(profileId);
+      navigation.navigate('ProfileDetail', { profileId });
+    } catch (err: any) {
+      if (err?.response?.status === 402) {
+        const name =
+          matches.find(p => p.profileId === profileId)?.name ||
+          interestedProfiles.find(p => p.profileId === profileId)?.name;
+        await showAccessRequired(profileId, name, 'send');
+        return;
+      }
+      Alert.alert('Error', err?.response?.data?.message || 'Could not view contact');
+    }
+  };
+
+  const getCardActionProps = (p: any, sendFn: (id: string) => void) => {
+    if (p.bothHaveActivePlans && !p._requestSent && !p.requestStatus) {
+      return {
+        actionLabel: 'View Contact',
+        actionDisabled: false,
+        onAction: () => viewContact(p.profileId),
+      };
+    }
+    return {
+      actionLabel:
+        p._requestSent || p.requestStatus === 'PENDING'
+          ? 'Request Sent'
+          : p.requestStatus === 'ACCEPTED'
+          ? 'Connected'
+          : 'Send Request',
+      actionDisabled: p._requestSent || !!p.requestStatus,
+      onAction: () => sendFn(p.profileId),
+    };
   };
 
   const sendRequest = async (profileId: string) => {
@@ -518,15 +542,7 @@ export default function HomeScreen({ navigation }: any) {
             <ProfileCard
               key={p.id}
               profile={p}
-              actionLabel={
-                p._requestSent || p.requestStatus === 'PENDING'
-                  ? 'Request Sent'
-                  : p.requestStatus === 'ACCEPTED'
-                  ? 'Connected'
-                  : 'Send Request'
-              }
-              actionDisabled={p._requestSent || !!p.requestStatus}
-              onAction={() => sendRequest(p.profileId)}
+              {...getCardActionProps(p, sendRequest)}
               onView={() =>
                 navigation.navigate('ProfileDetail', { profileId: p.profileId })
               }
@@ -589,15 +605,7 @@ export default function HomeScreen({ navigation }: any) {
               <ProfileCard
                 key={p.profileId}
                 profile={p}
-                actionLabel={
-                  p._requestSent || p.requestStatus === 'PENDING'
-                    ? 'Request Sent'
-                    : p.requestStatus === 'ACCEPTED'
-                    ? 'Connected'
-                    : 'Send Request'
-                }
-                actionDisabled={p._requestSent || !!p.requestStatus}
-                onAction={() => sendRequestFromInterest(p.profileId)}
+                {...getCardActionProps(p, sendRequestFromInterest)}
                 onView={() =>
                   navigation.navigate('ProfileDetail', {
                     profileId: p.profileId,

@@ -1,6 +1,5 @@
 import RazorpayCheckout from 'react-native-razorpay';
 import {
-  createProfileUnlockOrder,
   recordPaymentFailure,
   verifyPayment,
 } from '../api/membershipPayment';
@@ -106,26 +105,6 @@ export async function openRazorpayOrder(
     );
     await recordCheckoutFailure(order, err);
     return { success: false, message: paymentErrorMessage(err, 'Payment cancelled or failed') };
-  }
-}
-
-export async function payToUnlockProfile(
-  profileId: string,
-  userInfo?: UserInfo,
-): Promise<PaymentResult> {
-  try {
-    const data = await createProfileUnlockOrder(profileId);
-    return openRazorpayOrder(data, 'Unlock Profile Access', userInfo);
-  } catch (err: any) {
-    console.log(
-      'PROFILE UNLOCK ORDER ERR:',
-      JSON.stringify(err),
-      '| STATUS:',
-      err?.response?.status,
-      '| DATA:',
-      JSON.stringify(err?.response?.data),
-    );
-    return { success: false, message: paymentErrorMessage(err, 'Could not create payment order') };
   }
 }
 

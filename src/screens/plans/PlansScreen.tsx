@@ -24,15 +24,6 @@ import VerificationPromptModal from '../../components/VerificationPromptModal';
 import AadhaarVerificationModal from '../../components/AadhaarVerificationModal';
 import { getVerificationPromptStatus } from '../../utils/verificationPrompt';
 import type { VerificationPromptStatus } from '../../utils/verificationPrompt';
-import {
-  createProfileUnlockOrder,
-  getProfileAccess,
-  getUnlockPrice,
-} from '../../api/membershipPayment';
-import {
-  getSingleProfileUnlockLimitMessage,
-  isFreePlanSingleUnlockLimitReached,
-} from '../../utils/singleProfileUnlockAccess';
 
 // human-readable benefit lines from the toggles
 const benefitLines = (plan: Plan): string[] => {
@@ -75,16 +66,7 @@ type PendingPayment = {
   itemLabel: string;
 };
 
-type PendingProfileUnlockPayment = {
-  orderResult: PaymentOrderResult;
-  title: string;
-  description: string;
-  itemLabel: string;
-};
-
-export default function PlansScreen({ navigation, route }: any) {
-  const targetProfileId = route?.params?.profileId ? String(route.params.profileId) : ''; // optional (opened from a profile)
-  const targetProfileName = route?.params?.profileName || route?.params?.name || '';
+export default function PlansScreen({ navigation }: any) {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
@@ -92,13 +74,6 @@ export default function PlansScreen({ navigation, route }: any) {
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
-  const [profileUnlockPrice, setProfileUnlockPrice] = useState(99);
-  const [profileUnlockAccess, setProfileUnlockAccess] = useState<any>(null);
-  const [unlockingProfile, setUnlockingProfile] = useState(false);
-  const [pendingProfileUnlockPayment, setPendingProfileUnlockPayment] =
-    useState<PendingProfileUnlockPayment | null>(null);
-  const [confirmingProfileUnlockPayment, setConfirmingProfileUnlockPayment] =
-    useState(false);
   const [verificationPrompt, setVerificationPrompt] =
     useState<VerificationPromptStatus | null>(null);
   const [aadhaarPromptVisible, setAadhaarPromptVisible] = useState(false);
@@ -120,40 +95,13 @@ export default function PlansScreen({ navigation, route }: any) {
     }
   }, []);
 
-  const loadProfileUnlockOffer = useCallback(async () => {
-    if (!targetProfileId) {
-      setProfileUnlockAccess(null);
-      return;
-    }
-
-    const [priceResult, accessResult] = await Promise.allSettled([
-      getUnlockPrice(),
-      getProfileAccess(targetProfileId),
-    ]);
-
-    if (priceResult.status === 'fulfilled') {
-      setProfileUnlockPrice(priceResult.value?.amount || 99);
-    }
-    if (accessResult.status === 'fulfilled') {
-      setProfileUnlockAccess(accessResult.value);
-    }
-  }, [targetProfileId]);
-
   useFocusEffect(
     useCallback(() => {
       load();
     }, [load])
   );
 
-  const { refreshing, onRefresh } = usePullToRefresh(() =>
-    Promise.all([load(true), loadProfileUnlockOffer()])
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      loadProfileUnlockOffer();
-    }, [loadProfileUnlockOffer])
-  );
+  const { refreshing, onRefresh } = usePullToRefresh(() => load(true));
 
   const showVerificationPrompt = useCallback(async () => {
     try {
@@ -228,74 +176,6 @@ export default function PlansScreen({ navigation, route }: any) {
     }
   };
 
-  const unlockProfileIndividually = async () => {
-    if (!targetProfileId) return;
-
-    if (isFreePlanSingleUnlockLimitReached(profileUnlockAccess)) {
-      Alert.alert('Payment', getSingleProfileUnlockLimitMessage(profileUnlockAccess));
-      return;
-    }
-
-    setUnlockingProfile(true);
-    try {
-      const orderResult = await createProfileUnlockOrder(targetProfileId);
-      if (!orderResult?.order?.gatewayOrderId || !orderResult?.keyId) {
-        Alert.alert('Payment', 'Could not create payment order');
-        return;
-      }
-
-      setPendingProfileUnlockPayment({
-        orderResult,
-        title: 'Profile Unlock',
-        description: `Review the GST breakup before unlocking ${targetProfileName || 'this profile'}.`,
-        itemLabel: 'Profile unlock fee',
-      });
-    } catch (err: any) {
-      const payload = err?.response?.data;
-      Alert.alert(
-        'Payment',
-        payload?.code === 'SINGLE_PROFILE_UNLOCK_LIMIT_REACHED'
-          ? getSingleProfileUnlockLimitMessage(payload)
-          : payload?.message || 'Could not create payment order',
-      );
-    } finally {
-      setUnlockingProfile(false);
-    }
-  };
-
-  const closeProfileUnlockPaymentBreakup = () => {
-    if (confirmingProfileUnlockPayment) return;
-    setPendingProfileUnlockPayment(null);
-  };
-
-  const confirmProfileUnlockPayment = async () => {
-    const payment = pendingProfileUnlockPayment;
-    if (!payment) return;
-
-    setConfirmingProfileUnlockPayment(true);
-    const result = await openRazorpayOrder(payment.orderResult, 'Unlock Profile Access', {
-      name: targetProfileName,
-    });
-    setConfirmingProfileUnlockPayment(false);
-    setPendingProfileUnlockPayment(null);
-
-    if (result.success) {
-      await loadProfileUnlockOffer();
-      Alert.alert('Unlocked', 'Profile access unlocked successfully', [
-        {
-          text: 'OK',
-          onPress: () => {
-            if (targetProfileId) {
-              navigation.navigate('ProfileDetail', { profileId: targetProfileId });
-            }
-          },
-        },
-      ]);
-    } else {
-      Alert.alert('Payment', result.message || 'Payment failed');
-    }
-  };
-
   const verifyPhoto = () => {
     setVerificationPrompt(null);
     setAadhaarPromptVisible(false);
@@ -331,23 +211,6 @@ export default function PlansScreen({ navigation, route }: any) {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#D20236']} tintColor="#D20236" />
             }
           >
-            {/* Optional per-profile unlock banner */}
-            {targetProfileId && (
-              <>
-                <TouchableOpacity
-                  style={styles.unlockBanner}
-                  onPress={unlockProfileIndividually}
-                >
-                  <Text style={styles.unlockBannerText}>Unlock This profile for ₹{profileUnlockPrice}</Text>
-                </TouchableOpacity>
-                <View style={styles.orRow}>
-                  <View style={styles.orLine} />
-                  <Text style={styles.orText}>or choose a plan</Text>
-                  <View style={styles.orLine} />
-                </View>
-              </>
-            )}
-
             {plans.length === 0 ? (
               <Text style={styles.empty}>No plans available right now</Text>
             ) : (
@@ -417,13 +280,6 @@ export default function PlansScreen({ navigation, route }: any) {
         onClose={closePaymentBreakup}
         onPurchase={confirmPayment}
       />
-      <PaymentBreakupModal
-        visible={Boolean(pendingProfileUnlockPayment)}
-        payment={pendingProfileUnlockPayment}
-        loading={confirmingProfileUnlockPayment}
-        onClose={closeProfileUnlockPaymentBreakup}
-        onPurchase={confirmProfileUnlockPayment}
-      />
       <VerificationPromptModal
         visible={Boolean(verificationPrompt)}
         status={verificationPrompt}
@@ -454,13 +310,6 @@ const styles = StyleSheet.create({
   billingLink: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#D20236' },
   content: { flex: 1 },
   scroll: { padding: 16, paddingBottom: 20 },
-  unlockBanner: {
-    backgroundColor: '#D20236', borderRadius: 10, paddingVertical: 15, alignItems: 'center', marginBottom: 16,
-  },
-  unlockBannerText: { color: '#fff', fontSize: 15, fontFamily: 'Outfit-Bold' },
-  orRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10 },
-  orLine: { flex: 1, height: 1, backgroundColor: '#eee' },
-  orText: { fontSize: 12, color: '#D20236', fontFamily: 'Outfit-SemiBold' },
   planCard: { borderRadius: 16, padding: 18, marginBottom: 16 },
   planHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
   planName: { fontSize: 18, fontFamily: 'Outfit-Bold' },
