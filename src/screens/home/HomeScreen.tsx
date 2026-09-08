@@ -89,7 +89,7 @@ export default function HomeScreen({ navigation }: any) {
         if (filters.education?.length) params.education = filters.education;
         if (filters.profession?.length) params.profession = filters.profession;
         if (filters.preferredLocation?.length) params.preferredLocation = filters.preferredLocation;
-        if (filters.workingLocation?.length) params.workingLocation = filters.workingLocation;
+        if (filters.district?.length) params.district = filters.district;
       }
       console.log('Search Params:', params);
 

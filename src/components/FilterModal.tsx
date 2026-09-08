@@ -12,6 +12,7 @@ import SearchableDropdown from './SearchableDropdown';
 import MultiSelectDropdown from './MultiSelectDropdown';
 import { getCastes, Caste } from '../api/caste';
 import { INDIAN_STATE_OPTIONS } from '../constants/indianStates';
+import { getDistrictOptionsForStates } from '../constants/districtsByState';
 
 export type Filters = {
   minAge: number;
@@ -23,7 +24,7 @@ export type Filters = {
   education: string[];
   profession: string[];
   preferredLocation: string[];
-  workingLocation: string[];
+  district: string[];
 };
 
 const RELIGIONS = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jain', 'Buddhist', 'Parsi', 'Other'];
@@ -50,7 +51,7 @@ const PROFESSION = [
 ];
 
 const DEFAULT: Filters = {
-  minAge: 24, maxAge: 30, religion: '', caste: [], subCaste: [], maritalStatus: '', education: [], profession: [], preferredLocation: [], workingLocation: [],
+  minAge: 24, maxAge: 30, religion: '', caste: [], subCaste: [], maritalStatus: '', education: [], profession: [], preferredLocation: [], district: [],
 };
 
 type Props = {
@@ -70,7 +71,7 @@ export default function FilterModal({ visible, onClose, onApply, initial }: Prop
   const [education, setEducation] = useState<string[]>(initial?.education || []);
   const [profession, setProfession] = useState<string[]>(initial?.profession || []);
   const [preferredLocation, setPreferredLocation] = useState<string[]>(initial?.preferredLocation || []);
-  const [workingLocation, setWorkingLocation] = useState<string[]>(initial?.workingLocation || []);
+  const [district, setDistrict] = useState<string[]>(initial?.district || []);
   const [castes, setCastes] = useState<Caste[]>([]);
 
   useEffect(() => {
@@ -91,7 +92,7 @@ export default function FilterModal({ visible, onClose, onApply, initial }: Prop
       setEducation(initial?.education || []);
       setProfession(initial?.profession || []);
       setPreferredLocation(initial?.preferredLocation || []);
-      setWorkingLocation(initial?.workingLocation || []);
+      setDistrict(initial?.district || []);
     }
   }, [visible, initial]);
 
@@ -101,15 +102,18 @@ export default function FilterModal({ visible, onClose, onApply, initial }: Prop
     .flatMap((c) => c.subCastes || []);
   const uniqueSubCasteOptions = Array.from(new Set(subCasteOptions));
 
+  // union of districts across all currently-selected states
+  const districtOptions = getDistrictOptionsForStates(preferredLocation);
+
   const reset = () => {
     setMinAge(DEFAULT.minAge); setMaxAge(DEFAULT.maxAge);
-    setReligion(''); setCaste([]); setSubCaste([]); setMaritalStatus(''); setEducation([]); setProfession([]); setPreferredLocation([]); setWorkingLocation([]);
+    setReligion(''); setCaste([]); setSubCaste([]); setMaritalStatus(''); setEducation([]); setProfession([]); setPreferredLocation([]); setDistrict([]);
     onApply(null); // clear all filters → reload full list
     onClose();
   };
 
   const apply = () => {
-    onApply({ minAge, maxAge, religion, caste, subCaste, maritalStatus, education, profession, preferredLocation, workingLocation });
+    onApply({ minAge, maxAge, religion, caste, subCaste, maritalStatus, education, profession, preferredLocation, district });
     onClose();
   };
 
@@ -202,20 +206,25 @@ export default function FilterModal({ visible, onClose, onApply, initial }: Prop
               allowCustom
             />
 
-            <Text style={styles.label}>Preferred Location</Text>
+            <Text style={styles.label}>Preferred Location (State)</Text>
             <MultiSelectDropdown
-              placeholder="Select permanent state"
+              placeholder="Search and select state"
               value={preferredLocation}
               options={INDIAN_STATE_OPTIONS}
-              onChange={setPreferredLocation}
+              onChange={(vals) => { setPreferredLocation(vals); setDistrict([]); }}
             />
 
-            <Text style={styles.label}>Working Location</Text>
+            <Text style={styles.label}>District / City</Text>
             <MultiSelectDropdown
-              placeholder="Select current state"
-              value={workingLocation}
-              options={INDIAN_STATE_OPTIONS}
-              onChange={setWorkingLocation}
+              placeholder={
+                districtOptions.length
+                  ? 'Search and select district / city'
+                  : 'Select a state first'
+              }
+              value={district}
+              options={districtOptions}
+              onChange={setDistrict}
+              disabled={districtOptions.length === 0}
             />
           </ScrollView>
 
