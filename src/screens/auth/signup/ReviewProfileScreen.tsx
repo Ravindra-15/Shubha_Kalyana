@@ -44,6 +44,10 @@ export default function ReviewProfileScreen({ navigation }: any) {
             Your profile has been submitted for verification. Our team will
             review it shortly. You'll be able to log in once it's approved.
           </Text>
+
+          <Text style={[styles.note, styles.noteNotification]}>
+            You will receive a notification on your contact number and email address.
+          </Text>
         </View>
 
         <TouchableOpacity style={styles.btn} onPress={goToLogin}>
@@ -81,6 +85,7 @@ const styles = StyleSheet.create({
   },
   icon: { fontSize: 60 },
   note: { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 22 },
+  noteNotification: { marginTop: 12 },
   btn: {
     backgroundColor: '#D20236',
     borderRadius: 8,
