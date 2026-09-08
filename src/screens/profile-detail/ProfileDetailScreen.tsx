@@ -626,6 +626,9 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               {name}
               {age ? `, ${age}` : ''}
             </Text>
+            {!!user.profileCode && (
+              <Text style={styles.coverProfileCode}>Profile ID: {user.profileCode}</Text>
+            )}
             <Text style={styles.coverMeta}>
               {[basic.religion, caste, basic.maritalStatus?.replace(/_/g, ' ')]
                 .filter(Boolean)
@@ -946,6 +949,7 @@ const styles = StyleSheet.create({
   },
   coverName: { color: '#fff', fontSize: 24, fontFamily: 'Outfit-Bold' },
   coverMeta: { color: '#fff', fontSize: 13, marginTop: 4 },
+  coverProfileCode: { color: '#fff', fontSize: 13, fontFamily: 'Outfit-SemiBold', marginTop: 2 },
   coverIconRow: {
     flexDirection: 'row',
     alignItems: 'center',
