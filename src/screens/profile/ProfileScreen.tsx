@@ -5,7 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  ArrowLeft, Settings, BadgeCheck, Edit3, Bookmark, CreditCard, Download, Heart, ChevronRight, Crown, Eye, Users,
+  ArrowLeft, Settings, BadgeCheck, Edit3, CreditCard, Download, Heart, ChevronRight, Crown, Eye, Users,
 } from 'lucide-react-native';
 import apiClient from '../../api/client';
 import { getActiveMembership } from '../../api/membership';
@@ -125,7 +125,6 @@ export default function ProfileScreen({ navigation }: any) {
 
   const quickActions = [
     { label: 'Edit Profile', Icon: Edit3, onPress: () => navigation.navigate('EditProfile') },
-    { label: 'Saved Profiles', Icon: Bookmark, onPress: () => navigation.navigate('SavedProfiles') },
     { label: `Profile Viewers (${viewerSummary.profileViewersCount})`, Icon: Eye, onPress: () => navigation.navigate('ProfileViewers') },
     { label: `Connections (${connectionCount})`, Icon: Users, onPress: () => navigation.navigate('Requests', { initialTab: 'Accepted' }) },
     { label: 'Payment History', Icon: CreditCard, onPress: () => navigation.navigate('PaymentHistory') },

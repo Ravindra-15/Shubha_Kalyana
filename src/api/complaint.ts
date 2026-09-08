@@ -25,6 +25,17 @@ export const reportChatUser = async (
   return res.data?.data;
 };
 
+export const reportProfileUser = async (
+  userId: string,
+  payload: { reason: ChatReportReason; description?: string; blockUser?: boolean }
+) => {
+  const res = await apiClient.post(`/complaints/user/${userId}/report`, {
+    ...payload,
+    idempotencyKey: genIdempotencyKey(),
+  });
+  return res.data?.data;
+};
+
 export const raiseComplaint = async (payload: { type: string; description?: string }) => {
   const res = await apiClient.post('/complaints', payload);
   return res.data?.data;

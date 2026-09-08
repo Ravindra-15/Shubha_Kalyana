@@ -23,7 +23,6 @@ import {
   Phone,
   Mail,
   MessageCircle,
-  Bookmark,
   MoreVertical,
   Heart,
 } from 'lucide-react-native';
@@ -382,8 +381,10 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         setReportChatId(chatId);
       }
       setShowBlockConfirm(true);
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not start this action');
+    } catch {
+      // Not connected / no chat-enabled membership -- still allow reporting
+      // this user directly, without the chat-block step.
+      setShowReportModal(true);
     }
   };
 
@@ -524,6 +525,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       <ReportUserModal
         visible={showReportModal}
         chatId={reportChatId}
+        targetUserId={data?.user?._id}
         onClose={() => setShowReportModal(false)}
         onSubmitted={handleReportSubmitted}
       />
@@ -539,35 +541,26 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile Details</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('SavedProfiles')}
-            accessibilityLabel="Saved Profiles"
-          >
-            <Bookmark color="#D20236" size={24} fill="transparent" />
-          </TouchableOpacity>
+          <View>
+            <TouchableOpacity onPress={openOptionsMenu} accessibilityLabel="Profile options">
+              <MoreVertical color="#000" size={22} />
+            </TouchableOpacity>
 
-          {matchStatus === 'connected' ? (
-            <View>
-              <TouchableOpacity onPress={openOptionsMenu} accessibilityLabel="Profile options">
-                <MoreVertical color="#000" size={22} />
-              </TouchableOpacity>
-
-              {optionsMenuOpen ? (
-                <>
-                  <TouchableOpacity
-                    style={styles.menuBackdrop}
-                    activeOpacity={1}
-                    onPress={() => setOptionsMenuOpen(false)}
-                  />
-                  <View style={styles.optionsMenu}>
-                    <TouchableOpacity style={styles.optionsMenuItem} onPress={handleBlockAndReport}>
-                      <Text style={styles.optionsMenuText}>Block & Report User</Text>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              ) : null}
-            </View>
-          ) : null}
+            {optionsMenuOpen ? (
+              <>
+                <TouchableOpacity
+                  style={styles.menuBackdrop}
+                  activeOpacity={1}
+                  onPress={() => setOptionsMenuOpen(false)}
+                />
+                <View style={styles.optionsMenu}>
+                  <TouchableOpacity style={styles.optionsMenuItem} onPress={handleBlockAndReport}>
+                    <Text style={styles.optionsMenuText}>Block & Report User</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : null}
+          </View>
         </View>
       </View>
 

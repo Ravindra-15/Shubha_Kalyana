@@ -147,7 +147,7 @@ export default function DeleteAccountScreen({ navigation }: any) {
           ) : (
             <Square color={attemptedSubmit ? '#D20236' : '#ccc'} size={20} />
           )}
-          <Text style={styles.confirmText}>I understand this action is permanent.</Text>
+          <Text style={styles.confirmText}>I understand that this action is permanent and no refund will be initiated.</Text>
         </TouchableOpacity>
 
         {!!errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}

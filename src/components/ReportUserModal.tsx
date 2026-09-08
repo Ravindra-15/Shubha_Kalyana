@@ -4,16 +4,17 @@ import {
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { X } from 'lucide-react-native';
-import { reportChatUser, CHAT_REPORT_REASONS, ChatReportReason } from '../api/complaint';
+import { reportChatUser, reportProfileUser, CHAT_REPORT_REASONS, ChatReportReason } from '../api/complaint';
 
 type Props = {
   visible: boolean;
   chatId: string;
+  targetUserId?: string;
   onClose: () => void;
   onSubmitted: () => void;
 };
 
-export default function ReportUserModal({ visible, chatId, onClose, onSubmitted }: Props) {
+export default function ReportUserModal({ visible, chatId, targetUserId, onClose, onSubmitted }: Props) {
   const [reason, setReason] = useState<ChatReportReason | null>(null);
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,7 +33,11 @@ export default function ReportUserModal({ visible, chatId, onClose, onSubmitted 
     if (!reason) return;
     try {
       setLoading(true);
-      await reportChatUser(chatId, { reason, description: description.trim() || undefined });
+      if (chatId) {
+        await reportChatUser(chatId, { reason, description: description.trim() || undefined });
+      } else if (targetUserId) {
+        await reportProfileUser(targetUserId, { reason, description: description.trim() || undefined });
+      }
       reset();
       onSubmitted();
     } catch (err: any) {
