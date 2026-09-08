@@ -30,6 +30,7 @@ const RESIDENT = [
   { label: 'Indian', value: 'Indian' },
   { label: 'NRI', value: 'NRI' },
 ];
+const ANY_CASTE_VALUE = 'ANY_CASTE';
 
 // helper: multi-select toggle chips
 function Chips({
@@ -90,6 +91,17 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
     setArr(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
   };
 
+  const toggleCaste = (val: string) => {
+    if (val === ANY_CASTE_VALUE) {
+      setCasteIds(casteIds.includes(ANY_CASTE_VALUE) ? [] : [ANY_CASTE_VALUE]);
+      return;
+    }
+    const withoutAny = casteIds.filter((x) => x !== ANY_CASTE_VALUE);
+    setCasteIds(
+      withoutAny.includes(val) ? withoutAny.filter((x) => x !== val) : [...withoutAny, val],
+    );
+  };
+
   const goToNextStep = async () => {
     const resumeScreen = await getResumeScreen();
     navigation.navigate((resumeScreen as never) || 'ProfilePhoto');
@@ -115,7 +127,8 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
     if (ageMin.trim() && ageMax.trim()) payload.ageRange = { min: Number(ageMin), max: Number(ageMax) };
     if (maritalStatus.length) payload.maritalStatus = maritalStatus;
     if (religion.length) payload.religion = religion;
-    if (casteIds.length) payload.caste = casteIds;
+    const realCasteIds = casteIds.filter((id) => id !== ANY_CASTE_VALUE);
+    if (realCasteIds.length) payload.caste = realCasteIds;
     if (education.length) payload.education = education;
     if (profession.length) payload.profession = profession;
     if (resident.length) payload.ressident = resident;
@@ -179,16 +192,19 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
 
           <Text style={styles.label}>Preferred Religion</Text>
           <Chips
-            options={religions.map((r) => ({ label: r, value: r }))}
+            options={religions.map((r) => ({ label: r === 'Other' ? 'Any Religion' : r, value: r }))}
             selected={religion}
             onToggle={(v) => toggle(religion, setReligion, v)}
           />
 
           <Text style={styles.label}>Preferred Caste</Text>
           <Chips
-            options={castes.map((c) => ({ label: c.casteName, value: c._id }))}
+            options={[
+              { label: 'Any Caste', value: ANY_CASTE_VALUE },
+              ...castes.map((c) => ({ label: c.casteName, value: c._id })),
+            ]}
             selected={casteIds}
-            onToggle={(v) => toggle(casteIds, setCasteIds, v)}
+            onToggle={toggleCaste}
           />
 
           <Text style={styles.label}>Preferred Education</Text>

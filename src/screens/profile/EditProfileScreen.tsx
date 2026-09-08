@@ -202,6 +202,7 @@ const EDUCATION_OPTIONS: Option[] = [
   'PhD',
   'CA',
   'CS',
+  'Others',
 ].map((item) => ({ label: item, value: item }));
 
 const PROFESSION_OPTIONS: Option[] = [
@@ -215,22 +216,33 @@ const PROFESSION_OPTIONS: Option[] = [
   'Lawyer',
   'Business Owner',
   'Government Officer',
+  'Associate',
+  'Manager',
+  'Mid-Senior',
+  'Senior',
+  'Director',
+  'VP',
+  'Executive',
+  'Senior Executive',
+  'Others',
 ].map((item) => ({ label: item, value: item }));
 
 const HOBBY_GROUPS = [
   {
     title: 'Entertainment',
-    options: ['Music', 'Movies', 'Web Series', 'Reading'],
+    options: ['Music', 'Movies', 'Web Series', 'Reading', 'Others'],
   },
   {
     title: 'Lifestyle & Activities',
-    options: ['Traveling', 'Cooking', 'Gardening', 'Shopping', 'Drinking', 'Driving', 'Smoking', 'Podcasts'],
+    options: ['Traveling', 'Cooking', 'Gardening', 'Shopping', 'Drinking', 'Driving', 'Smoking', 'Podcasts', 'Others'],
   },
   {
     title: 'Fitness & Health',
-    options: ['Gym', 'Yoga', 'Running', 'Meditation', 'Sports', 'Cycling', 'Cricket'],
+    options: ['Gym', 'Yoga', 'Running', 'Meditation', 'Sports', 'Cycling', 'Cricket', 'Others'],
   },
 ];
+
+const ANY_CASTE_VALUE = 'ANY_CASTE';
 
 const emptyAddress = (): AddressFields => ({
   residenceType: 'INDIA',
@@ -438,12 +450,14 @@ export default function EditProfileScreen({ navigation }: any) {
   const showLinkedIn = !isAgriculture;
 
   const preferredCasteOptions = useMemo(() => {
-    return castes
+    const anyReligionSelected = prefReligionValues.includes('Other');
+    const options = castes
       .filter((caste) => {
-        if (!prefReligionValues.length) return true;
+        if (!prefReligionValues.length || anyReligionSelected) return true;
         return prefReligionValues.includes(caste.religion || '');
       })
       .map((caste) => ({ label: caste.casteName, value: caste._id }));
+    return [{ label: 'Any Caste', value: ANY_CASTE_VALUE }, ...options];
   }, [castes, prefReligionValues]);
 
   const preferredSubCasteOptions = useMemo(() => {
@@ -641,9 +655,14 @@ export default function EditProfileScreen({ navigation }: any) {
   };
 
   const setPreferredReligions = (values: string[]) => {
-    const allowedCastes = castes.filter((caste) => !values.length || values.includes(caste.religion || ''));
+    const anyReligionSelected = values.includes('Other');
+    const allowedCastes = anyReligionSelected
+      ? castes
+      : castes.filter((caste) => !values.length || values.includes(caste.religion || ''));
     const allowedIds = new Set(allowedCastes.map((caste) => caste._id));
-    const casteIds = prefCasteIds.filter((id) => allowedIds.has(id));
+    const casteIds = prefCasteIds.includes(ANY_CASTE_VALUE)
+      ? [ANY_CASTE_VALUE]
+      : prefCasteIds.filter((id) => allowedIds.has(id));
     const allowedSubs = new Set(
       castes
         .filter((caste) => casteIds.includes(caste._id))
@@ -657,12 +676,21 @@ export default function EditProfileScreen({ navigation }: any) {
   };
 
   const setPreferredCastes = (values: string[]) => {
+    if (values.includes(ANY_CASTE_VALUE)) {
+      setPrefCasteIds([ANY_CASTE_VALUE]);
+      setPrefSubCasteValues([]);
+      markChanged();
+      return;
+    }
+
     const selected = castes.filter((caste) => values.includes(caste._id));
     const casteReligions = selected.map((caste) => caste.religion).filter(Boolean) as string[];
     const allowedSubs = new Set(selected.flatMap((caste) => caste.subCastes || []));
 
     setPrefCasteIds(values);
-    setPrefReligionValues((prev) => [...new Set([...prev, ...casteReligions])]);
+    setPrefReligionValues((prev) =>
+      prev.includes('Other') ? prev : [...new Set([...prev, ...casteReligions])],
+    );
     setPrefSubCasteValues((prev) => prev.filter((item) => allowedSubs.has(item)));
     markChanged();
   };
@@ -1013,7 +1041,7 @@ export default function EditProfileScreen({ navigation }: any) {
             }
           : undefined,
       religion: prefReligionValues || undefined,
-      caste: prefCasteIds || undefined,
+      caste: prefCasteIds.filter((id) => id !== ANY_CASTE_VALUE) || undefined,
       subCaste: prefSubCasteValues || undefined,
       education: prefEducationValues || undefined,
       profession: prefProfessionValues || undefined,
@@ -1064,6 +1092,10 @@ export default function EditProfileScreen({ navigation }: any) {
         { label: 'Sikh', value: 'Sikh' },
         { label: 'Buddhist', value: 'Buddhist' },
       ];
+  // "Any Religion" is only meaningful as a partner preference, not the user's own religion.
+  const preferredReligionOptions = religionOptions.map((option) =>
+    option.value === 'Other' ? { ...option, label: 'Any Religion' } : option,
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -2047,7 +2079,7 @@ export default function EditProfileScreen({ navigation }: any) {
           <MultiSelectField
             label="Preferred Religion"
             placeholder="Select preferred religion"
-            options={religionOptions}
+            options={preferredReligionOptions}
             selected={prefReligionValues}
             onChange={setPreferredReligions}
           />

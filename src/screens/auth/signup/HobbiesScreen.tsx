@@ -16,15 +16,15 @@ import { useSignup } from '../../../context/SignupContext';
 const GROUPS = [
   {
     title: 'Entertainment',
-    items: ['Music', 'Movies', 'Web Series', 'Reading', 'Podcasts'],
+    items: ['Music', 'Movies', 'Web Series', 'Reading', 'Podcasts', 'Others'],
   },
   {
     title: 'Lifestyle & Activities',
-    items: ['Traveling', 'Cooking', 'Gardening', 'Shopping', 'Drinking', 'Driving', 'Smoking'],
+    items: ['Traveling', 'Cooking', 'Gardening', 'Shopping', 'Drinking', 'Driving', 'Smoking', 'Others'],
   },
   {
     title: 'Fitness & Health',
-    items: ['Gym', 'Yoga', 'Running', 'Meditation', 'Sports', 'Cycling', 'Cricket'],
+    items: ['Gym', 'Yoga', 'Running', 'Meditation', 'Sports', 'Cycling', 'Cricket', 'Others'],
   },
 ];
 
