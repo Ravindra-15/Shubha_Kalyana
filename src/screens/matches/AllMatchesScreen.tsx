@@ -19,7 +19,6 @@ import FilterModal, { Filters } from '../../components/FilterModal';
 import BottomNav from '../../components/BottomNav';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
-import { sortProfilesByMatchPercent } from '../../utils/matchSorting';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 export default function AllMatchesScreen({ navigation, route }: any) {
@@ -66,10 +65,11 @@ export default function AllMatchesScreen({ navigation, route }: any) {
         const params = buildParams(pageNum);
         const res = await apiClient.get('/user/search', { params });
         const data = res.data?.data;
-        const newProfiles = sortProfilesByMatchPercent(data?.profiles || []);
-        setProfiles((prev) =>
-          replace ? newProfiles : sortProfilesByMatchPercent([...prev, ...newProfiles])
-        );
+        // Server already orders these by the viewer's partner preferences
+        // (age, profession, caste, education) then match percentage -- trust
+        // that order instead of re-sorting by match percentage alone here.
+        const newProfiles = data?.profiles || [];
+        setProfiles((prev) => (replace ? newProfiles : [...prev, ...newProfiles]));
         setTotal(data?.pagination?.total || 0);
         setHasNext(data?.pagination?.hasNextPage || false);
         setPage(pageNum);

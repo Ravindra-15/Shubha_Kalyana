@@ -29,7 +29,6 @@ import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
 import { getUnreadCount } from '../../api/notification';
-import { sortProfilesByMatchPercent } from '../../utils/matchSorting';
 import { isProfileFullyVerified } from '../../api/profile';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
@@ -98,7 +97,10 @@ export default function HomeScreen({ navigation }: any) {
 
       console.log('Search Response:', res.data);
 
-      setMatches(sortProfilesByMatchPercent(res.data?.data?.profiles || []));
+      // Server already orders these by the viewer's partner preferences
+      // (age, profession, caste, education) then match percentage -- trust
+      // that order instead of re-sorting by match percentage alone here.
+      setMatches(res.data?.data?.profiles || []);
     } catch {
       setMatches([]);
     } finally {
