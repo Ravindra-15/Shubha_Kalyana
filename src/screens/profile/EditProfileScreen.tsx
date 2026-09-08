@@ -71,6 +71,19 @@ const MARITAL_STATUS: Option[] = [
   { label: 'Awaiting Divorce', value: 'AWAITING_DIVORCE' },
 ];
 
+// The partner being searched for is (usually) the opposite gender of the
+// logged-in user, so "Widowed" is shown as it would describe them.
+const getPreferredMaritalStatusOptions = (gender?: string): Option[] =>
+  MARITAL_STATUS.map((option) =>
+    option.value === 'WIDOWED'
+      ? {
+          ...option,
+          label:
+            gender === 'MALE' ? 'Widow (Girl)' : gender === 'FEMALE' ? 'Widower (Boy)' : 'Widowed',
+        }
+      : option,
+  );
+
 const RASHIS: Option[] = [
   { label: 'Mesha (Aries)', value: 'MESHA' },
   { label: 'Vrishabha (Taurus)', value: 'VRISHABHA' },
@@ -2124,7 +2137,7 @@ export default function EditProfileScreen({ navigation }: any) {
           <MultiSelectField
             label="Preferred Marital Status"
             placeholder="Select preferred marital status"
-            options={MARITAL_STATUS}
+            options={getPreferredMaritalStatusOptions(gender)}
             selected={prefMaritalStatusValues}
             onChange={(values) => {
               setPrefMaritalStatusValues(values);

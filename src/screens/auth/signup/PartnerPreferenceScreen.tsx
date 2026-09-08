@@ -17,10 +17,16 @@ import { getCastes, getReligionOptions, Caste } from '../../../api/caste';
 import { useSignup } from '../../../context/SignupContext';
 import { getResumeScreen } from '../../../utils/resumeOnboarding';
 
-const MARITAL = [
+// The partner being searched for is (usually) the opposite gender of the
+// logged-in user, so the "Widowed" label is shown as it would describe them.
+const getMaritalOptions = (gender?: string) => [
   { label: 'Never Married', value: 'NEVER_MARRIED' },
   { label: 'Divorced', value: 'DIVORCED' },
-  { label: 'Widowed', value: 'WIDOWED' },
+  {
+    label:
+      gender === 'MALE' ? 'Widow (Girl)' : gender === 'FEMALE' ? 'Widower (Boy)' : 'Widowed',
+    value: 'WIDOWED',
+  },
   { label: 'Awaiting Divorce', value: 'AWAITING_DIVORCE' },
 ];
 // const RELIGIONS = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jain', 'Buddhist', 'Parsi', 'Other'];
@@ -188,7 +194,7 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
           </View>
 
           <Text style={styles.label}>Preferred Marital Status</Text>
-          <Chips options={MARITAL} selected={maritalStatus} onToggle={(v) => toggle(maritalStatus, setMaritalStatus, v)} />
+          <Chips options={getMaritalOptions(data.gender)} selected={maritalStatus} onToggle={(v) => toggle(maritalStatus, setMaritalStatus, v)} />
 
           <Text style={styles.label}>Preferred Religion</Text>
           <Chips
