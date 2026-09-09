@@ -140,7 +140,7 @@ export default function UploadAadhaarScreen({ navigation }: any) {
     }
     if (availability === 'duplicate') {
       setErrNum(true);
-      return Alert.alert('Duplicate', 'This Aadhaar number is already registered');
+      return Alert.alert('Invalid Aadhaar', 'Please enter a correct Aadhaar number');
     }
     if (!file) {
       return Alert.alert('Required', 'Please upload your Aadhaar document');
@@ -163,7 +163,7 @@ export default function UploadAadhaarScreen({ navigation }: any) {
       if (!availabilityResult?.available) {
         setErrNum(true);
         setAvailability('duplicate');
-        return Alert.alert('Duplicate', 'This Aadhaar number is already registered');
+        return Alert.alert('Invalid Aadhaar', 'Please enter a correct Aadhaar number');
       }
       await apiClient.post('/onboarding/aadhaar', formData);
       navigation.navigate('ReviewProfile');
@@ -210,14 +210,8 @@ export default function UploadAadhaarScreen({ navigation }: any) {
             maxLength={14}
           />
           <View style={styles.aadhaarStatusSlot}>
-            {availability === 'checking' ? (
-              <Text style={styles.availabilityMuted}>Checking Aadhaar uniqueness...</Text>
-            ) : null}
-            {availability === 'available' ? (
-              <Text style={styles.availabilitySuccess}>Aadhaar number is available</Text>
-            ) : null}
             {availability === 'duplicate' ? (
-              <Text style={styles.availabilityError}>This Aadhaar number is already registered</Text>
+              <Text style={styles.availabilityError}>Please enter a correct Aadhaar number</Text>
             ) : null}
             {availability === 'error' ? (
               <Text style={styles.availabilityError}>{availabilityError}</Text>
