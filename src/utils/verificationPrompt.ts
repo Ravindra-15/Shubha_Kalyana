@@ -107,8 +107,11 @@ export const isAadhaarNumberVerifiedForPrompt = (value: any) => {
 
   const profile = getProfile(value);
   const aadhaarStatus = String(profile?.aadhaarVerification?.status || '').toUpperCase();
+  const hypersignStatus = String(
+    profile?.hypersignAadhaarVerification?.status || '',
+  ).toUpperCase();
 
-  return aadhaarStatus === 'VERIFIED';
+  return aadhaarStatus === 'VERIFIED' || hypersignStatus === 'VERIFIED';
 };
 
 export const isProfileFullyVerifiedForPrompt = (value: any) =>

@@ -78,7 +78,10 @@ export const isProfilePictureVerified = (profile: any) => {
 
 export const isAadhaarNumberVerified = (profile: any) => {
   const aadhaarStatus = String(profile?.aadhaarVerification?.status || '').toUpperCase();
-  return aadhaarStatus === 'VERIFIED';
+  const hypersignStatus = String(
+    profile?.hypersignAadhaarVerification?.status || '',
+  ).toUpperCase();
+  return aadhaarStatus === 'VERIFIED' || hypersignStatus === 'VERIFIED';
 };
 
 export const isProfileFullyVerified = (profile: any) =>

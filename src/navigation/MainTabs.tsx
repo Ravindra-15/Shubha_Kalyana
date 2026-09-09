@@ -39,6 +39,7 @@ export default function MainTabs({ navigation }: any) {
     useState<VerificationPromptStatus | null>(null);
   const [aadhaarPromptVisible, setAadhaarPromptVisible] = useState(false);
   const [aadhaarPhotoVerified, setAadhaarPhotoVerified] = useState(false);
+  const [userName, setUserName] = useState('');
   const [newInterestCount, setNewInterestCount] = useState(0);
   const [inactivityPrompt, setInactivityPrompt] = useState<InactivityPromptStatus | null>(null);
 
@@ -78,6 +79,7 @@ export default function MainTabs({ navigation }: any) {
         getMyFullProfile(),
         getActiveMembership(),
       ]);
+      setUserName(profile?.profile?.basicInfo?.firstName || profile?.user?.firstName || '');
       const status = getVerificationPromptStatus(profile, activeMembership);
       if (status.shouldShow) {
         setVerificationPrompt(status);
@@ -186,6 +188,7 @@ export default function MainTabs({ navigation }: any) {
       <AadhaarVerificationModal
         visible={aadhaarPromptVisible}
         photoVerified={aadhaarPhotoVerified}
+        userName={userName}
         onClose={() => setAadhaarPromptVisible(false)}
         onVerified={async () => {
           await getMyFullProfile().catch(() => null);
