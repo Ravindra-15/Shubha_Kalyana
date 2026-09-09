@@ -286,6 +286,8 @@ export default function SignupContactScreen({ navigation }: any) {
                 onChangeText={setMobileOtpValue}
                 keyboardType="number-pad"
                 maxLength={6}
+                textContentType="oneTimeCode"
+                autoComplete="sms-otp"
               />
               <TouchableOpacity
                 style={styles.otpBtn}
@@ -359,6 +361,7 @@ export default function SignupContactScreen({ navigation }: any) {
                 onChangeText={setEmailOtpValue}
                 keyboardType="number-pad"
                 maxLength={6}
+                textContentType="oneTimeCode"
               />
               <TouchableOpacity
                 style={styles.otpBtn}

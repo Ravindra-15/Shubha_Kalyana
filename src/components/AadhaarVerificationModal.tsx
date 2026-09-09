@@ -220,6 +220,8 @@ export default function AadhaarVerificationModal({
                     placeholder="6-digit OTP"
                     placeholderTextColor="#aaa"
                     style={styles.input}
+                    textContentType="oneTimeCode"
+                    autoComplete="sms-otp"
                   />
                 </View>
 

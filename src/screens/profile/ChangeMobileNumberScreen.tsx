@@ -133,12 +133,26 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
   };
 
   const handleOtpChange = (value: string, index: number) => {
-    if (value.length > 1) return;
+    const digits = value.replace(/\D/g, '');
+
+    // Autofill/paste delivers the whole code to whichever box is focused --
+    // spread it across the remaining boxes instead of dropping it.
+    if (digits.length > 1) {
+      const next = [...otp];
+      for (let i = 0; i < digits.length && index + i < next.length; i++) {
+        next[index + i] = digits[i];
+      }
+      setOtp(next);
+      const lastFilledIndex = Math.min(index + digits.length, next.length) - 1;
+      otpRefs.current[lastFilledIndex]?.focus();
+      return;
+    }
+
     const next = [...otp];
-    next[index] = value;
+    next[index] = digits;
     setOtp(next);
-    if (value && index < 5) otpRefs.current[index + 1]?.focus();
-    if (!value && index > 0) otpRefs.current[index - 1]?.focus();
+    if (digits && index < 5) otpRefs.current[index + 1]?.focus();
+    if (!digits && index > 0) otpRefs.current[index - 1]?.focus();
   };
 
   const verifyAndUpdate = async () => {
@@ -253,7 +267,9 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
                     value={digit}
                     onChangeText={v => handleOtpChange(v, i)}
                     keyboardType="number-pad"
-                    maxLength={1}
+                    maxLength={6}
+                    textContentType="oneTimeCode"
+                    autoComplete="sms-otp"
                   />
                 ))}
               </View>
