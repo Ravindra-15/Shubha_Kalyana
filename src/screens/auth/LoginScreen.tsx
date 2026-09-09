@@ -71,7 +71,7 @@ export default function LoginScreen({ navigation }: any) {
             placeholder={t('login.mobilePlaceholder')}
             placeholderTextColor="#999"
             value={mobile}
-            onChangeText={setMobile}
+            onChangeText={(text) => setMobile(text.includes('@') ? text.toLowerCase() : text)}
             keyboardType="email-address"
             autoCapitalize="none"
           />

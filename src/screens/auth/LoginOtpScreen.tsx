@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function LoginOtpScreen({ route, navigation }: any) {
   const initialMobile = route.params?.mobile || '';
   const [mobile, setMobile] = useState(initialMobile);
+  const isEmail = mobile.includes('@');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,11 +30,13 @@ export default function LoginOtpScreen({ route, navigation }: any) {
   }, []);
 
   const sendOtp = async (num: string) => {
-    if (!num.trim()) return Alert.alert('Error', 'Enter mobile number');
+    const trimmed = num.trim();
+    if (!trimmed) return Alert.alert('Error', 'Enter mobile number');
+    const normalized = trimmed.includes('@') ? trimmed.toLowerCase() : trimmed;
     try {
       setLoading(true);
       await apiClient.post('/auth/mobile/login/otp/send', {
-        mobile: num.trim(),
+        mobile: normalized,
       });
       setSent(true);
       setOtp(['', '', '', '', '', '']);
@@ -58,8 +61,9 @@ export default function LoginOtpScreen({ route, navigation }: any) {
     if (code.length !== 6) return Alert.alert('Error', 'Enter 6-digit OTP');
     try {
       setLoading(true);
+      const trimmedMobile = mobile.trim();
       const res = await apiClient.post('/auth/mobile/login/otp/verify', {
-        mobile: mobile.trim(),
+        mobile: trimmedMobile.includes('@') ? trimmedMobile.toLowerCase() : trimmedMobile,
         code,
       });
       const token = res.data?.data?.accessToken;
@@ -86,17 +90,18 @@ export default function LoginOtpScreen({ route, navigation }: any) {
           resizeMode="contain"
         />
         <Text style={styles.title}>Verify your</Text>
-        <Text style={styles.titleRed}>Mobile Number</Text>
+        <Text style={styles.titleRed}>{isEmail ? 'Email Address' : 'Mobile Number'}</Text>
 
         {!initialMobile && !sent ? (
           <>
             <TextInput
               style={styles.input}
-              placeholder="Enter mobile number"
+              placeholder="Enter mobile number or email"
               placeholderTextColor="#999"
               value={mobile}
-              onChangeText={setMobile}
-              keyboardType="phone-pad"
+              onChangeText={(text) => setMobile(text.includes('@') ? text.toLowerCase() : text)}
+              keyboardType="email-address"
+              autoCapitalize="none"
             />
             <TouchableOpacity style={styles.submitBtn} onPress={() => sendOtp(mobile)}>
               <Text style={styles.submitText}>Send OTP</Text>
@@ -105,7 +110,7 @@ export default function LoginOtpScreen({ route, navigation }: any) {
         ) : (
           <>
             <Text style={styles.subtitle}>We will sent you an OTP to</Text>
-            <Text style={styles.phone}>+91 {mobile}</Text>
+            <Text style={styles.phone}>{isEmail ? mobile : `+91 ${mobile}`}</Text>
 
             <View style={styles.otpRow}>
               {otp.map((digit, i) => (
