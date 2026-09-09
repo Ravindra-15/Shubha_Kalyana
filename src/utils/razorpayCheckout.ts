@@ -6,11 +6,15 @@ import {
 import { createMembershipOrder } from '../api/membershipPlans';
 import type { PaymentOrderResult } from './paymentBreakup';
 
-type PaymentResult = { success: boolean; message?: string };
+type PaymentResult = { success: boolean; message?: string; paymentMayHaveSucceeded?: boolean };
 type UserInfo = { name?: string; email?: string; contact?: string };
 
-const paymentErrorMessage = (err: any, fallback: string) =>
-  err?.description || err?.response?.data?.message || err?.message || fallback;
+const paymentErrorMessage = (err: any, fallback: string) => {
+  if (err?.isNetworkError) {
+    return 'Unable to reach the server. Please check your internet connection and try again.';
+  }
+  return err?.description || err?.response?.data?.message || err?.message || fallback;
+};
 
 const failureMetadata = (err: any) =>
   err?.error?.metadata || err?.metadata || err?.details?.metadata || {};
@@ -87,11 +91,28 @@ export async function openRazorpayOrder(
 
     const payment: any = await RazorpayCheckout.open(options);
 
-    await verifyPayment({
-      razorpay_order_id: payment.razorpay_order_id,
-      razorpay_payment_id: payment.razorpay_payment_id,
-      razorpay_signature: payment.razorpay_signature,
-    });
+    // Razorpay's SDK already resolved successfully at this point (the
+    // charge went through on their end) -- if OUR OWN verification call
+    // then fails purely because of a network problem, the payment itself
+    // likely still succeeded. Handle that case separately so we never tell
+    // the user "payment failed" and invite a risky duplicate payment.
+    try {
+      await verifyPayment({
+        razorpay_order_id: payment.razorpay_order_id,
+        razorpay_payment_id: payment.razorpay_payment_id,
+        razorpay_signature: payment.razorpay_signature,
+      });
+    } catch (verifyErr: any) {
+      if (verifyErr?.isNetworkError) {
+        return {
+          success: false,
+          paymentMayHaveSucceeded: true,
+          message:
+            "Your payment may have gone through, but we couldn't confirm it because of a network issue. Please check your membership status in a minute before trying to pay again.",
+        };
+      }
+      throw verifyErr;
+    }
 
     return { success: true };
   } catch (err: any) {

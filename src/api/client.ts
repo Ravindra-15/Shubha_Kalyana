@@ -41,4 +41,16 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // No response at all means the request never reached the server
+    // (backend down, no internet, timeout) -- distinct from a normal 4xx/5xx
+    // reply that DID come back with its own message. Purely additive: every
+    // existing field on the error (response, message, etc.) is untouched.
+    error.isNetworkError = !error.response;
+    return Promise.reject(error);
+  },
+);
+
 export default apiClient;

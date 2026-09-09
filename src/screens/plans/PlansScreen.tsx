@@ -171,6 +171,13 @@ export default function PlansScreen({ navigation }: any) {
           { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
         ]);
       }
+    } else if (result.paymentMayHaveSucceeded) {
+      await load(); // refresh in case it actually went through
+      Alert.alert(
+        'Please Check Your Membership',
+        result.message ||
+          "Your payment may have gone through, but we couldn't confirm it because of a network issue.",
+      );
     } else {
       Alert.alert('Payment', result.message || 'Payment failed');
     }
