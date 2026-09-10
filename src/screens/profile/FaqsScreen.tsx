@@ -7,34 +7,60 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const FAQS = [
+type FaqSection = {
+  heading: string;
+  points: string[];
+};
+
+type FaqItem = {
+  q: string;
+  a: string;
+  sections?: FaqSection[];
+};
+
+const FAQS: FaqItem[] = [
   {
-    q: 'How do I create a profile on Shubhakalyanam?',
-    a: 'Download the app, tap Sign Up, and follow the step-by-step onboarding process including basic details, preferences, and document verification.',
+    q: 'Why to register on Shubhakalyana Matrimony?',
+    a: "Shubhakalyana Matrimony is Karnataka's leading matchmaking platform, committed to understanding the unique needs and challenges faced by individuals in their search for a life partner.",
   },
   {
-    q: 'Is my Aadhaar information safe?',
-    a: 'Yes, your Aadhaar details are encrypted and used only for identity verification. We never share this information with other users.',
+    q: 'Is Shubhakalyana Matrimony is a trustworthy matchmaking platform?',
+    a: 'YES, Shubhakalyana Matrimony is a highly trustworthy matchmaking platform with a profile verification process. Shubhakalyana.com ensures a safe and reliable experience and it offers a modern and personalized approach to finding a life partner.',
   },
   {
-    q: 'How do I send an interest or connection request?',
-    a: 'Open any profile you like and tap "Send Request". You can track all your sent requests from the Interests section.',
+    q: 'How to register on Shubhakalyana Matrimony?',
+    a: 'To register, simply log in at Shubhakalyana.com or download the Shubha Kalyana app from the Play Store or App Store, and complete your profile by filling in the required details.',
   },
   {
-    q: 'What is the difference between Free and Premium plans?',
-    a: 'Free accounts have limited profile views and no chat access. Premium plans unlock more profile views, chat, and priority support.',
+    q: 'Does Shubhakalyana Matrimony offer free registration?',
+    a: 'YES. Registration on Shubhakalyana matrimony is absolutely FREE.',
   },
   {
-    q: 'How do I unlock a profile\'s contact details?',
-    a: 'You can unlock a profile individually for a small fee, or subscribe to a membership plan which includes multiple unlocks.',
+    q: 'What is the difference between free membership vs paid membership?',
+    a: '',
+    sections: [
+      {
+        heading: '"Free Membership" allows you to..',
+        points: [
+          'Create a profile',
+          'Can browse and view the basic information of other profiles.',
+        ],
+      },
+      {
+        heading: '"Paid membership" offers you a lot more...',
+        points: [
+          'Can view complete profile details, including contact information, address, and photos.',
+          'Can chat with an interested profile once the request has been accepted by that profile.',
+          'Can send messages to interested profiles and respond to messages they receive.',
+          'Search for matches by religion, city, community, education and many other specific parameters.',
+          'Priority customer support.',
+        ],
+      },
+    ],
   },
   {
-    q: 'How do I report or block a user?',
-    a: 'Open the chat with the user, tap the menu icon in the top right, and choose "Block and Report User".',
-  },
-  {
-    q: 'How do I delete my account?',
-    a: 'Go to Profile > Settings > Account Settings > Delete Account, select a reason, and submit your request. Our team will process it shortly.',
+    q: 'How does a profile have the "Verified" tag on Shubhakalyana Matrimony?',
+    a: "A profile is awarded the 'Verified' tag only after completing Aadhaar and selfie video authentication, followed by verification of government-issued documents by our dedicated verification team.",
   },
 ];
 
@@ -74,7 +100,26 @@ export default function FaqsScreen({ navigation }: any) {
                   <ChevronDown color="#999" size={18} />
                 )}
               </View>
-              {open && <Text style={styles.answer}>{item.a}</Text>}
+              {open ? (
+                <View>
+                  {item.a ? <Text style={styles.answer}>{item.a}</Text> : null}
+
+                  {item.sections?.map((section, sectionIndex) => (
+                    <View
+                      key={sectionIndex}
+                      style={[styles.section, sectionIndex > 0 && styles.sectionSpacing]}
+                    >
+                      <Text style={styles.sectionHeading}>{section.heading}</Text>
+                      {section.points.map((point, pointIndex) => (
+                        <View key={pointIndex} style={styles.bulletRow}>
+                          <Text style={styles.bulletDot}>{'•'}</Text>
+                          <Text style={styles.bulletText}>{point}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  ))}
+                </View>
+              ) : null}
             </TouchableOpacity>
           );
         })}
@@ -98,4 +143,10 @@ const styles = StyleSheet.create({
   qRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   question: { flex: 1, fontSize: 14, fontFamily: 'Outfit-SemiBold', color: '#000', marginRight: 10 },
   answer: { fontSize: 13, color: '#666', marginTop: 12, lineHeight: 19 },
+  section: { marginTop: 12 },
+  sectionSpacing: { marginTop: 10 },
+  sectionHeading: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#333' },
+  bulletRow: { flexDirection: 'row', marginTop: 6, paddingRight: 4 },
+  bulletDot: { fontSize: 13, color: '#666', width: 14 },
+  bulletText: { flex: 1, fontSize: 13, color: '#666', lineHeight: 19 },
 });
