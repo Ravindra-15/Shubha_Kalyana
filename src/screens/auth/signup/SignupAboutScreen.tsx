@@ -143,7 +143,7 @@ const dd = parseInt(day, 10);
     setField('firstName', firstName.trim());
     setField('lastName', lastName.trim());
     setField('dob', dob);
-    navigation.navigate('SignupCaste');
+    navigation.navigate('SignupContact');
   };
 
   return (

@@ -17,12 +17,6 @@ import apiClient from '../../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useScrollToError } from '../../../hooks/useScrollToError';
 
-const getLookingForFromGender = (selectedGender?: string) => {
-  if (selectedGender === 'MALE') return 'Groom';
-  if (selectedGender === 'FEMALE') return 'Bride';
-  return '';
-};
-
 export default function SignupContactScreen({ navigation }: any) {
   const { data, setField } = useSignup();
   const [mobile, setMobile] = useState(data.mobile || '');
@@ -41,12 +35,10 @@ export default function SignupContactScreen({ navigation }: any) {
   const [emailOtpSent, setEmailOtpSent] = useState(false);
   const [emailOtpValue, setEmailOtpValue] = useState('');
   const [emailVerified, setEmailVerified] = useState(false);
+  const [emailSkipped, setEmailSkipped] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
   const [emailVerifying, setEmailVerifying] = useState(false);
   const [emailCooldown, setEmailCooldown] = useState(0);
-
-  const [submitting, setSubmitting] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   useEffect(() => {
     if (mobileCooldown <= 0) return;
@@ -168,51 +160,16 @@ export default function SignupContactScreen({ navigation }: any) {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!mobileVerified || !emailVerified) {
+  const handleContinue = () => {
+    if (!mobileVerified || (!emailVerified && !emailSkipped)) {
       scrollToError(!mobileVerified ? ['mobile'] : ['email'], ['mobile', 'email']);
-      Alert.alert('Required', 'Please verify both mobile number and email');
+      Alert.alert('Required', 'Please verify your mobile number, and either verify or skip email');
       return;
     }
 
-    if (!agreedToTerms) {
-      Alert.alert('Required', 'Please agree to the Privacy Policy and Terms & Conditions to continue');
-      return;
-    }
-
-    const payload = {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      profileFor: data.profileFor,
-      gender: data.gender,
-      dob: data.dob,
-      religion: data.religion,
-      caste: data.caste,
-      subCaste: data.subCaste,
-      isCustomCaste: data.isCustomCaste || false,
-      motherTongue: data.motherTongue || 'Kannada',
-      lookingFor: data.lookingFor || getLookingForFromGender(data.gender),
-    };
-
-    try {
-      setSubmitting(true);
-      const res = await apiClient.post('/onboarding/register', payload);
-      const onboardingToken = res.data?.data?.onboardingToken;
-
-      if (onboardingToken) {
-        await AsyncStorage.setItem('onboardingToken', onboardingToken);
-        setField('mobile', mobile.trim());
-        setField('email', email.trim());
-        navigation.navigate('BasicLifestyle');
-      } else {
-        Alert.alert('Error', 'No onboarding token received');
-      }
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Registration failed';
-      Alert.alert('Error', msg);
-    } finally {
-      setSubmitting(false);
-    }
+    setField('mobile', mobile.trim());
+    setField('email', emailSkipped ? '' : email.trim());
+    navigation.navigate('SignupCaste');
   };
 
   return (
@@ -223,7 +180,7 @@ export default function SignupContactScreen({ navigation }: any) {
             <Text style={styles.back}>←</Text>
           </TouchableOpacity>
 
-          <ProgressBar step={4} total={16} />
+          <ProgressBar step={3} total={16} />
 
         <View style={styles.iconCircle}>
           <Image
@@ -305,21 +262,41 @@ export default function SignupContactScreen({ navigation }: any) {
           {errors.mobile ? <Text style={styles.errorText}>{errors.mobile}</Text> : null}
           {mobileVerified && <Text style={styles.verifiedText}>✓ Mobile verified</Text>}
 
-          <Text style={[styles.label, { marginTop: 20 }]}>
-            Email ID <Text style={styles.star}>*</Text>
-          </Text>
+          <View style={[styles.row, { marginTop: 20, justifyContent: 'space-between' }]}>
+            <Text style={styles.label}>Email ID (optional)</Text>
+            {mobileVerified && !emailVerified && (
+              <TouchableOpacity
+                onPress={() => {
+                  if (emailSkipped) {
+                    setEmailSkipped(false);
+                  } else {
+                    setEmailSkipped(true);
+                    setEmail('');
+                    setEmailOtpSent(false);
+                    setEmailOtpValue('');
+                    setEmailCooldown(0);
+                    setErrors((e) => ({ ...e, email: '' }));
+                  }
+                }}
+              >
+                <Text style={styles.skipLink}>
+                  {emailSkipped ? 'Add email instead' : 'Skip for now'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
           <View style={styles.row} ref={registerField('email')}>
             <TextInput
               style={[
                 styles.input,
                 styles.flexInput,
                 errors.email && styles.inputError,
-                (!mobileVerified || emailVerified) && styles.inputDisabled,
+                (!mobileVerified || emailVerified || emailSkipped) && styles.inputDisabled,
               ]}
-              placeholder="Enter your email address"
+              placeholder={emailSkipped ? 'Skipped — you can add this later' : 'Enter your email address'}
               placeholderTextColor="#999"
               value={email}
-              editable={mobileVerified && !emailVerified}
+              editable={mobileVerified && !emailVerified && !emailSkipped}
               onChangeText={(t) => {
                 setEmail(t);
                 setEmailOtpSent(false);
@@ -329,7 +306,7 @@ export default function SignupContactScreen({ navigation }: any) {
               keyboardType="email-address"
               autoCapitalize="none"
             />
-            {mobileVerified && !emailVerified && emailCooldown <= 0 && (
+            {mobileVerified && !emailVerified && !emailSkipped && emailCooldown <= 0 && (
               <TouchableOpacity
                 style={styles.otpBtn}
                 onPress={sendEmailOtp}
@@ -344,14 +321,14 @@ export default function SignupContactScreen({ navigation }: any) {
                 )}
               </TouchableOpacity>
             )}
-            {mobileVerified && !emailVerified && emailCooldown > 0 && (
+            {mobileVerified && !emailVerified && !emailSkipped && emailCooldown > 0 && (
               <View style={styles.cooldownBox}>
                 <Text style={styles.cooldownText}>{emailCooldown}s</Text>
               </View>
             )}
           </View>
 
-          {mobileVerified && !emailVerified && emailOtpSent && (
+          {mobileVerified && !emailVerified && !emailSkipped && emailOtpSent && (
             <View style={styles.row}>
               <TextInput
                 style={[styles.input, styles.flexInput]}
@@ -378,33 +355,21 @@ export default function SignupContactScreen({ navigation }: any) {
           )}
           {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
           {emailVerified && <Text style={styles.verifiedText}>✓ Email verified</Text>}
-
-          <TouchableOpacity style={styles.checkRow} onPress={() => setAgreedToTerms(!agreedToTerms)}>
-            <View style={[styles.checkbox, agreedToTerms && styles.checkboxActive]}>
-              {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
-            </View>
-            <Text style={styles.checkLabel}>
-              By creating an account, you agree to our{' '}
-              <Text style={styles.checkLink} onPress={() => navigation.navigate('PrivacyPolicy')}>
-                Privacy Policy
-              </Text>{' '}
-              and{' '}
-              <Text style={styles.checkLink} onPress={() => navigation.navigate('TermsAndConditions')}>
-                T&C
-              </Text>
+          {emailSkipped && (
+            <Text style={styles.skippedText}>
+              Email skipped — you can add it later from your profile settings.
             </Text>
-          </TouchableOpacity>
+          )}
 
           <TouchableOpacity
-            style={[styles.continueBtn, (!mobileVerified || !emailVerified || !agreedToTerms) && styles.continueBtnDisabled]}
-            onPress={handleSubmit}
-            disabled={submitting || !mobileVerified || !emailVerified || !agreedToTerms}
+            style={[
+              styles.continueBtn,
+              (!mobileVerified || (!emailVerified && !emailSkipped)) && styles.continueBtnDisabled,
+            ]}
+            onPress={handleContinue}
+            disabled={!mobileVerified || (!emailVerified && !emailSkipped)}
           >
-            {submitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.continueText}>Submit →</Text>
-            )}
+            <Text style={styles.continueText}>Continue →</Text>
           </TouchableOpacity>
         </View>
       </KeyboardWrapper>
@@ -464,6 +429,8 @@ const styles = StyleSheet.create({
   cooldownText: { color: '#999', fontSize: 14, fontFamily: 'Outfit-SemiBold' },
   errorText: { color: '#D20236', fontSize: 13, marginBottom: 10 },
   verifiedText: { color: '#2e7d32', fontSize: 14, fontFamily: 'Outfit-SemiBold', marginBottom: 10 },
+  skippedText: { color: '#888', fontSize: 13, marginBottom: 10 },
+  skipLink: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-SemiBold', textDecorationLine: 'underline' },
   continueBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,
@@ -474,10 +441,4 @@ const styles = StyleSheet.create({
   continueBtnDisabled: { backgroundColor: '#f0a8b8' },
   continueText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
-  checkRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 20, marginBottom: 4 },
-  checkbox: { width: 22, height: 22, borderRadius: 4, borderWidth: 1.5, borderColor: '#ccc', alignItems: 'center', justifyContent: 'center', marginRight: 10, marginTop: 2 },
-  checkboxActive: { borderColor: '#D20236', backgroundColor: '#D20236' },
-  checkmark: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
-  checkLabel: { flex: 1, fontSize: 13, color: '#555', lineHeight: 19 },
-  checkLink: { color: '#D20236', fontFamily: 'Outfit-SemiBold' },
 });

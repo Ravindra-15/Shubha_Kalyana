@@ -16,6 +16,14 @@ import { useSignup } from '../../../context/SignupContext';
 import { getCastes, Caste } from '../../../api/caste';
 import SearchableDropdown from '../../../components/SearchableDropdown';
 import { useScrollToError } from '../../../hooks/useScrollToError';
+import apiClient from '../../../api/client';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const getLookingForFromGender = (selectedGender?: string) => {
+  if (selectedGender === 'MALE') return 'Groom';
+  if (selectedGender === 'FEMALE') return 'Bride';
+  return '';
+};
 
 const MOTHER_TONGUES = [
   'Kannada',
@@ -57,6 +65,8 @@ export default function SignupCasteScreen({ navigation }: any) {
   const [castes, setCastes] = useState<Caste[]>([]);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const { scrollRef, registerField, scrollToError } = useScrollToError();
   const FIELD_ORDER = ['religion', 'casteId', 'subCaste', 'livingIn', 'motherTongue'];
 
@@ -79,7 +89,7 @@ const visibleCastes = religion
   const selectedCaste = castes.find(c => c._id === casteId);
   const subCasteOptions = selectedCaste?.subCastes || [];
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     const newErrors: { [k: string]: boolean } = {};
     if (!religion.trim()) newErrors.religion = true;
     if (!casteId) newErrors.casteId = true;
@@ -93,12 +103,47 @@ const visibleCastes = religion
       return Alert.alert('Required', 'Please fill all mandatory fields');
     }
 
+    if (!agreedToTerms) {
+      return Alert.alert('Required', 'Please agree to the Privacy Policy and Terms & Conditions to continue');
+    }
+
     setField('religion', religion.trim());
     setField('caste', casteId);
     setField('subCaste', subCaste);
     setField('livingIn', livingIn.trim());
     setField('motherTongue', motherTongue.trim());
-    navigation.navigate('SignupContact');
+
+    const payload = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      profileFor: data.profileFor,
+      gender: data.gender,
+      dob: data.dob,
+      religion: religion.trim(),
+      caste: casteId,
+      subCaste,
+      isCustomCaste: data.isCustomCaste || false,
+      motherTongue: motherTongue.trim() || 'Kannada',
+      lookingFor: data.lookingFor || getLookingForFromGender(data.gender),
+    };
+
+    try {
+      setSubmitting(true);
+      const res = await apiClient.post('/onboarding/register', payload);
+      const onboardingToken = res.data?.data?.onboardingToken;
+
+      if (onboardingToken) {
+        await AsyncStorage.setItem('onboardingToken', onboardingToken);
+        navigation.navigate('BasicLifestyle');
+      } else {
+        Alert.alert('Error', 'No onboarding token received');
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Registration failed';
+      Alert.alert('Error', msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -109,7 +154,7 @@ const visibleCastes = religion
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
 
-        <ProgressBar step={3} total={16} />
+        <ProgressBar step={4} total={16} />
 
         <View style={styles.iconCircle}>
           <Image
@@ -209,8 +254,32 @@ const visibleCastes = religion
           />
         </View>
 
-        <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
-          <Text style={styles.continueText}>Continue →</Text>
+        <TouchableOpacity style={styles.checkRow} onPress={() => setAgreedToTerms(!agreedToTerms)}>
+          <View style={[styles.checkbox, agreedToTerms && styles.checkboxActive]}>
+            {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
+          </View>
+          <Text style={styles.checkLabel}>
+            By creating an account, you agree to our{' '}
+            <Text style={styles.checkLink} onPress={() => navigation.navigate('PrivacyPolicy')}>
+              Privacy Policy
+            </Text>{' '}
+            and{' '}
+            <Text style={styles.checkLink} onPress={() => navigation.navigate('TermsAndConditions')}>
+              T&C
+            </Text>
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.continueBtn, (!agreedToTerms || submitting) && styles.continueBtnDisabled]}
+          onPress={handleContinue}
+          disabled={submitting || !agreedToTerms}
+        >
+          {submitting ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.continueText}>Submit →</Text>
+          )}
         </TouchableOpacity>
         </View>
       </KeyboardWrapper>
@@ -270,4 +339,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   continueText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
+  continueBtnDisabled: { backgroundColor: '#f0a8b8' },
+  checkRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 20, marginBottom: 4 },
+  checkbox: { width: 22, height: 22, borderRadius: 4, borderWidth: 1.5, borderColor: '#ccc', alignItems: 'center', justifyContent: 'center', marginRight: 10, marginTop: 2 },
+  checkboxActive: { borderColor: '#D20236', backgroundColor: '#D20236' },
+  checkmark: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
+  checkLabel: { flex: 1, fontSize: 13, color: '#555', lineHeight: 19 },
+  checkLink: { color: '#D20236', fontFamily: 'Outfit-SemiBold' },
 });
