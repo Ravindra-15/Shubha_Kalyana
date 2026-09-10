@@ -36,6 +36,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
 export default function HomeScreen({ navigation }: any) {
   const [firstName, setFirstName] = useState('');
+  const [gender, setGender] = useState('');
   const [showWelcome, setShowWelcome] = useState(false);
   const [planName, setPlanName] = useState('Free Plan');
   const [hasActivePlan, setHasActivePlan] = useState(false);
@@ -386,8 +387,10 @@ export default function HomeScreen({ navigation }: any) {
     try {
       const res = await apiClient.get('/user/me/profile');
       const user = res.data?.data?.user;
+      const profile = res.data?.data?.profile;
       const name = user?.firstName || '';
       setFirstName(name);
+      setGender(profile?.basicInfo?.gender || '');
 
       // show welcome popup once per user
       const userId = user?._id;
@@ -438,6 +441,7 @@ export default function HomeScreen({ navigation }: any) {
         onClose={() => setShowFilter(false)}
         onApply={applyFilters}
         initial={activeFilters || undefined}
+        gender={gender}
       />
 
       <UnlockAccessModal

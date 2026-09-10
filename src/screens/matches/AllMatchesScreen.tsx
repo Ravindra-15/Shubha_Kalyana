@@ -27,6 +27,14 @@ export default function AllMatchesScreen({ navigation, route }: any) {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<Filters | null>(null);
   const [showFilter, setShowFilter] = useState(false);
+  const [gender, setGender] = useState('');
+
+  useEffect(() => {
+    apiClient
+      .get('/user/me/profile')
+      .then((res) => setGender(res.data?.data?.profile?.basicInfo?.gender || ''))
+      .catch(() => {});
+  }, []);
 
   const [profiles, setProfiles] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
@@ -198,6 +206,7 @@ export default function AllMatchesScreen({ navigation, route }: any) {
         onClose={() => setShowFilter(false)}
         onApply={applyFilters}
         initial={filters || undefined}
+        gender={gender}
       />
 
       {/* Header */}

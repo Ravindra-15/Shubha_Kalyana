@@ -34,6 +34,20 @@ const MARITAL_STATUS = [
   { label: 'Widowed', value: 'WIDOWED' },
   { label: 'Awaiting Divorce', value: 'AWAITING_DIVORCE' },
 ];
+
+// The profiles being searched for are (usually) the opposite gender of the
+// logged-in user, so "Widowed" is shown as it would describe them —
+// matches the same helper used on partner preference.
+const getMaritalStatusOptions = (gender?: string) =>
+  MARITAL_STATUS.map((option) =>
+    option.value === 'WIDOWED'
+      ? {
+          ...option,
+          label:
+            gender === 'MALE' ? 'Widow (Girl)' : gender === 'FEMALE' ? 'Widower (Boy)' : 'Widowed',
+        }
+      : option,
+  );
 const EDUCATION = ['B.Tech', 'B.E', 'B.Sc', 'B.Com', 'B.A', 'BBA', 'BCA', 'MBBS', 'M.Tech', 'M.Sc', 'MBA', 'MCA', 'PhD', 'Diploma'];
 // Kept in sync with the profession options shown during onboarding
 // (matrimony-user/src/onboarding/onboardingOptions.js -> professionOptions).
@@ -59,9 +73,11 @@ type Props = {
   onClose: () => void;
   onApply: (filters: Filters | null) => void;
   initial?: Filters;
+  gender?: string;
 };
 
-export default function FilterModal({ visible, onClose, onApply, initial }: Props) {
+export default function FilterModal({ visible, onClose, onApply, initial, gender }: Props) {
+  const maritalStatusOptions = getMaritalStatusOptions(gender);
   const [minAge, setMinAge] = useState(initial?.minAge ?? 24);
   const [maxAge, setMaxAge] = useState(initial?.maxAge ?? 30);
   const [religion, setReligion] = useState(initial?.religion || '');
@@ -184,7 +200,7 @@ export default function FilterModal({ visible, onClose, onApply, initial }: Prop
             <SearchableDropdown
               placeholder="Select Marital Status"
               value={maritalStatus}
-              options={MARITAL_STATUS}
+              options={maritalStatusOptions}
               onSelect={setMaritalStatus}
             />
 
