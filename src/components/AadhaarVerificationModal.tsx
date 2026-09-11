@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -190,7 +191,7 @@ export default function AadhaarVerificationModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
       <KeyboardAvoidingView
         style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.card}>
           <View style={styles.header}>
@@ -207,7 +208,14 @@ export default function AadhaarVerificationModal({
             <View style={styles.checkingBox}>
               <ActivityIndicator color="#999" />
             </View>
-          ) : step === 'otp' ? (
+          ) : (
+          <ScrollView
+            style={styles.scrollBody}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+          {step === 'otp' ? (
             <>
               <View style={styles.body}>
                 <Text style={styles.otpHint}>
@@ -360,6 +368,8 @@ export default function AadhaarVerificationModal({
               </View>
             </>
           )}
+          </ScrollView>
+          )}
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -377,9 +387,16 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 420,
+    maxHeight: '90%',
     borderRadius: 12,
     backgroundColor: '#fff',
     overflow: 'hidden',
+  },
+  scrollBody: {
+    flexShrink: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   header: {
     flexDirection: 'row',
