@@ -19,6 +19,7 @@ import { getProfileAccess, unlockProfileWithMembership } from '../../api/members
 import { getProfileViewers, isProfileFullyVerified } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import { startChat } from '../../api/chat';
 
 const getAge = (dob?: string) => {
   if (!dob) return null;
@@ -57,6 +58,7 @@ const mapProfileViewer = (item: any) => {
 
   return {
     profileId: String(item.profileId || p._id),
+    userId: item.userId || user._id,
     name:
       [user.firstName || basic.firstName, user.lastName || basic.lastName]
         .filter(Boolean)
@@ -198,7 +200,29 @@ export default function ProfileViewersScreen({ navigation }: any) {
     }
   };
 
+  const chatWithProfile = async (p: any) => {
+    try {
+      const { chat, profileId } = await startChat(p.userId);
+      navigation.navigate('Conversation', {
+        chatId: chat._id,
+        name: p.name,
+        photo: p.image,
+        receiverId: p.userId,
+        profileId,
+      });
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not start chat');
+    }
+  };
+
   const getCardActionProps = (p: any) => {
+    if (p.requestStatus === 'ACCEPTED') {
+      return {
+        actionLabel: 'Chat Now',
+        actionDisabled: false,
+        onAction: () => chatWithProfile(p),
+      };
+    }
     if (p.bothHaveActivePlans && !p.requestStatus) {
       return {
         actionLabel: 'View Contact',
@@ -210,8 +234,6 @@ export default function ProfileViewersScreen({ navigation }: any) {
       actionLabel:
         p.requestStatus === 'PENDING'
           ? 'Request Sent'
-          : p.requestStatus === 'ACCEPTED'
-          ? 'Connected'
           : 'Send Request',
       actionDisabled: !!p.requestStatus,
       onAction: () => sendRequest(p.profileId),

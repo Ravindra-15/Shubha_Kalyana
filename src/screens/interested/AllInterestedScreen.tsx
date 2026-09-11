@@ -19,6 +19,7 @@ import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
 import { isProfileFullyVerified } from '../../api/profile';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import { startChat } from '../../api/chat';
 
 const getAge = (dob?: string) => {
   if (!dob) return null;
@@ -39,6 +40,7 @@ const mapInterest = (item: any) => {
   const matchPercentage = item.matchPercentage ?? item.matchPercent ?? p.matchPercentage ?? p.matchPercent;
   return {
     profileId: item.profileId || p._id,
+    userId: item.userId || item.user?._id,
     name: [item.user?.firstName, item.user?.lastName].filter(Boolean).join(' ') || 'Profile',
     age: getAge(basic.dob),
     profession: p.employment?.designation || '',
@@ -146,7 +148,29 @@ export default function AllInterestedScreen({ navigation, route }: any) {
     }
   };
 
+  const chatWithProfile = async (p: any) => {
+    try {
+      const { chat, profileId } = await startChat(p.userId);
+      navigation.navigate('Conversation', {
+        chatId: chat._id,
+        name: p.name,
+        photo: p.image,
+        receiverId: p.userId,
+        profileId,
+      });
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not start chat');
+    }
+  };
+
   const getCardActionProps = (p: any) => {
+    if (p.requestStatus === 'ACCEPTED') {
+      return {
+        actionLabel: 'Chat Now',
+        actionDisabled: false,
+        onAction: () => chatWithProfile(p),
+      };
+    }
     if (p.bothHaveActivePlans && !p.requestStatus) {
       return {
         actionLabel: 'View Contact',
@@ -158,8 +182,6 @@ export default function AllInterestedScreen({ navigation, route }: any) {
       actionLabel:
         p.requestStatus === 'PENDING'
           ? 'Request Sent'
-          : p.requestStatus === 'ACCEPTED'
-          ? 'Connected'
           : 'Send Request',
       actionDisabled: !!p.requestStatus,
       onAction: () => sendRequest(p.profileId),

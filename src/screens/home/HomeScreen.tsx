@@ -31,6 +31,7 @@ import { getProfileAccess, unlockProfileWithMembership } from '../../api/members
 import { getUnreadCount } from '../../api/notification';
 import { isProfileFullyVerified } from '../../api/profile';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import { startChat } from '../../api/chat';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
@@ -187,6 +188,7 @@ export default function HomeScreen({ navigation }: any) {
       item.profile?.matchPercent;
     return {
       profileId: item.profileId,
+      userId: item.userId || item.user?._id,
       name:
         [item.user?.firstName, item.user?.lastName].filter(Boolean).join(' ') ||
         'Profile',
@@ -299,7 +301,29 @@ export default function HomeScreen({ navigation }: any) {
     }
   };
 
+  const chatWithProfile = async (p: any) => {
+    try {
+      const { chat, profileId } = await startChat(p.userId);
+      navigation.navigate('Conversation', {
+        chatId: chat._id,
+        name: p.name,
+        photo: p.image,
+        receiverId: p.userId,
+        profileId,
+      });
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not start chat');
+    }
+  };
+
   const getCardActionProps = (p: any, sendFn: (id: string) => void) => {
+    if (p.requestStatus === 'ACCEPTED') {
+      return {
+        actionLabel: 'Chat Now',
+        actionDisabled: false,
+        onAction: () => chatWithProfile(p),
+      };
+    }
     if (p.bothHaveActivePlans && !p._requestSent && !p.requestStatus) {
       return {
         actionLabel: 'View Contact',
@@ -311,8 +335,6 @@ export default function HomeScreen({ navigation }: any) {
       actionLabel:
         p._requestSent || p.requestStatus === 'PENDING'
           ? 'Request Sent'
-          : p.requestStatus === 'ACCEPTED'
-          ? 'Connected'
           : 'Send Request',
       actionDisabled: p._requestSent || !!p.requestStatus,
       onAction: () => sendFn(p.profileId),
