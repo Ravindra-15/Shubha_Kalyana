@@ -65,7 +65,7 @@ export default function ProfilePhotoScreen({ navigation }: any) {
   const [photo, setPhoto] = useState<any>(null);
   const [existingPhotoUrl, setExistingPhotoUrl] = useState('');
   const [galleryPhotos, setGalleryPhotos] = useState<any[]>([]);
-  const [galleryUploading, setGalleryUploading] = useState(false);
+  const [galleryUploadingIndex, setGalleryUploadingIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [picking, setPicking] = useState(false);
 
@@ -93,14 +93,14 @@ export default function ProfilePhotoScreen({ navigation }: any) {
     } as any);
 
     try {
-      setGalleryUploading(true);
+      setGalleryUploadingIndex(galleryPhotos.length);
       const res = await apiClient.post('/onboarding/gallery-photo', formData);
       const photos = res.data?.data?.photos || [];
       setGalleryPhotos(photos.filter((p: any) => !p.isProfilePhoto));
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not upload photo');
     } finally {
-      setGalleryUploading(false);
+      setGalleryUploadingIndex(null);
     }
   };
 
@@ -267,7 +267,7 @@ export default function ProfilePhotoScreen({ navigation }: any) {
             photos={galleryPhotos}
             onAdd={addGalleryPhoto}
             onRemove={removeGalleryPhotoItem}
-            uploading={galleryUploading}
+            uploadingSlotIndex={galleryUploadingIndex}
           />
 
           <View style={styles.guidelinesSection}>

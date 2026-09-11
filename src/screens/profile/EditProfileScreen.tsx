@@ -339,7 +339,7 @@ export default function EditProfileScreen({ navigation }: any) {
     photoUrl: '',
   });
   const [galleryPhotos, setGalleryPhotos] = useState<any[]>([]);
-  const [galleryUploading, setGalleryUploading] = useState(false);
+  const [galleryUploadingIndex, setGalleryUploadingIndex] = useState<number | null>(null);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -825,7 +825,7 @@ export default function EditProfileScreen({ navigation }: any) {
 
   const addGalleryPhoto = async (asset: any) => {
     try {
-      setGalleryUploading(true);
+      setGalleryUploadingIndex(galleryPhotos.length);
       const updated = await uploadMyGalleryPhoto({
         uri: asset.uri,
         type: asset.type || 'image/jpeg',
@@ -835,7 +835,7 @@ export default function EditProfileScreen({ navigation }: any) {
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not upload photo');
     } finally {
-      setGalleryUploading(false);
+      setGalleryUploadingIndex(null);
     }
   };
 
@@ -1202,7 +1202,7 @@ export default function EditProfileScreen({ navigation }: any) {
               photos={galleryPhotos.map((p: any) => ({ publicId: p.publicId, url: resolveImageUrl(p.url) }))}
               onAdd={addGalleryPhoto}
               onRemove={removeGalleryPhotoItem}
-              uploading={galleryUploading}
+              uploadingSlotIndex={galleryUploadingIndex}
             />
           </View>
 

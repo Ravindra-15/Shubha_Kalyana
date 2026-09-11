@@ -10,7 +10,7 @@ type Props = {
   onAdd: (asset: any) => void;
   onRemove: (publicId: string) => void;
   maxCount?: number;
-  uploading?: boolean;
+  uploadingSlotIndex?: number | null;
   title?: string;
 };
 
@@ -19,12 +19,15 @@ export default function GalleryPhotoRow({
   onAdd,
   onRemove,
   maxCount = 5,
-  uploading = false,
+  uploadingSlotIndex = null,
   title = 'Add up to 5 more photos (optional)',
 }: Props) {
   const emptySlots = Math.max(0, maxCount - photos.length);
+  const isUploading = uploadingSlotIndex !== null;
 
   const pickPhoto = async () => {
+    if (isUploading) return;
+
     const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8 });
     if (result.didCancel || result.errorCode) return;
 
@@ -56,20 +59,25 @@ export default function GalleryPhotoRow({
           </View>
         ))}
 
-        {Array.from({ length: emptySlots }).map((_, i) => (
-          <TouchableOpacity
-            key={`empty-${i}`}
-            style={styles.emptyTile}
-            onPress={pickPhoto}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <ActivityIndicator size="small" color="#D20236" />
-            ) : (
-              <Text style={styles.plus}>+</Text>
-            )}
-          </TouchableOpacity>
-        ))}
+        {Array.from({ length: emptySlots }).map((_, i) => {
+          const slotIndex = photos.length + i;
+          const isThisSlotUploading = uploadingSlotIndex === slotIndex;
+
+          return (
+            <TouchableOpacity
+              key={`empty-${i}`}
+              style={styles.emptyTile}
+              onPress={pickPhoto}
+              disabled={isUploading}
+            >
+              {isThisSlotUploading ? (
+                <ActivityIndicator size="small" color="#D20236" />
+              ) : (
+                <Text style={styles.plus}>+</Text>
+              )}
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
@@ -78,10 +86,10 @@ export default function GalleryPhotoRow({
 const styles = StyleSheet.create({
   container: { marginTop: 16 },
   title: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#333', marginBottom: 8 },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  row: { flexDirection: 'row', gap: 6 },
   tile: {
-    width: 58,
-    height: 58,
+    flex: 1,
+    aspectRatio: 1,
     borderRadius: 8,
     overflow: 'hidden',
     backgroundColor: '#eee',
@@ -101,8 +109,8 @@ const styles = StyleSheet.create({
   },
   removeText: { color: '#fff', fontSize: 12, fontFamily: 'Outfit-Bold', lineHeight: 14 },
   emptyTile: {
-    width: 58,
-    height: 58,
+    flex: 1,
+    aspectRatio: 1,
     borderRadius: 8,
     borderWidth: 1.5,
     borderStyle: 'dashed',

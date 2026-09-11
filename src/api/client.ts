@@ -36,6 +36,13 @@ apiClient.interceptors.request.use(async (config) => {
       delete config.headers['Content-Type'];
       delete config.headers['content-type'];
     }
+
+    // File uploads (photos, Aadhaar docs) need much more time than the
+    // default 15s on real mobile networks -- a multi-MB multipart upload
+    // over 4G routinely exceeds that, aborting the request client-side
+    // with no server response at all. Only widen it for FormData bodies
+    // so every other (JSON) request keeps its existing 15s timeout.
+    config.timeout = 60000;
   }
 
   return config;
