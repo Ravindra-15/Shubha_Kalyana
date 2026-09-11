@@ -39,6 +39,7 @@ export default function SignupContactScreen({ navigation }: any) {
   const [emailSending, setEmailSending] = useState(false);
   const [emailVerifying, setEmailVerifying] = useState(false);
   const [emailCooldown, setEmailCooldown] = useState(0);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   useEffect(() => {
     if (mobileCooldown <= 0) return;
@@ -161,14 +162,18 @@ export default function SignupContactScreen({ navigation }: any) {
   };
 
   const handleContinue = () => {
-    if (!mobileVerified || (!emailVerified && !emailSkipped)) {
-      scrollToError(!mobileVerified ? ['mobile'] : ['email'], ['mobile', 'email']);
-      Alert.alert('Required', 'Please verify your mobile number, and either verify or skip email');
+    if (!mobileVerified) {
+      scrollToError(['mobile'], ['mobile', 'email']);
+      Alert.alert('Required', 'Please verify your mobile number');
+      return;
+    }
+    if (!agreedToTerms) {
+      Alert.alert('Required', 'Please agree to the Privacy Policy and Terms & Conditions to continue');
       return;
     }
 
     setField('mobile', mobile.trim());
-    setField('email', emailSkipped ? '' : email.trim());
+    setField('email', emailVerified ? email.trim() : '');
     navigation.navigate('SignupCaste');
   };
 
@@ -361,13 +366,29 @@ export default function SignupContactScreen({ navigation }: any) {
             </Text>
           )}
 
+          <TouchableOpacity style={styles.checkRow} onPress={() => setAgreedToTerms(!agreedToTerms)}>
+            <View style={[styles.checkbox, agreedToTerms && styles.checkboxActive]}>
+              {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+            <Text style={styles.checkLabel}>
+              By creating an account, you agree to our{' '}
+              <Text style={styles.checkLink} onPress={() => navigation.navigate('PrivacyPolicy')}>
+                Privacy Policy
+              </Text>{' '}
+              and{' '}
+              <Text style={styles.checkLink} onPress={() => navigation.navigate('TermsAndConditions')}>
+                T&C
+              </Text>
+            </Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={[
               styles.continueBtn,
-              (!mobileVerified || (!emailVerified && !emailSkipped)) && styles.continueBtnDisabled,
+              (!mobileVerified || !agreedToTerms) && styles.continueBtnDisabled,
             ]}
             onPress={handleContinue}
-            disabled={!mobileVerified || (!emailVerified && !emailSkipped)}
+            disabled={!mobileVerified || !agreedToTerms}
           >
             <Text style={styles.continueText}>Continue →</Text>
           </TouchableOpacity>
@@ -441,4 +462,10 @@ const styles = StyleSheet.create({
   continueBtnDisabled: { backgroundColor: '#f0a8b8' },
   continueText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
+  checkRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 20, marginBottom: 4 },
+  checkbox: { width: 22, height: 22, borderRadius: 4, borderWidth: 1.5, borderColor: '#ccc', alignItems: 'center', justifyContent: 'center', marginRight: 10, marginTop: 2 },
+  checkboxActive: { borderColor: '#D20236', backgroundColor: '#D20236' },
+  checkmark: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
+  checkLabel: { flex: 1, fontSize: 13, color: '#555', lineHeight: 19 },
+  checkLink: { color: '#D20236', fontFamily: 'Outfit-SemiBold' },
 });

@@ -65,7 +65,6 @@ export default function SignupCasteScreen({ navigation }: any) {
   const [castes, setCastes] = useState<Caste[]>([]);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { scrollRef, registerField, scrollToError } = useScrollToError();
   const FIELD_ORDER = ['religion', 'casteId', 'subCaste', 'livingIn', 'motherTongue'];
@@ -101,10 +100,6 @@ const visibleCastes = religion
     if (Object.keys(newErrors).length > 0) {
       scrollToError(Object.keys(newErrors), FIELD_ORDER);
       return Alert.alert('Required', 'Please fill all mandatory fields');
-    }
-
-    if (!agreedToTerms) {
-      return Alert.alert('Required', 'Please agree to the Privacy Policy and Terms & Conditions to continue');
     }
 
     setField('religion', religion.trim());
@@ -254,26 +249,10 @@ const visibleCastes = religion
           />
         </View>
 
-        <TouchableOpacity style={styles.checkRow} onPress={() => setAgreedToTerms(!agreedToTerms)}>
-          <View style={[styles.checkbox, agreedToTerms && styles.checkboxActive]}>
-            {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
-          </View>
-          <Text style={styles.checkLabel}>
-            By creating an account, you agree to our{' '}
-            <Text style={styles.checkLink} onPress={() => navigation.navigate('PrivacyPolicy')}>
-              Privacy Policy
-            </Text>{' '}
-            and{' '}
-            <Text style={styles.checkLink} onPress={() => navigation.navigate('TermsAndConditions')}>
-              T&C
-            </Text>
-          </Text>
-        </TouchableOpacity>
-
         <TouchableOpacity
-          style={[styles.continueBtn, (!agreedToTerms || submitting) && styles.continueBtnDisabled]}
+          style={[styles.continueBtn, submitting && styles.continueBtnDisabled]}
           onPress={handleContinue}
-          disabled={submitting || !agreedToTerms}
+          disabled={submitting}
         >
           {submitting ? (
             <ActivityIndicator color="#fff" />
@@ -340,10 +319,4 @@ const styles = StyleSheet.create({
   },
   continueText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   continueBtnDisabled: { backgroundColor: '#f0a8b8' },
-  checkRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 20, marginBottom: 4 },
-  checkbox: { width: 22, height: 22, borderRadius: 4, borderWidth: 1.5, borderColor: '#ccc', alignItems: 'center', justifyContent: 'center', marginRight: 10, marginTop: 2 },
-  checkboxActive: { borderColor: '#D20236', backgroundColor: '#D20236' },
-  checkmark: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
-  checkLabel: { flex: 1, fontSize: 13, color: '#555', lineHeight: 19 },
-  checkLink: { color: '#D20236', fontFamily: 'Outfit-SemiBold' },
 });
