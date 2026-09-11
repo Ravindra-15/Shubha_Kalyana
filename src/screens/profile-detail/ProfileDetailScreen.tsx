@@ -35,6 +35,8 @@ import UnlockAccessModal from '../../components/UnlockAccessModal';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import ReportUserModal from '../../components/ReportUserModal';
 import ReportSubmittedModal from '../../components/ReportSubmittedModal';
+import GalleryPreviewGrid from '../../components/GalleryPreviewGrid';
+import LockedGalleryPreview from '../../components/LockedGalleryPreview';
 import {
   unlockProfileWithMembership,
   getProfileAccess,
@@ -623,21 +625,18 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         </View>
 
         {Array.isArray(data?.galleryPhotos) && data.galleryPhotos.length > 0 && (
-          <View style={styles.galleryRow}>
-            {data.galleryPhotos.map((p: any, i: number) =>
-              p.locked ? (
-                <View key={i} style={styles.galleryLockedTile}>
-                  <Lock color="#D20236" size={14} />
-                </View>
-              ) : (
-                <Image
-                  key={p.publicId || i}
-                  source={{ uri: resolveImageUrl(p.url) }}
-                  style={styles.galleryTile}
-                />
-              ),
-            )}
-          </View>
+          data.galleryPhotos[0]?.locked ? (
+            <LockedGalleryPreview count={data.galleryPhotos.length} onPress={handleViewContact} />
+          ) : (
+            <View style={{ paddingHorizontal: 16 }}>
+              <GalleryPreviewGrid
+                photos={data.galleryPhotos.map((p: any) => ({
+                  publicId: p.publicId,
+                  url: resolveImageUrl(p.url),
+                }))}
+              />
+            </View>
+          )
         )}
 
         {/* Action button */}
@@ -887,22 +886,6 @@ const styles = StyleSheet.create({
   coverWrap: { height: 320, position: 'relative' },
   cover: { width: '100%', height: '100%' },
   coverPlaceholder: { backgroundColor: '#ccc' },
-  galleryRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    paddingHorizontal: 16,
-    marginTop: 12,
-  },
-  galleryTile: { width: 58, height: 58, borderRadius: 8 },
-  galleryLockedTile: {
-    width: 58,
-    height: 58,
-    borderRadius: 8,
-    backgroundColor: '#eee',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   verifiedBadge: {
     position: 'absolute',
     top: 16,
