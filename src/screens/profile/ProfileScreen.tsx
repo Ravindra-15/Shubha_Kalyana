@@ -12,6 +12,7 @@ import { getActiveMembership } from '../../api/membership';
 import { getProfileViewersSummary, getNavbarCounts, isProfileFullyVerified } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import GalleryPreviewGrid from '../../components/GalleryPreviewGrid';
 
 
 const getAge = (dob?: string) => {
@@ -102,7 +103,10 @@ export default function ProfileScreen({ navigation }: any) {
     .filter(Boolean).join(' ');
   const profileCode = user?.profileCode || '';
   const age = getAge(basic.dob);
-  const photo = profile?.photos?.find((p: any) => p.isProfilePhoto)?.url || profile?.photos?.[0]?.url || '';
+  const photo = profile?.photos?.find((p: any) => p.isProfilePhoto)?.url || '';
+  const galleryPhotos = (profile?.photos || [])
+    .filter((p: any) => !p.isProfilePhoto)
+    .map((p: any) => ({ publicId: p.publicId, url: resolveImageUrl(p.url) }));
   const verified = isProfileFullyVerified(profile);
   const location = [profile?.address?.current?.city, profile?.address?.current?.state]
     .filter(Boolean).join(', ');
@@ -176,6 +180,8 @@ export default function ProfileScreen({ navigation }: any) {
               {!!user?.mobile && <Text style={styles.meta}>+91 {user.mobile}</Text>}
             </View>
           </View>
+
+          <GalleryPreviewGrid photos={galleryPhotos} />
 
           <View style={styles.summaryBox}>
             {summaryItems.map(item => (
