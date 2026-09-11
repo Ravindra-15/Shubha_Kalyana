@@ -12,10 +12,11 @@ import {
 } from 'react-native';
 import { AlertCircle, Camera, CheckCircle, Fingerprint, Smartphone, X } from 'lucide-react-native';
 import {
-  confirmHypersignAadhaarOtp,
-  getHypersignAadhaarStatus,
-  requestHypersignAadhaarOtp,
-} from '../api/hypersignAadhaar';
+  confirmAadhaarOtp,
+  getAadhaarVerificationStatus,
+  resendAadhaarOtp,
+  verifyAadhaarWithMobile,
+} from '../api/aadhaarVerification';
 
 type Props = {
   visible: boolean;
@@ -46,12 +47,13 @@ export default function AadhaarVerificationModal({
   const [step, setStep] = useState<'form' | 'otp' | 'success'>('form');
   const [checkingResume, setCheckingResume] = useState(true);
   const [aadhaarNumber, setAadhaarNumber] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [aadhaarLast4, setAadhaarLast4] = useState('');
+  const [maskedMobile, setMaskedMobile] = useState('');
   const [otp, setOtp] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [cooldown, setCooldown] = useState(0);
-  const [verifiedName, setVerifiedName] = useState('');
 
   useEffect(() => {
     if (!visible) {
@@ -60,23 +62,24 @@ export default function AadhaarVerificationModal({
       setStatus('idle');
       setMessage('');
       setAadhaarNumber('');
+      setMobileNumber('');
       setAadhaarLast4('');
+      setMaskedMobile('');
       setOtp('');
       setCooldown(0);
-      setVerifiedName('');
       return;
     }
 
     let ignore = false;
     (async () => {
       try {
-        const result = await getHypersignAadhaarStatus();
+        const result = await getAadhaarVerificationStatus();
         if (ignore) return;
         if (result?.status === 'OTP_SENT') {
-          setAadhaarLast4(result?.aadhaarLast4 || '');
+          setMaskedMobile(result?.maskedMobile || '');
           setStep('otp');
         } else if (result?.status === 'VERIFIED') {
-          setVerifiedName(result?.verifiedName || '');
+          setAadhaarLast4(result?.aadhaarLast4 || '');
           setStep('success');
         }
       } catch {
@@ -108,6 +111,7 @@ export default function AadhaarVerificationModal({
 
   const submitDetails = async () => {
     const normalizedAadhaar = digitsOnly(aadhaarNumber);
+    const normalizedMobile = digitsOnly(mobileNumber);
 
     if (normalizedAadhaar.length !== 12) {
       setStatus('error');
@@ -115,11 +119,20 @@ export default function AadhaarVerificationModal({
       return;
     }
 
+    if (normalizedMobile.length < 10) {
+      setStatus('error');
+      setMessage('Enter the mobile number linked with your Aadhaar.');
+      return;
+    }
+
     try {
       setStatus('submitting');
       setMessage('');
-      await requestHypersignAadhaarOtp(normalizedAadhaar);
-      setAadhaarLast4(normalizedAadhaar.slice(-4));
+      const result = await verifyAadhaarWithMobile({
+        aadhaarNumber: normalizedAadhaar,
+        mobileNumber: normalizedMobile,
+      });
+      setMaskedMobile(result?.maskedMobile || '');
       setStep('otp');
       setStatus('idle');
       setCooldown(RESEND_COOLDOWN_SECONDS);
@@ -133,18 +146,11 @@ export default function AadhaarVerificationModal({
   const resendOtp = async () => {
     if (cooldown > 0 || loading) return;
 
-    const normalizedAadhaar = digitsOnly(aadhaarNumber);
-    if (normalizedAadhaar.length !== 12) {
-      setStatus('error');
-      setMessage('Please re-enter your Aadhaar number to resend the OTP.');
-      setStep('form');
-      return;
-    }
-
     try {
       setStatus('submitting');
       setMessage('');
-      await requestHypersignAadhaarOtp(normalizedAadhaar);
+      const result = await resendAadhaarOtp();
+      setMaskedMobile(result?.maskedMobile || maskedMobile);
       setStatus('idle');
       setCooldown(RESEND_COOLDOWN_SECONDS);
       setMessage('OTP resent successfully.');
@@ -164,8 +170,8 @@ export default function AadhaarVerificationModal({
     try {
       setStatus('submitting');
       setMessage('');
-      const result = await confirmHypersignAadhaarOtp(otp);
-      setVerifiedName(result?.name || '');
+      const result = await confirmAadhaarOtp(otp);
+      setAadhaarLast4(result?.aadhaarLast4 || '');
       try {
         await onVerified?.();
       } catch {
@@ -205,13 +211,15 @@ export default function AadhaarVerificationModal({
             <>
               <View style={styles.body}>
                 <Text style={styles.otpHint}>
-                  We've sent an OTP to the mobile number registered with your Aadhaar
-                  {aadhaarLast4 ? (
+                  We've sent an OTP to
+                  {maskedMobile ? (
                     <>
                       {' '}
-                      (ending in <Text style={styles.otpHintBold}>{aadhaarLast4}</Text>)
+                      <Text style={styles.otpHintBold}>{maskedMobile}</Text>
                     </>
-                  ) : null}
+                  ) : (
+                    ' the mobile number registered with your Aadhaar'
+                  )}
                   . Enter it below to confirm.
                 </Text>
 
@@ -267,7 +275,7 @@ export default function AadhaarVerificationModal({
                 {!success ? (
                   <Text style={styles.otpHint}>
                     {userName ? `${userName}, please` : 'Please'} fill your correct Aadhaar
-                    number for verification.
+                    number and registered mobile number for verification.
                   </Text>
                 ) : null}
 
@@ -285,6 +293,25 @@ export default function AadhaarVerificationModal({
                   />
                 </View>
 
+                {!success ? (
+                  <>
+                    <Text style={styles.label}>Linked mobile number</Text>
+                    <View style={styles.inputWrap}>
+                      <Smartphone color="#999" size={18} />
+                      <TextInput
+                        value={mobileNumber}
+                        onChangeText={(text) => setMobileNumber(digitsOnly(text).slice(0, 15))}
+                        editable={!loading}
+                        keyboardType="number-pad"
+                        placeholder="10-digit mobile number"
+                        placeholderTextColor="#aaa"
+                        style={styles.input}
+                        autoComplete="tel"
+                      />
+                    </View>
+                  </>
+                ) : null}
+
                 {message ? (
                   <View style={[styles.messageBox, success ? styles.successBox : styles.errorBox]}>
                     {success ? (
@@ -298,8 +325,8 @@ export default function AadhaarVerificationModal({
                   </View>
                 ) : null}
 
-                {success && verifiedName ? (
-                  <Text style={styles.otpHint}>Name on Aadhaar: {verifiedName}</Text>
+                {success && aadhaarLast4 ? (
+                  <Text style={styles.otpHint}>Aadhaar ending in {aadhaarLast4}</Text>
                 ) : null}
               </View>
 
