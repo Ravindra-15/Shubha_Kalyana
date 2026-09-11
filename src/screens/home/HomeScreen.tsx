@@ -520,7 +520,16 @@ export default function HomeScreen({ navigation }: any) {
         <View style={styles.filterBar}>
           <TouchableOpacity
             style={styles.filterBtn}
-            onPress={() => setShowFilter(true)}
+            onPress={() => {
+              // Refresh gender right before opening so the "Widow/Widower"
+              // marital status label is correct even if the earlier
+              // on-mount profile fetch hadn't finished yet.
+              apiClient
+                .get('/user/me/profile')
+                .then((res) => setGender(res.data?.data?.profile?.basicInfo?.gender || ''))
+                .catch(() => {});
+              setShowFilter(true);
+            }}
           >
             <Filter color="#333" size={20} />
             <Text style={styles.filterText}>Filter</Text>
