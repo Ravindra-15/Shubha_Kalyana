@@ -61,7 +61,28 @@ export const uploadMyProfilePhoto = async (photo: { uri: string; type: string; n
 
 export const getCurrentProfilePhoto = (profile: any) => {
   const photos = Array.isArray(profile?.photos) ? profile.photos : [];
-  return photos.find((photo: any) => photo?.isProfilePhoto) || photos[0] || null;
+  return photos.find((photo: any) => photo?.isProfilePhoto) || null;
+};
+
+export const getGalleryPhotos = (profile: any) => {
+  const photos = Array.isArray(profile?.photos) ? profile.photos : [];
+  return photos.filter((photo: any) => !photo?.isProfilePhoto);
+};
+
+export const uploadMyGalleryPhoto = async (
+  photo: { uri: string; type: string; name: string },
+  replacePublicId?: string,
+) => {
+  const formData = new FormData();
+  formData.append('galleryPhoto', photo as any);
+  if (replacePublicId) formData.append('replacePublicId', replacePublicId);
+  const res = await apiClient.post('/user/me/gallery-photo', formData);
+  return res.data?.data || null;
+};
+
+export const deleteMyGalleryPhoto = async (publicId: string) => {
+  const res = await apiClient.delete(`/user/me/gallery-photo/${publicId}`);
+  return res.data?.data || null;
 };
 
 export const isProfilePictureVerified = (profile: any) => {

@@ -27,12 +27,15 @@ import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { requestCameraPermission, showCameraPermissionAlert } from '../../utils/cameraPermission';
 import KeyboardWrapper from '../../components/KeyboardWrapper';
 import SearchableDropdown from '../../components/SearchableDropdown';
+import GalleryPhotoRow from '../../components/GalleryPhotoRow';
 import {
   getMyFullProfile,
   isProfilePictureVerified,
   updateMyProfile,
   updateMyPartnerPreference,
   uploadMyProfilePhoto,
+  uploadMyGalleryPhoto,
+  deleteMyGalleryPhoto,
 } from '../../api/profile';
 import {
   Caste,
@@ -335,6 +338,8 @@ export default function EditProfileScreen({ navigation }: any) {
     email: '',
     photoUrl: '',
   });
+  const [galleryPhotos, setGalleryPhotos] = useState<any[]>([]);
+  const [galleryUploading, setGalleryUploading] = useState(false);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -499,7 +504,7 @@ export default function EditProfileScreen({ navigation }: any) {
       const pref = data?.partnerPreference || data?.partnerPrefrence || {};
       const current = profile.address?.current || {};
       const permanent = profile.address?.permanent || {};
-      const photo = profile.photos?.find((p: any) => p.isProfilePhoto)?.url || profile.photos?.[0]?.url || '';
+      const photo = profile.photos?.find((p: any) => p.isProfilePhoto)?.url || '';
       const casteName = basic.caste?.casteName || '';
 
       setCastes(casteList);
@@ -513,6 +518,7 @@ export default function EditProfileScreen({ navigation }: any) {
         email: user.email || '',
         photoUrl: photo,
       });
+      setGalleryPhotos((profile.photos || []).filter((p: any) => !p.isProfilePhoto));
 
       setReligionValue(basic.religion || '');
       setCasteId(basic.caste?._id || '');
@@ -805,7 +811,7 @@ export default function EditProfileScreen({ navigation }: any) {
         type: asset.type || 'image/jpeg',
         name: asset.fileName || `photo_${Date.now()}.jpg`,
       });
-      const nextPhoto = updated?.profile?.photos?.find((p: any) => p.isProfilePhoto)?.url || updated?.profile?.photos?.[0]?.url;
+      const nextPhoto = updated?.profile?.photos?.find((p: any) => p.isProfilePhoto)?.url;
       if (nextPhoto) {
         setReadonly((prev) => ({ ...prev, photoUrl: nextPhoto }));
       }
@@ -814,6 +820,31 @@ export default function EditProfileScreen({ navigation }: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not upload photo');
     } finally {
       setUploadingPhoto(false);
+    }
+  };
+
+  const addGalleryPhoto = async (asset: any) => {
+    try {
+      setGalleryUploading(true);
+      const updated = await uploadMyGalleryPhoto({
+        uri: asset.uri,
+        type: asset.type || 'image/jpeg',
+        name: asset.fileName || `gallery_${Date.now()}.jpg`,
+      });
+      setGalleryPhotos((updated?.profile?.photos || []).filter((p: any) => !p.isProfilePhoto));
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not upload photo');
+    } finally {
+      setGalleryUploading(false);
+    }
+  };
+
+  const removeGalleryPhotoItem = async (publicId: string) => {
+    try {
+      const updated = await deleteMyGalleryPhoto(publicId);
+      setGalleryPhotos((updated?.profile?.photos || []).filter((p: any) => !p.isProfilePhoto));
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not remove photo');
     }
   };
 
@@ -1166,6 +1197,13 @@ export default function EditProfileScreen({ navigation }: any) {
                 <BadgeCheck color="#fff" size={17} fill="#D20236" />
               )}
             </View>
+
+            <GalleryPhotoRow
+              photos={galleryPhotos.map((p: any) => ({ publicId: p.publicId, url: resolveImageUrl(p.url) }))}
+              onAdd={addGalleryPhoto}
+              onRemove={removeGalleryPhotoItem}
+              uploading={galleryUploading}
+            />
           </View>
 
           {!!errorMsg && <Text style={styles.errorBanner}>{errorMsg}</Text>}

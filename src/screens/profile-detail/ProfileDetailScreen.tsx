@@ -459,10 +459,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             : bothHaveActivePlans
               ? 'viewContact'
               : 'sendRequest';
-  const photo =
-    profile.photos?.find((p: any) => p.isProfilePhoto)?.url ||
-    profile.photos?.[0]?.url ||
-    '';
+  const photo = profile.photos?.find((p: any) => p.isProfilePhoto)?.url || '';
   const verified = Boolean(profile.verified || isProfileFullyVerified(profile));
   const caste = basic.caste?.casteName || basic.caste?.name || '';
   const location = [addr.current?.city, addr.current?.state]
@@ -624,6 +621,24 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             )}
           </View>
         </View>
+
+        {Array.isArray(data?.galleryPhotos) && data.galleryPhotos.length > 0 && (
+          <View style={styles.galleryRow}>
+            {data.galleryPhotos.map((p: any, i: number) =>
+              p.locked ? (
+                <View key={i} style={styles.galleryLockedTile}>
+                  <Lock color="#D20236" size={14} />
+                </View>
+              ) : (
+                <Image
+                  key={p.publicId || i}
+                  source={{ uri: resolveImageUrl(p.url) }}
+                  style={styles.galleryTile}
+                />
+              ),
+            )}
+          </View>
+        )}
 
         {/* Action button */}
         <View style={styles.actionWrap}>
@@ -872,6 +887,22 @@ const styles = StyleSheet.create({
   coverWrap: { height: 320, position: 'relative' },
   cover: { width: '100%', height: '100%' },
   coverPlaceholder: { backgroundColor: '#ccc' },
+  galleryRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingHorizontal: 16,
+    marginTop: 12,
+  },
+  galleryTile: { width: 58, height: 58, borderRadius: 8 },
+  galleryLockedTile: {
+    width: 58,
+    height: 58,
+    borderRadius: 8,
+    backgroundColor: '#eee',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   verifiedBadge: {
     position: 'absolute',
     top: 16,

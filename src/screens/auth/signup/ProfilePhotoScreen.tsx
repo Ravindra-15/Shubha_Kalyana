@@ -16,6 +16,7 @@ import apiClient from '../../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { validateProfilePhotoAsset } from '../../../utils/profilePhotoValidation';
 import { requestCameraPermission, showCameraPermissionAlert } from '../../../utils/cameraPermission';
+import GalleryPhotoRow from '../../../components/GalleryPhotoRow';
 
 const guidelineItems = [
   {
@@ -53,7 +54,7 @@ const guidelineItems = [
 const doGuidelines = [
   'Your photo should be front facing and your entire face should be visible.',
   'Ensure that your photo is recent and not with a group.',
-  'Use a JPG or PNG photo up to 2MB.',
+  'Use a JPG or PNG photo up to 5MB.',
 ];
 
 const dontGuidelines = [
@@ -62,6 +63,9 @@ const dontGuidelines = [
 
 export default function ProfilePhotoScreen({ navigation }: any) {
   const [photo, setPhoto] = useState<any>(null);
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState('');
+  const [galleryPhotos, setGalleryPhotos] = useState<any[]>([]);
+  const [galleryUploading, setGalleryUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [picking, setPicking] = useState(false);
 
@@ -69,7 +73,46 @@ export default function ProfilePhotoScreen({ navigation }: any) {
     AsyncStorage.getItem('onboardingToken').then(token => {
       console.log('ONBOARDING TOKEN:', token);
     });
+
+    apiClient
+      .get('/onboarding/status')
+      .then(res => {
+        const data = res.data?.data;
+        if (data?.profilePhotoUrl) setExistingPhotoUrl(data.profilePhotoUrl);
+        if (Array.isArray(data?.galleryPhotos)) setGalleryPhotos(data.galleryPhotos);
+      })
+      .catch(() => {});
   }, []);
+
+  const addGalleryPhoto = async (asset: any) => {
+    const formData = new FormData();
+    formData.append('galleryPhoto', {
+      uri: asset.uri,
+      type: asset.type || 'image/jpeg',
+      name: asset.fileName || `gallery_${Date.now()}.jpg`,
+    } as any);
+
+    try {
+      setGalleryUploading(true);
+      const res = await apiClient.post('/onboarding/gallery-photo', formData);
+      const photos = res.data?.data?.photos || [];
+      setGalleryPhotos(photos.filter((p: any) => !p.isProfilePhoto));
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not upload photo');
+    } finally {
+      setGalleryUploading(false);
+    }
+  };
+
+  const removeGalleryPhotoItem = async (publicId: string) => {
+    try {
+      const res = await apiClient.delete('/onboarding/gallery-photo', { data: { publicId } });
+      const photos = res.data?.data?.photos || [];
+      setGalleryPhotos(photos.filter((p: any) => !p.isProfilePhoto));
+    } catch (err: any) {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not remove photo');
+    }
+  };
 
   const pickImage = () => {
     Alert.alert('Upload Photo', 'Choose an option', [
@@ -118,7 +161,13 @@ export default function ProfilePhotoScreen({ navigation }: any) {
   };
 
   const uploadPhoto = async () => {
-    if (!photo) return Alert.alert('Required', 'Please select a photo first');
+    if (!photo) {
+      if (existingPhotoUrl) {
+        navigation.navigate('Hobbies');
+        return;
+      }
+      return Alert.alert('Required', 'Please select a photo first');
+    }
 
     const formData = new FormData();
     formData.append('profilePhoto', {
@@ -165,6 +214,10 @@ export default function ProfilePhotoScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.back}>←</Text>
+          </TouchableOpacity>
+
           <ProgressBar step={13} total={16} />
 
           <Text style={styles.title}>
@@ -185,6 +238,8 @@ export default function ProfilePhotoScreen({ navigation }: any) {
           >
             {photo ? (
               <Image source={{ uri: photo.uri }} style={styles.avatar} />
+            ) : existingPhotoUrl ? (
+              <Image source={{ uri: existingPhotoUrl }} style={styles.avatar} />
             ) : (
               <View style={styles.avatarPlaceholder} />
             )}
@@ -207,6 +262,13 @@ export default function ProfilePhotoScreen({ navigation }: any) {
               {loading ? 'Uploading...' : picking ? 'Opening...' : 'Upload photo'}
             </Text>
           </TouchableOpacity>
+
+          <GalleryPhotoRow
+            photos={galleryPhotos}
+            onAdd={addGalleryPhoto}
+            onRemove={removeGalleryPhotoItem}
+            uploading={galleryUploading}
+          />
 
           <View style={styles.guidelinesSection}>
             <View style={styles.guidelinesHeader}>
@@ -260,9 +322,9 @@ export default function ProfilePhotoScreen({ navigation }: any) {
 
         <View style={styles.footer}>
           <TouchableOpacity
-            style={[styles.nextBtn, (!photo || loading || picking) && styles.nextBtnDisabled]}
+            style={[styles.nextBtn, ((!photo && !existingPhotoUrl) || loading || picking) && styles.nextBtnDisabled]}
             onPress={uploadPhoto}
-            disabled={!photo || loading || picking}
+            disabled={(!photo && !existingPhotoUrl) || loading || picking}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />

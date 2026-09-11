@@ -78,6 +78,17 @@ export default function UploadAadhaarScreen({ navigation }: any) {
   const [errNum, setErrNum] = useState(false);
   const [availability, setAvailability] = useState<AadhaarAvailability>('idle');
   const [availabilityError, setAvailabilityError] = useState('');
+  const [existingDocumentUrl, setExistingDocumentUrl] = useState('');
+
+  useEffect(() => {
+    apiClient
+      .get('/onboarding/status')
+      .then(res => {
+        const data = res.data?.data;
+        if (data?.aadhaarDocumentUrl) setExistingDocumentUrl(data.aadhaarDocumentUrl);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const normalizedAadhaarNumber = getDigits(aadhaarNumber);
@@ -128,6 +139,11 @@ export default function UploadAadhaarScreen({ navigation }: any) {
   };
 
   const upload = async () => {
+    if (!file && existingDocumentUrl) {
+      navigation.navigate('ReviewProfile');
+      return;
+    }
+
     const num = makeValidAadhaarNumber(aadhaarNumber);
     setAadhaarNumber(formatAadhaarNumber(num));
 
@@ -222,6 +238,8 @@ export default function UploadAadhaarScreen({ navigation }: any) {
             <Text style={styles.uploadIcon}>⬆</Text>
             {file ? (
               <Text style={styles.fileName}>{file.name}</Text>
+            ) : existingDocumentUrl ? (
+              <Text style={styles.fileName}>Aadhaar document already uploaded</Text>
             ) : (
               <>
                 <Text style={styles.dropTitle}>Choose a file or drag{'\n'}& drop it here</Text>
