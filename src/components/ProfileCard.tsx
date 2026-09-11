@@ -155,6 +155,8 @@ secondaryBtn: {
   paddingVertical: 7,
   paddingHorizontal: 12,
   marginRight: 12,
+  minWidth: 130,
+  alignItems: 'center',
 },
 secondaryBtnDisabled: { borderColor: '#ddd' },
 secondaryText: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-Bold' },
