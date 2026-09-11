@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { BadgeCheck, Eye, Heart } from 'lucide-react-native';
+import { BadgeCheck, Heart } from 'lucide-react-native';
 
 type Props = {
   profile: any;
@@ -53,17 +53,27 @@ export default function ProfileCard({
           <Text style={styles.detail}>{profile.location}</Text>
 
           <TouchableOpacity
-            style={[styles.actionBtn, actionDisabled && styles.actionBtnDisabled]}
-            onPress={onAction}
-            disabled={actionDisabled}
+            style={styles.actionBtn}
+            onPress={onView}
             activeOpacity={0.85}
           >
-            <Text style={styles.actionText}>{actionLabel}</Text>
+            <Text style={styles.actionText}>View Profile</Text>
           </TouchableOpacity>
         </View>
       </View>
 
 <View style={styles.bottomRow}>
+  <TouchableOpacity
+    style={[styles.secondaryBtn, actionDisabled && styles.secondaryBtnDisabled]}
+    onPress={onAction}
+    disabled={actionDisabled}
+    activeOpacity={0.85}
+  >
+    <Text style={[styles.secondaryText, actionDisabled && styles.secondaryTextDisabled]}>
+      {actionLabel}
+    </Text>
+  </TouchableOpacity>
+
   {showInterested && (
     <TouchableOpacity style={styles.linkBtn} onPress={onInterested}>
       <Heart
@@ -81,11 +91,6 @@ export default function ProfileCard({
       </Text>
     </TouchableOpacity>
   )}
-
-  <TouchableOpacity style={styles.linkBtn} onPress={onView}>
-    <Eye color="#666" size={15} />
-    <Text style={styles.linkText}>View</Text>
-  </TouchableOpacity>
 
   {onRemove && (
 <TouchableOpacity style={styles.removeBtn} onPress={onRemove}>
@@ -136,7 +141,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
-  actionBtnDisabled: { backgroundColor: '#e69aab' },
   actionText: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
 bottomRow: {
   flexDirection: 'row',
@@ -144,6 +148,17 @@ bottomRow: {
   marginTop: 8,
   marginLeft: 100,
 },
+secondaryBtn: {
+  borderWidth: 1,
+  borderColor: '#D20236',
+  borderRadius: 8,
+  paddingVertical: 7,
+  paddingHorizontal: 12,
+  marginRight: 12,
+},
+secondaryBtnDisabled: { borderColor: '#ddd' },
+secondaryText: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-Bold' },
+secondaryTextDisabled: { color: '#999' },
 linkBtn: {
   flexDirection: 'row',
   alignItems: 'center',
