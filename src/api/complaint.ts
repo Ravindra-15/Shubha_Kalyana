@@ -1,13 +1,11 @@
 import apiClient from './client';
 
 export const CHAT_REPORT_REASONS = [
-  'Fake Profile',
-  'Harassment / Abuse',
-  'Inappropriate Messages',
-  'Fraud / Money Request',
-  'Misleading Information',
-  'Spam',
-  'Other',
+  'Obscene/Fake/Misleading Profile',
+  'Inappropriate/Unacceptable behaviour',
+  'I know this person',
+  'Photo related',
+  'Other Reason',
 ] as const;
 
 export type ChatReportReason = typeof CHAT_REPORT_REASONS[number];
