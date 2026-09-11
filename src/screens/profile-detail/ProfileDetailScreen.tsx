@@ -571,40 +571,6 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#D20236']} tintColor="#D20236" />
         }
       >
-        {matchStatus ? (
-          <View style={styles.matchBanner}>
-            <Image
-              source={require('../../assets/images/unlock-illustration.png')}
-              style={styles.matchBannerImage}
-              resizeMode="contain"
-            />
-            <View>
-              {matchStatus === 'connected' ? (
-                <>
-                  <Text style={styles.matchBannerTitle}>It's a Match !</Text>
-                  <Text style={styles.matchBannerText}>
-                    {name} has accepted your interest. You can now start your conversation.
-                  </Text>
-                </>
-              ) : matchStatus === 'sent' ? (
-                <>
-                  <Text style={styles.matchBannerTitle}>Request Sent</Text>
-                  <Text style={styles.matchBannerText}>
-                    Your request is waiting for {name}'s response. We'll let you know once they accept.
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.matchBannerTitle}>New Request!</Text>
-                  <Text style={styles.matchBannerText}>
-                    {name} wants to connect with you. Review your requests to respond.
-                  </Text>
-                </>
-              )}
-            </View>
-          </View>
-        ) : null}
-
         {/* Cover photo */}
         <View style={styles.coverWrap}>
           {photo ? (
@@ -903,26 +869,6 @@ const styles = StyleSheet.create({
   },
   optionsMenuItem: { paddingHorizontal: 16, paddingVertical: 12 },
   optionsMenuText: { fontSize: 14, fontFamily: 'Outfit-Medium', color: '#D20236' },
-  matchBanner: {
-    margin: 16,
-    marginBottom: 0,
-    borderRadius: 12,
-    backgroundColor: '#D9043D',
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    overflow: 'hidden',
-  },
-  matchBannerImage: {
-    position: 'absolute',
-    alignSelf: 'center',
-    top: '50%',
-    marginTop: -60,
-    width: 160,
-    height: 120,
-    opacity: 0.15,
-  },
-  matchBannerTitle: { color: '#fff', fontSize: 18, fontFamily: 'Outfit-Bold' },
-  matchBannerText: { color: 'rgba(255,255,255,0.9)', fontSize: 13, marginTop: 4, lineHeight: 19 },
   coverWrap: { height: 320, position: 'relative' },
   cover: { width: '100%', height: '100%' },
   coverPlaceholder: { backgroundColor: '#ccc' },
