@@ -81,7 +81,7 @@ export const uploadMyGalleryPhoto = async (
 };
 
 export const deleteMyGalleryPhoto = async (publicId: string) => {
-  const res = await apiClient.delete(`/user/me/gallery-photo/${publicId}`);
+  const res = await apiClient.delete(`/user/me/gallery-photo/${encodeURIComponent(publicId)}`);
   return res.data?.data || null;
 };
 
