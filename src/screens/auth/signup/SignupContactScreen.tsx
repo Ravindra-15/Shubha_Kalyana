@@ -35,7 +35,6 @@ export default function SignupContactScreen({ navigation }: any) {
   const [emailOtpSent, setEmailOtpSent] = useState(false);
   const [emailOtpValue, setEmailOtpValue] = useState('');
   const [emailVerified, setEmailVerified] = useState(false);
-  const [emailSkipped, setEmailSkipped] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
   const [emailVerifying, setEmailVerifying] = useState(false);
   const [emailCooldown, setEmailCooldown] = useState(0);
@@ -267,41 +266,19 @@ export default function SignupContactScreen({ navigation }: any) {
           {errors.mobile ? <Text style={styles.errorText}>{errors.mobile}</Text> : null}
           {mobileVerified && <Text style={styles.verifiedText}>✓ Mobile verified</Text>}
 
-          <View style={[styles.row, { marginTop: 20, justifyContent: 'space-between' }]}>
-            <Text style={styles.label}>Email ID (optional)</Text>
-            {mobileVerified && !emailVerified && (
-              <TouchableOpacity
-                onPress={() => {
-                  if (emailSkipped) {
-                    setEmailSkipped(false);
-                  } else {
-                    setEmailSkipped(true);
-                    setEmail('');
-                    setEmailOtpSent(false);
-                    setEmailOtpValue('');
-                    setEmailCooldown(0);
-                    setErrors((e) => ({ ...e, email: '' }));
-                  }
-                }}
-              >
-                <Text style={styles.skipLink}>
-                  {emailSkipped ? 'Add email instead' : 'Skip for now'}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          <Text style={[styles.label, { marginTop: 20 }]}>Email ID (optional)</Text>
           <View style={styles.row} ref={registerField('email')}>
             <TextInput
               style={[
                 styles.input,
                 styles.flexInput,
                 errors.email && styles.inputError,
-                (!mobileVerified || emailVerified || emailSkipped) && styles.inputDisabled,
+                (!mobileVerified || emailVerified) && styles.inputDisabled,
               ]}
-              placeholder={emailSkipped ? 'Skipped — you can add this later' : 'Enter your email address'}
+              placeholder="Enter your email address"
               placeholderTextColor="#999"
               value={email}
-              editable={mobileVerified && !emailVerified && !emailSkipped}
+              editable={mobileVerified && !emailVerified}
               onChangeText={(t) => {
                 setEmail(t);
                 setEmailOtpSent(false);
@@ -311,7 +288,7 @@ export default function SignupContactScreen({ navigation }: any) {
               keyboardType="email-address"
               autoCapitalize="none"
             />
-            {mobileVerified && !emailVerified && !emailSkipped && emailCooldown <= 0 && (
+            {mobileVerified && !emailVerified && emailCooldown <= 0 && (
               <TouchableOpacity
                 style={styles.otpBtn}
                 onPress={sendEmailOtp}
@@ -326,14 +303,14 @@ export default function SignupContactScreen({ navigation }: any) {
                 )}
               </TouchableOpacity>
             )}
-            {mobileVerified && !emailVerified && !emailSkipped && emailCooldown > 0 && (
+            {mobileVerified && !emailVerified && emailCooldown > 0 && (
               <View style={styles.cooldownBox}>
                 <Text style={styles.cooldownText}>{emailCooldown}s</Text>
               </View>
             )}
           </View>
 
-          {mobileVerified && !emailVerified && !emailSkipped && emailOtpSent && (
+          {mobileVerified && !emailVerified && emailOtpSent && (
             <View style={styles.row}>
               <TextInput
                 style={[styles.input, styles.flexInput]}
@@ -360,11 +337,6 @@ export default function SignupContactScreen({ navigation }: any) {
           )}
           {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
           {emailVerified && <Text style={styles.verifiedText}>✓ Email verified</Text>}
-          {emailSkipped && (
-            <Text style={styles.skippedText}>
-              Email skipped — you can add it later from your profile settings.
-            </Text>
-          )}
 
           <TouchableOpacity style={styles.checkRow} onPress={() => setAgreedToTerms(!agreedToTerms)}>
             <View style={[styles.checkbox, agreedToTerms && styles.checkboxActive]}>
@@ -450,8 +422,6 @@ const styles = StyleSheet.create({
   cooldownText: { color: '#999', fontSize: 14, fontFamily: 'Outfit-SemiBold' },
   errorText: { color: '#D20236', fontSize: 13, marginBottom: 10 },
   verifiedText: { color: '#2e7d32', fontSize: 14, fontFamily: 'Outfit-SemiBold', marginBottom: 10 },
-  skippedText: { color: '#888', fontSize: 13, marginBottom: 10 },
-  skipLink: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-SemiBold', textDecorationLine: 'underline' },
   continueBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,
