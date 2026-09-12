@@ -17,7 +17,7 @@ import type { Plan } from '../../api/membershipPlans';
 import { getMyFullProfile } from '../../api/profile';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { openRazorpayOrder } from '../../utils/razorpayCheckout';
-import { formatMoney, type PaymentOrderResult } from '../../utils/paymentBreakup';
+import { formatMoney, getBillingBreakupFromAmount, type PaymentOrderResult } from '../../utils/paymentBreakup';
 import PaymentBreakupModal from '../../components/PaymentBreakupModal';
 import BottomNav from '../../components/BottomNav';
 import VerificationPromptModal from '../../components/VerificationPromptModal';
@@ -57,6 +57,17 @@ const getPlanUpgradePricing = (plan: Plan) =>
 
 const getPlanPayableAmount = (plan: Plan) =>
   getPlanUpgradePricing(plan)?.payableAmount ?? plan.price;
+
+// Display-only "MRP + discount" info shown on the plan card, kept in sync with
+// the web membership cards (matrimony-user/.../MembershipPage.jsx -> planDiscountInfo).
+const planDiscountInfo = (planName?: string) => {
+  const n = (planName || '').toLowerCase();
+  if (n.includes('diamond')) return { actualPrice: 4480, discountPercent: 66 };
+  if (n.includes('gold')) return { actualPrice: 3607, discountPercent: 69 };
+  if (n.includes('silver')) return { actualPrice: 2491, discountPercent: 72 };
+  if (n.includes('star')) return { actualPrice: 499, discountPercent: 0 };
+  return null;
+};
 
 type PendingPayment = {
   plan: Plan;
@@ -230,6 +241,8 @@ export default function PlansScreen({ navigation }: any) {
                   !isActive && activePlanRank > 0 && Number(plan.rank || 0) <= activePlanRank;
                 const upgradePricing = getPlanUpgradePricing(plan);
                 const payableAmount = getPlanPayableAmount(plan);
+                const discountInfo = planDiscountInfo(plan.planName);
+                const gstBreakup = getBillingBreakupFromAmount(payableAmount);
                 return (
                   <View key={plan._id} style={[styles.planCard, { backgroundColor: theme.bg }]}>
                     <View style={styles.planHead}>
@@ -249,7 +262,20 @@ export default function PlansScreen({ navigation }: any) {
                       <Text style={[styles.upgradeCredit, { color: theme.text }]}>
                         {formatMoney(upgradePricing.targetPlanPrice, plan.currency)} before {formatMoney(upgradePricing.creditAmount, plan.currency)} credit
                       </Text>
+                    ) : discountInfo && discountInfo.discountPercent > 0 ? (
+                      <Text style={[styles.upgradeCredit, { color: theme.text }]}>
+                        <Text style={styles.strikethrough}>
+                          {formatMoney(discountInfo.actualPrice, plan.currency)}
+                        </Text>{' '}
+                        <Text style={styles.discountPercent}>{discountInfo.discountPercent}% OFF</Text>
+                      </Text>
                     ) : null}
+                    <Text style={[styles.gstLine, { color: theme.text }]}>
+                      + 18% GST {formatMoney(gstBreakup.taxAmount, plan.currency)}
+                    </Text>
+                    <Text style={[styles.finalAmount, { color: theme.text }]}>
+                      Final Amount: {formatMoney(gstBreakup.totalAmount, plan.currency)}
+                    </Text>
 
                     <View style={[styles.benefitBox, { backgroundColor: theme.light }]}>
                       {benefitLines(plan).map((line, i) => (
@@ -324,9 +350,13 @@ const styles = StyleSheet.create({
   planHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
   planName: { fontSize: 18, fontFamily: 'Outfit-Bold' },
   planSub: { fontSize: 13, marginBottom: 12, opacity: 0.9 },
-  planPrice: { fontSize: 26, fontFamily: 'Outfit-ExtraBold', marginBottom: 14 },
+  planPrice: { fontSize: 26, fontFamily: 'Outfit-ExtraBold', marginBottom: 4 },
   planDuration: { fontSize: 13, fontFamily: 'Outfit-Medium' },
   upgradeCredit: { marginTop: -8, marginBottom: 14, fontSize: 12, fontFamily: 'Outfit-Bold', opacity: 0.88 },
+  strikethrough: { textDecorationLine: 'line-through', opacity: 0.75 },
+  discountPercent: { fontFamily: 'Outfit-Bold' },
+  gstLine: { fontSize: 12, fontFamily: 'Outfit-Medium', opacity: 0.85, marginBottom: 2 },
+  finalAmount: { fontSize: 14, fontFamily: 'Outfit-Bold', marginBottom: 14 },
   benefitBox: { borderRadius: 12, padding: 14, marginBottom: 16 },
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   benefitText: { fontSize: 13 },

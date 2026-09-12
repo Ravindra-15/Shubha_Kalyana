@@ -51,6 +51,24 @@ export const formatMoney = (amount: number | string | undefined | null, currency
   return currency === 'INR' ? `\u20B9${value}` : `${currency} ${value}`;
 };
 
+export const getBillingBreakupFromAmount = (amount: number | string | undefined | null): PaymentBreakup => {
+  const taxableAmount = roundMoney(amount);
+  const taxAmount = roundMoney((taxableAmount * GST_RATE) / 100);
+  const cgstAmount = roundMoney((taxableAmount * CGST_RATE) / 100);
+  const sgstAmount = roundMoney(taxAmount - cgstAmount);
+
+  return {
+    taxableAmount,
+    taxAmount,
+    taxRate: GST_RATE,
+    cgstAmount,
+    cgstRate: CGST_RATE,
+    sgstAmount,
+    sgstRate: SGST_RATE,
+    totalAmount: roundMoney(taxableAmount + taxAmount),
+  };
+};
+
 export const getBillingBreakupFromOrder = (order: PaymentOrder = {}): PaymentBreakup => {
   const metadataBreakup = order.metadata?.billingBreakup || {};
   const taxableAmount = roundMoney(
