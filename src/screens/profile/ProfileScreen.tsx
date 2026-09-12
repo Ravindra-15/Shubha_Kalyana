@@ -178,7 +178,9 @@ export default function ProfileScreen({ navigation }: any) {
             </View>
           </View>
 
-          <GalleryPreviewGrid photos={galleryPhotos} />
+          <View style={styles.gallerySection}>
+            <GalleryPreviewGrid photos={galleryPhotos} />
+          </View>
 
           <View style={styles.summaryBox}>
             {summaryItems.map(item => (
@@ -283,6 +285,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 17, fontFamily: 'Outfit-Bold', color: '#000' },
   meta: { fontSize: 13, color: '#777', marginTop: 2 },
   profileCode: { fontSize: 13, color: '#D20236', fontFamily: 'Outfit-Bold', marginTop: 2 },
+  gallerySection: { marginBottom: 16 },
   summaryBox: {
     flexDirection: 'row',
     flexWrap: 'wrap',
