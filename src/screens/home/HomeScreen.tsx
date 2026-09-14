@@ -318,13 +318,25 @@ export default function HomeScreen({ navigation }: any) {
 
   const getCardActionProps = (p: any, sendFn: (id: string) => void) => {
     if (p.requestStatus === 'ACCEPTED') {
-      // Being connected alone doesn't unlock chat -- contact must have
-      // been viewed at least once first (single unlock or membership grant).
-      if (p.isContactUnlocked) {
+      // Being connected alone doesn't unlock chat -- BOTH sides must have
+      // viewed each other's contact at least once (single unlock or
+      // membership grant). One-sided unlocking must not open chat.
+      if (p.isChatUnlocked) {
         return {
           actionLabel: 'Chat Now',
           actionDisabled: false,
           onAction: () => chatWithProfile(p),
+        };
+      }
+      if (p.isContactUnlocked) {
+        return {
+          actionLabel: 'Chat Now',
+          actionDisabled: false,
+          onAction: () =>
+            Alert.alert(
+              'Chat not available yet',
+              'Once they also view your contact, you both can chat.',
+            ),
         };
       }
       return {

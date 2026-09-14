@@ -200,14 +200,9 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         try {
           const acc = await getProfileAccess(profileId);
           setAccess(acc);
-          setCanChat(
-            Boolean(
-              acc?.shouldBlurSensitiveFields === false ||
-                acc?.canViewContactNumber ||
-                acc?.isProfileSingleUnlocked ||
-                acc?.isMembershipProfileUnlocked,
-            ),
-          );
+          // Mutual gate: both sides must have viewed each other's contact
+          // before chat opens up -- one-sided unlocking is not enough.
+          setCanChat(Boolean(acc?.canChatNow));
           if (acc && acc.shouldBlurSensitiveFields === false) {
             const c = await revealContact(profileId);
             setContact(c);
@@ -291,14 +286,9 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       setRequestStatus('ACCEPTED');
       const acc = await getProfileAccess(profileId);
       setAccess(acc);
-      setCanChat(
-        Boolean(
-          acc?.shouldBlurSensitiveFields === false ||
-            acc?.canViewContactNumber ||
-            acc?.isProfileSingleUnlocked ||
-            acc?.isMembershipProfileUnlocked,
-        ),
-      );
+      // Mutual gate: both sides must have viewed each other's contact
+      // before chat opens up -- one-sided unlocking is not enough.
+      setCanChat(Boolean(acc?.canChatNow));
     } catch (err: any) {
       if (err?.response?.status === 402) {
         setShowUnlock(true);
@@ -322,14 +312,9 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       setData(fresh);
       setAccess(acc);
       setContact(c);
-      setCanChat(
-        Boolean(
-          acc?.shouldBlurSensitiveFields === false ||
-            acc?.canViewContactNumber ||
-            acc?.isProfileSingleUnlocked ||
-            acc?.isMembershipProfileUnlocked,
-        ),
-      );
+      // Mutual gate: both sides must have viewed each other's contact
+      // before chat opens up -- one-sided unlocking is not enough.
+      setCanChat(Boolean(acc?.canChatNow));
     } catch (err: any) {
       if (err?.response?.status === 402) {
         setShowUnlock(true);
@@ -451,7 +436,9 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
     requestStatus === 'ACCEPTED'
       ? canChat
         ? 'chat'
-        : 'viewContact'
+        : myUnlockDone
+          ? 'waitingForChat'
+          : 'viewContact'
       : matchStatus === 'received'
         ? 'acceptRequest'
         : requestStatus === 'PENDING'
