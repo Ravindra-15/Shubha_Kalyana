@@ -179,10 +179,19 @@ export default function AllMatchesScreen({ navigation, route }: any) {
 
   const getCardActionProps = (p: any) => {
     if (p.requestStatus === 'ACCEPTED') {
+      // Being connected alone doesn't unlock chat -- contact must have
+      // been viewed at least once first (single unlock or membership grant).
+      if (p.isContactUnlocked) {
+        return {
+          actionLabel: 'Chat Now',
+          actionDisabled: false,
+          onAction: () => chatWithProfile(p),
+        };
+      }
       return {
-        actionLabel: 'Chat Now',
+        actionLabel: 'View Contact',
         actionDisabled: false,
-        onAction: () => chatWithProfile(p),
+        onAction: () => viewContact(p.profileId),
       };
     }
     if (p.bothHaveActivePlans && !p.requestStatus) {

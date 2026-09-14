@@ -318,10 +318,19 @@ export default function HomeScreen({ navigation }: any) {
 
   const getCardActionProps = (p: any, sendFn: (id: string) => void) => {
     if (p.requestStatus === 'ACCEPTED') {
+      // Being connected alone doesn't unlock chat -- contact must have
+      // been viewed at least once first (single unlock or membership grant).
+      if (p.isContactUnlocked) {
+        return {
+          actionLabel: 'Chat Now',
+          actionDisabled: false,
+          onAction: () => chatWithProfile(p),
+        };
+      }
       return {
-        actionLabel: 'Chat Now',
+        actionLabel: 'View Contact',
         actionDisabled: false,
-        onAction: () => chatWithProfile(p),
+        onAction: () => viewContact(p.profileId),
       };
     }
     if (p.bothHaveActivePlans && !p._requestSent && !p.requestStatus) {
