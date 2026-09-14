@@ -46,7 +46,7 @@ export default function UnlockAccessModal({
           </Text>
           <Text style={styles.subtitle}>
             {isAcceptFlow
-              ? `Access required to ${action === 'send' ? 'send a request to' : 'accept'} ${name || 'this profile'}.`
+              ? `Purchase or upgrade your membership plan to continue with ${name || 'this profile'}.`
               : `View contact details and start communicating with ${name || 'this profile'} securely.`}
           </Text>
 
