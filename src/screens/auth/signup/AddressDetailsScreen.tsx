@@ -15,6 +15,7 @@ import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
 import SearchableDropdown from '../../../components/SearchableDropdown';
 import { INDIAN_STATE_OPTIONS } from '../../../constants/indianStates';
+import { getDistrictOptionsForStates } from '../../../constants/districtsByState';
 import { useScrollToError } from '../../../hooks/useScrollToError';
 
 export default function AddressDetailsScreen({ navigation }: any) {
@@ -164,12 +165,27 @@ export default function AddressDetailsScreen({ navigation }: any) {
               onSelect={(v) => {
                 setS(v);
                 clearErr(prefix ? `${prefix}State` : 'state');
+                // District options depend on the selected state -- clear it
+                // so a stale district from a different state can't remain.
+                setD('');
               }}
               error={Boolean(errors[prefix ? `${prefix}State` : 'state'])}
             />
           </View>
           <Text style={styles.label}>District <Text style={styles.star}>*</Text></Text>
-          <TextInput ref={registerField(key('district', 'District')) as any} style={[styles.input, errors[key('district', 'District')] && styles.inputError]} placeholder="District" placeholderTextColor="#999" value={d} onChangeText={(v) => { setD(v); clearErr(key('district', 'District')); }} />
+          <View ref={registerField(key('district', 'District')) as any}>
+            <SearchableDropdown
+              placeholder={s ? 'Select District' : 'Select state first'}
+              value={d}
+              options={getDistrictOptionsForStates(s ? [s] : [])}
+              onSelect={(v) => {
+                setD(v);
+                clearErr(key('district', 'District'));
+              }}
+              error={Boolean(errors[key('district', 'District')])}
+              disabled={!s}
+            />
+          </View>
           <Text style={styles.label}>Taluka</Text>
           <TextInput style={styles.input} placeholder="Taluka" placeholderTextColor="#999" value={t} onChangeText={setT} />
           <Text style={styles.label}>Pincode</Text>

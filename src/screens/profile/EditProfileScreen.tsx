@@ -43,6 +43,7 @@ import {
   getReligionOptions,
 } from '../../api/caste';
 import { INDIAN_STATE_OPTIONS } from '../../constants/indianStates';
+import { getDistrictOptionsForStates } from '../../constants/districtsByState';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { validateProfilePhotoAsset } from '../../utils/profilePhotoValidation';
 
@@ -2456,18 +2457,25 @@ function AddressEditor({
             placeholder="Taluka"
             onChangeText={(value) => onChange('taluka', value)}
           />
-          <EditableTextField
-            label="District"
-            value={address.district}
-            placeholder="District"
-            onChangeText={(value) => onChange('district', value)}
-          />
           <Text style={styles.label}>State</Text>
           <SearchableDropdown
             placeholder="Select state"
             value={address.state}
             options={INDIAN_STATE_OPTIONS}
-            onSelect={(value) => onChange('state', value)}
+            onSelect={(value) => {
+              onChange('state', value);
+              // District options depend on the selected state -- clear it
+              // so a stale district from a different state can't remain.
+              onChange('district', '');
+            }}
+          />
+          <Text style={styles.label}>District</Text>
+          <SearchableDropdown
+            placeholder={address.state ? 'Select district' : 'Select state first'}
+            value={address.district}
+            options={getDistrictOptionsForStates(address.state ? [address.state] : [])}
+            onSelect={(value) => onChange('district', value)}
+            disabled={!address.state}
           />
           <EditableTextField
             label="Pincode"
