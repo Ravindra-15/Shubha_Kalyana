@@ -49,23 +49,6 @@ const isValidAadhaar = (value: string) => {
   return c === 0;
 };
 
-const makeValidAadhaarNumber = (value = '') => {
-  const digits = getDigits(value).slice(0, AADHAAR_LENGTH);
-
-  if (digits.length < AADHAAR_LENGTH) return digits;
-
-  const first11Digits = digits.slice(0, 11);
-
-  for (let i = 0; i <= 9; i += 1) {
-    const aadhaarNumber = `${first11Digits}${i}`;
-    if (isValidAadhaar(aadhaarNumber)) {
-      return aadhaarNumber;
-    }
-  }
-
-  return digits;
-};
-
 const checkAadhaarAvailability = async (aadhaarNumber: string) => {
   const res = await apiClient.post('/onboarding/aadhaar/check', { aadhaarNumber });
   return res.data?.data ?? res.data;
@@ -144,7 +127,7 @@ export default function UploadAadhaarScreen({ navigation }: any) {
       return;
     }
 
-    const num = makeValidAadhaarNumber(aadhaarNumber);
+    const num = getDigits(aadhaarNumber);
     setAadhaarNumber(formatAadhaarNumber(num));
 
     if (!isValidAadhaar(num)) {
@@ -216,7 +199,7 @@ export default function UploadAadhaarScreen({ navigation }: any) {
             placeholderTextColor="#999"
             value={aadhaarNumber}
             onChangeText={(t) => {
-              const nextValue = formatAadhaarNumber(makeValidAadhaarNumber(t));
+              const nextValue = formatAadhaarNumber(t);
               setAadhaarNumber(nextValue);
               setAvailability(isValidAadhaar(getDigits(nextValue)) ? 'checking' : 'idle');
               setAvailabilityError('');
