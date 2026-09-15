@@ -31,12 +31,40 @@ const GROUPS = [
 export default function HobbiesScreen({ navigation }: any) {
   const { data, setField } = useSignup();
   const [selected, setSelected] = useState<string[]>(data.hobbies || []);
+  // Each group has its own "Others" chip, but they all share the literal
+  // string "Others" in `selected` -- previously that meant clicking any one
+  // of them lit up all three, since they were indistinguishable. Tracked
+  // here separately, per group, so each toggles independently; `selected`
+  // still only ever stores plain "Others" (once, if any group has it
+  // active), so the saved data shape is completely unchanged. Initialized
+  // to "all active" only when Others was already saved, since which
+  // specific group it originally came from was never recorded.
+  const [othersActiveGroups, setOthersActiveGroups] = useState<Set<string>>(
+    () => new Set((data.hobbies || []).includes('Others') ? GROUPS.map((g) => g.title) : []),
+  );
   const [loading, setLoading] = useState(false);
 
   const toggle = (item: string) => {
     setSelected((prev) =>
       prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item]
     );
+  };
+
+  const toggleOthers = (groupTitle: string) => {
+    setOthersActiveGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupTitle)) next.delete(groupTitle);
+      else next.add(groupTitle);
+
+      setSelected((prevSelected) => {
+        const hasOthers = prevSelected.includes('Others');
+        if (next.size > 0 && !hasOthers) return [...prevSelected, 'Others'];
+        if (next.size === 0 && hasOthers) return prevSelected.filter((x) => x !== 'Others');
+        return prevSelected;
+      });
+
+      return next;
+    });
   };
 
   const submit = async (skip = false) => {
@@ -79,12 +107,15 @@ export default function HobbiesScreen({ navigation }: any) {
               <Text style={styles.groupTitle}>{group.title}</Text>
               <View style={styles.chipRow}>
                 {group.items.map((item) => {
-                  const active = selected.includes(item);
+                  const isOthers = item === 'Others';
+                  const active = isOthers
+                    ? othersActiveGroups.has(group.title)
+                    : selected.includes(item);
                   return (
                     <TouchableOpacity
                       key={item}
                       style={[styles.chip, active && styles.chipActive]}
-                      onPress={() => toggle(item)}
+                      onPress={() => (isOthers ? toggleOthers(group.title) : toggle(item))}
                     >
                       <Text style={[styles.chipText, active && styles.chipTextActive]}>{item}</Text>
                     </TouchableOpacity>

@@ -419,6 +419,14 @@ export default function EditProfileScreen({ navigation }: any) {
 
   const [aboutMe, setAboutMe] = useState('');
   const [selectedHobbies, setSelectedHobbies] = useState<string[]>([]);
+  // Each hobby group has its own "Others" chip, but they all share the
+  // literal string "Others" in `selectedHobbies` -- previously that meant
+  // toggling any one of them lit up all three, since they were
+  // indistinguishable. Tracked here separately, per group, so each toggles
+  // independently; `selectedHobbies` still only ever stores plain "Others"
+  // (once, if any group has it active), so the saved data shape is
+  // completely unchanged.
+  const [othersActiveGroups, setOthersActiveGroups] = useState<Set<string>>(new Set());
 
   const [prefAgeMin, setPrefAgeMin] = useState('');
   const [prefAgeMax, setPrefAgeMax] = useState('');
@@ -632,7 +640,14 @@ export default function EditProfileScreen({ navigation }: any) {
       setHealthConditionDetails(profile.healthDisclosure?.details || '');
 
       setAboutMe(profile.about?.aboutMe || '');
-      setSelectedHobbies(toArray(profile.hobbiesAndInterests));
+      const loadedHobbies = toArray(profile.hobbiesAndInterests);
+      setSelectedHobbies(loadedHobbies);
+      // Which specific group "Others" originally came from was never
+      // recorded, so if it's set, show all three as active to match what
+      // was previously visible -- each still toggles independently from here.
+      setOthersActiveGroups(
+        new Set(loadedHobbies.includes('Others') ? HOBBY_GROUPS.map((g) => g.title) : []),
+      );
 
       setPrefAgeMin(pref.ageRange?.min ? String(pref.ageRange.min) : '');
       setPrefAgeMax(pref.ageRange?.max ? String(pref.ageRange.max) : '');
@@ -743,6 +758,24 @@ export default function EditProfileScreen({ navigation }: any) {
     setSelectedHobbies((prev) =>
       prev.includes(item) ? prev.filter((value) => value !== item) : [...prev, item],
     );
+    markChanged();
+  };
+
+  const toggleOthersHobby = (groupTitle: string) => {
+    setOthersActiveGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupTitle)) next.delete(groupTitle);
+      else next.add(groupTitle);
+
+      setSelectedHobbies((prevSelected) => {
+        const hasOthers = prevSelected.includes('Others');
+        if (next.size > 0 && !hasOthers) return [...prevSelected, 'Others'];
+        if (next.size === 0 && hasOthers) return prevSelected.filter((value) => value !== 'Others');
+        return prevSelected;
+      });
+
+      return next;
+    });
     markChanged();
   };
 
@@ -2084,16 +2117,23 @@ export default function EditProfileScreen({ navigation }: any) {
           </View>
 
           <Text style={styles.sectionTitle}>HOBBIES & INTERESTS</Text>
-          {HOBBY_GROUPS.map((group) => (
-            <View key={group.title} style={styles.group}>
-              <Text style={styles.groupTitle}>{group.title}</Text>
-              <ChipWrap
-                options={group.options.map((option) => ({ label: option, value: option }))}
-                selected={selectedHobbies}
-                onToggle={toggleHobby}
-              />
-            </View>
-          ))}
+          {HOBBY_GROUPS.map((group) => {
+            const groupSelected = othersActiveGroups.has(group.title)
+              ? selectedHobbies
+              : selectedHobbies.filter((value) => value !== 'Others');
+            return (
+              <View key={group.title} style={styles.group}>
+                <Text style={styles.groupTitle}>{group.title}</Text>
+                <ChipWrap
+                  options={group.options.map((option) => ({ label: option, value: option }))}
+                  selected={groupSelected}
+                  onToggle={(value) =>
+                    value === 'Others' ? toggleOthersHobby(group.title) : toggleHobby(value)
+                  }
+                />
+              </View>
+            );
+          })}
 
           <Text style={styles.sectionTitle}>ABOUT ME</Text>
           <TextInput
