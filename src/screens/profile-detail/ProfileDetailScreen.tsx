@@ -26,7 +26,7 @@ import {
   MoreVertical,
   Heart,
 } from 'lucide-react-native';
-import { getPartnerProfile, isProfileFullyVerified } from '../../api/profile';
+import { getPartnerProfile } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import apiClient from '../../api/client';
 import { LayoutAnimation, Platform, UIManager } from 'react-native';
@@ -449,7 +449,11 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               ? 'viewContact'
               : 'sendRequest';
   const photo = profile.photos?.find((p: any) => p.isProfilePhoto)?.url || '';
-  const verified = Boolean(profile.verified || isProfileFullyVerified(profile));
+  // `data.verified` is the backend's combined check (active plan + photo
+  // verification + Aadhaar verification) -- the nested `profile` object has
+  // no such field of its own, and isProfileFullyVerified() alone doesn't
+  // account for the active-plan requirement.
+  const verified = Boolean(data.verified);
   const caste = basic.caste?.casteName || basic.caste?.name || '';
   const location = [addr.current?.city, addr.current?.state]
     .filter(x => x && !isBlur(x))

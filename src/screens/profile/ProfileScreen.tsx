@@ -107,7 +107,8 @@ export default function ProfileScreen({ navigation }: any) {
   const galleryPhotos = (profile?.photos || [])
     .filter((p: any) => !p.isProfilePhoto)
     .map((p: any) => ({ publicId: p.publicId, url: resolveImageUrl(p.url) }));
-  const verified = isProfileFullyVerified(profile);
+  // Verified badge requires an active plan too, not just photo + Aadhaar.
+  const verified = Boolean(membership) && isProfileFullyVerified(profile);
   const location = [profile?.address?.current?.city, profile?.address?.current?.state]
     .filter(Boolean).join(', ');
   const completion = profile?.completionPercentage || 0;
