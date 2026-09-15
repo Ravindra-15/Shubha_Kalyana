@@ -158,6 +158,30 @@ const BUSINESS_TYPES: Option[] = [
   { label: 'Other', value: 'Other' },
 ];
 
+// Mirrors the web app's professionOptions (onboarding/onboardingOptions.js)
+// so the designation list matches across platforms.
+const DESIGNATIONS: Option[] = [
+  'Software Engineer',
+  'Senior Software Engineer',
+  'Team Lead',
+  'Project Manager',
+  'Doctor',
+  'Teacher',
+  'Professor',
+  'Lawyer',
+  'Business Owner',
+  'Government Officer',
+  'Associate',
+  'Manager',
+  'Mid-Senior',
+  'Senior',
+  'Director',
+  'VP',
+  'Executive',
+  'Senior Executive',
+  'Others',
+].map((item) => ({ label: item, value: item }));
+
 const EXPERIENCE_PRESETS = [
   { label: 'Less than 1 year', value: '0-1', years: 0, months: 6 },
   { label: '1 - 2 years', value: '1-2', years: 1, months: 6 },
@@ -1698,15 +1722,18 @@ export default function EditProfileScreen({ navigation }: any) {
           />
 
           {showDesignation && (
-            <EditableTextField
-              label="You work as"
-              value={designation}
-              placeholder="Designation"
-              onChangeText={(text) => {
-                setDesignation(text);
-                markChanged();
-              }}
-            />
+            <>
+              <Text style={styles.label}>You work as</Text>
+              <SearchableDropdown
+                placeholder="Select your designation"
+                value={designation}
+                options={DESIGNATIONS}
+                onSelect={(value) => {
+                  setDesignation(value);
+                  markChanged();
+                }}
+              />
+            </>
           )}
 
           {isBusiness ? (
