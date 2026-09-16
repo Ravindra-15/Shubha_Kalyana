@@ -12,13 +12,8 @@ import { getMyFullProfile, getNavbarCounts } from '../api/profile';
 import { getActiveMembership } from '../api/membership';
 import VerificationPromptModal from '../components/VerificationPromptModal';
 import AadhaarVerificationModal from '../components/AadhaarVerificationModal';
-import InactivityFeedbackModal from '../components/InactivityFeedbackModal';
 import { getVerificationPromptStatus } from '../utils/verificationPrompt';
 import type { VerificationPromptStatus } from '../utils/verificationPrompt';
-import {
-  getInactivityPromptStatus,
-  InactivityPromptStatus,
-} from '../api/inactivityFeedback';
 
 const Tab = createBottomTabNavigator();
 
@@ -41,7 +36,6 @@ export default function MainTabs({ navigation }: any) {
   const [aadhaarPhotoVerified, setAadhaarPhotoVerified] = useState(false);
   const [userName, setUserName] = useState('');
   const [newInterestCount, setNewInterestCount] = useState(0);
-  const [inactivityPrompt, setInactivityPrompt] = useState<InactivityPromptStatus | null>(null);
 
   const INTEREST_SEEN_COUNT_KEY = 'lastSeenInterestCount';
 
@@ -53,12 +47,6 @@ export default function MainTabs({ navigation }: any) {
       .then(([counts, storedSeenCount]) => {
         const seenCount = Number(storedSeenCount || 0);
         setNewInterestCount(Math.max(0, counts.interestCount - seenCount));
-      })
-      .catch(() => {});
-
-    getInactivityPromptStatus()
-      .then((status) => {
-        if (status?.shouldPrompt) setInactivityPrompt(status);
       })
       .catch(() => {});
   }, []);
@@ -194,11 +182,6 @@ export default function MainTabs({ navigation }: any) {
           await getMyFullProfile().catch(() => null);
         }}
         onVerifyPhoto={verifyPhoto}
-      />
-      <InactivityFeedbackModal
-        visible={Boolean(inactivityPrompt)}
-        reasons={inactivityPrompt?.reasons || []}
-        onSubmitted={() => setInactivityPrompt(null)}
       />
     </>
   );
