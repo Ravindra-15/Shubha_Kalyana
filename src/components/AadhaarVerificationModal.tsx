@@ -50,6 +50,9 @@ export default function AadhaarVerificationModal({
   const [aadhaarNumber, setAadhaarNumber] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [aadhaarLast4, setAadhaarLast4] = useState('');
+  const [aadhaarPrefilled, setAadhaarPrefilled] = useState(false);
+  const [savedAadhaarNumber, setSavedAadhaarNumber] = useState('');
+  const [editingAadhaar, setEditingAadhaar] = useState(false);
   const [maskedMobile, setMaskedMobile] = useState('');
   const [otp, setOtp] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
@@ -63,6 +66,9 @@ export default function AadhaarVerificationModal({
       setStatus('idle');
       setMessage('');
       setAadhaarNumber('');
+      setAadhaarPrefilled(false);
+      setSavedAadhaarNumber('');
+      setEditingAadhaar(false);
       setMobileNumber('');
       setAadhaarLast4('');
       setMaskedMobile('');
@@ -76,6 +82,14 @@ export default function AadhaarVerificationModal({
       try {
         const result = await getAadhaarVerificationStatus();
         if (ignore) return;
+        const savedAadhaar = digitsOnly(result?.aadhaarNumber || '');
+        if (savedAadhaar.length === 12) {
+          setAadhaarNumber(formatAadhaar(savedAadhaar));
+          setSavedAadhaarNumber(formatAadhaar(savedAadhaar));
+          setAadhaarPrefilled(true);
+          setEditingAadhaar(false);
+        }
+
         if (result?.status === 'OTP_SENT') {
           setMaskedMobile(result?.maskedMobile || '');
           setStep('otp');
@@ -287,19 +301,52 @@ export default function AadhaarVerificationModal({
                   </Text>
                 ) : null}
 
-                <Text style={styles.label}>Aadhaar number</Text>
+                <View style={styles.labelRow}>
+                  <Text style={styles.label}>Aadhaar number</Text>
+
+                  {aadhaarPrefilled && !success ? (
+                    <TouchableOpacity
+                      onPress={() => {
+                        // Cancel puts the saved number back so a half-typed
+                        // edit can't get locked in.
+                        if (editingAadhaar) setAadhaarNumber(savedAadhaarNumber);
+                        setEditingAadhaar((prev) => !prev);
+                        setMessage('');
+                        if (status === 'error') setStatus('idle');
+                      }}
+                      disabled={loading}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text style={[styles.editLink, loading && styles.editLinkDisabled]}>
+                        {editingAadhaar ? 'Cancel' : 'Edit'}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
                 <View style={styles.inputWrap}>
                   <Fingerprint color="#999" size={18} />
                   <TextInput
                     value={aadhaarNumber}
                     onChangeText={(text) => setAadhaarNumber(formatAadhaar(text))}
-                    editable={!loading && !success}
+                    editable={
+                      !loading && !success && (!aadhaarPrefilled || editingAadhaar)
+                    }
                     keyboardType="number-pad"
                     placeholder="1234 5678 9012"
                     placeholderTextColor="#aaa"
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      aadhaarPrefilled && !editingAadhaar && styles.inputLocked,
+                    ]}
                   />
                 </View>
+
+                {aadhaarPrefilled && !editingAadhaar && !success ? (
+                  <Text style={styles.prefillHint}>
+                    This is the Aadhaar number saved with your account. Tap Edit if it is
+                    incorrect.
+                  </Text>
+                ) : null}
 
                 {!success ? (
                   <>
@@ -430,6 +477,25 @@ const styles = StyleSheet.create({
   otpHint: { color: '#444', fontSize: 14, fontFamily: 'Outfit-Medium', lineHeight: 20, marginBottom: 4 },
   otpHintBold: { fontFamily: 'Outfit-ExtraBold', color: '#111' },
   label: { color: '#222', fontSize: 13, fontFamily: 'Outfit-ExtraBold' },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  editLink: {
+    color: '#d9043d',
+    fontSize: 12,
+    fontFamily: 'Outfit-SemiBold',
+    textDecorationLine: 'underline',
+  },
+  editLinkDisabled: { color: '#aaa' },
+  inputLocked: { color: '#666' },
+  prefillHint: {
+    color: '#777',
+    fontSize: 11,
+    fontFamily: 'Outfit-Regular',
+    marginTop: 4,
+  },
   inputWrap: {
     minHeight: 48,
     borderWidth: 1,
