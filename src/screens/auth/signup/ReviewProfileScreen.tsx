@@ -1,11 +1,20 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import ProgressBar from '../../../components/ProgressBar';
 import { useSignup } from '../../../context/SignupContext';
 
 export default function ReviewProfileScreen({ navigation }: any) {
   const { reset } = useSignup();
+
+  // Onboarding is complete on this screen, so going back is not allowed.
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+      return () => sub.remove();
+    }, []),
+  );
 
   const goToLogin = () => {
     reset(); // clear signup data
@@ -18,10 +27,6 @@ export default function ReviewProfileScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.inner}>
-        <TouchableOpacity onPress={goToLogin}>
-          <Text style={styles.back}>←</Text>
-        </TouchableOpacity>
-
         <ProgressBar step={16} total={16} />
 
         <View style={styles.content}>
@@ -61,7 +66,6 @@ export default function ReviewProfileScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   inner: { flex: 1, paddingHorizontal: 24, paddingBottom: 30 },
-  back: { fontSize: 24, color: '#000', marginTop: 8 },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: {
     fontSize: 22,
