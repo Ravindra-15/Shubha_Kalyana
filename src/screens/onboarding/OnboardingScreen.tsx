@@ -144,8 +144,8 @@ const styles = StyleSheet.create({
   },
   safe: { flex: 1, paddingHorizontal: 24 },
   logo: {
-    width: 90,
-    height: 90,
+    width: 110,
+    height: 110,
     alignSelf: 'center',
     marginTop: 20,
   },
@@ -163,7 +163,9 @@ const styles = StyleSheet.create({
     lineHeight: 48,
     textAlign: 'center',
   },
-  highlight: { color: '#D20236' },
+  // Figma sets the highlighted word in Poppins, not the Outfit used for the
+  // rest of the heading.
+  highlight: { color: '#D20236', fontFamily: 'Poppins-ExtraBold' },
   arrowWrap: {
     position: 'absolute',
     bottom: 50,
