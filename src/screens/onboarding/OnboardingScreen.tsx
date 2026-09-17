@@ -158,14 +158,14 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 40,
-    fontFamily: 'Outfit-Bold',
+    fontFamily: 'Outfit-SemiBold',
     color: '#fff',
     lineHeight: 48,
     textAlign: 'center',
   },
-  // Figma sets the highlighted word in Poppins, not the Outfit used for the
-  // rest of the heading.
-  highlight: { color: '#D20236', fontFamily: 'Poppins-ExtraBold' },
+  // The highlighted word uses Yeseva One (400), the same typeface as the
+  // SHUBHA KALYANA wordmark in the logo, per Figma.
+  highlight: { color: '#D20236', fontFamily: 'YesevaOne-Regular' },
   arrowWrap: {
     position: 'absolute',
     bottom: 50,

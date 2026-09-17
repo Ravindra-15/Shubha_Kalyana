@@ -60,8 +60,7 @@
 	<false/>
 	<key>UIAppFonts</key>
 	<array>
-		<string>Poppins-ExtraBold.ttf</string>
-		<string>Poppins-Bold.ttf</string>
+		<string>YesevaOne-Regular.ttf</string>
 		<string>Outfit-Black.ttf</string>
 		<string>Outfit-Bold.ttf</string>
 		<string>Outfit-ExtraBold.ttf</string>

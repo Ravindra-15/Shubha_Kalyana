@@ -36,6 +36,10 @@
     {
       "path": "src/assets/fonts/Outfit-Thin.ttf",
       "sha1": "f20be5b036a2a7452d142c9947ee774988a10352"
+    },
+    {
+      "path": "src/assets/fonts/YesevaOne-Regular.ttf",
+      "sha1": "621699f152fa680209786b3ffcbd9edc835bbf3d"
     }
   ]
 }
