@@ -350,7 +350,7 @@ export default function AadhaarVerificationModal({
 
                 {!success ? (
                   <>
-                    <Text style={styles.label}>Linked mobile number</Text>
+                    <Text style={styles.label}>Linked Aadhaar mobile number</Text>
                     <View style={styles.inputWrap}>
                       <Smartphone color="#999" size={18} />
                       <TextInput
