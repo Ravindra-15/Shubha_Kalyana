@@ -229,6 +229,7 @@ const EDUCATION_OPTIONS: Option[] = [
   'Diploma',
   'ITI',
   'B.Tech',
+  'B.E',
   'BCA',
   'BBA',
   'B.Com',
