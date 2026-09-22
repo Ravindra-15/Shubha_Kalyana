@@ -52,13 +52,11 @@ type Option = { label: string; value: string };
 type AddressFields = {
   residenceType: ResidenceType;
   addressLine1: string;
-  taluka: string;
+  addressLine2: string;
   district: string;
   state: string;
-  pincode: string;
   country: string;
   stateOrProvince: string;
-  city: string;
   postalCode: string;
 };
 
@@ -289,19 +287,16 @@ const ANY_CASTE_VALUE = 'ANY_CASTE';
 const emptyAddress = (): AddressFields => ({
   residenceType: 'INDIA',
   addressLine1: '',
-  taluka: '',
+  addressLine2: '',
   district: '',
   state: '',
-  pincode: '',
   country: '',
   stateOrProvince: '',
-  city: '',
   postalCode: '',
 });
 
 // const hasValue = (value: unknown) => String(value ?? '').trim() !== '';
 // (hasValue removed — no longer used now that real editLocks drive field state)
-const isValidPincode = (value: string) => !value || /^\d{6}$/.test(value);
 const isValidLinkedIn = (value: string) => !value || /linkedin\.com/i.test(value);
 const toArray = (value: any) => {
   if (!value) return [];
@@ -322,13 +317,11 @@ const optionLabel = (options: Option[], value: string) =>
 const addressFromProfile = (address: any = {}): AddressFields => ({
   residenceType: address.residenceType === 'NRI' ? 'NRI' : 'INDIA',
   addressLine1: address.addressLine1 || '',
-  taluka: address.taluka || '',
+  addressLine2: address.addressLine2 || '',
   district: address.district || '',
   state: address.state || '',
-  pincode: address.pincode || '',
   country: address.country || '',
   stateOrProvince: address.stateOrProvince || '',
-  city: address.city || '',
   postalCode: address.postalCode || '',
 });
 
@@ -338,13 +331,11 @@ const buildAddressPart = (address: AddressFields) => {
   return {
     residenceType: address.residenceType,
     addressLine1: address.addressLine1.trim(),
-    taluka: isNri ? '' : address.taluka.trim(),
+    addressLine2: address.addressLine2.trim(),
     district: isNri ? '' : address.district.trim(),
     state: isNri ? '' : address.state.trim(),
-    pincode: isNri ? '' : address.pincode.trim(),
     country: isNri ? address.country.trim() : 'India',
     stateOrProvince: isNri ? address.stateOrProvince.trim() : '',
-    city: isNri ? address.city.trim() : '',
     postalCode: isNri ? address.postalCode.trim() : '',
   };
 };
@@ -992,11 +983,11 @@ export default function EditProfileScreen({ navigation }: any) {
     numberInRange('brothers', brothers, 0, 20, 'Enter a valid number');
     numberInRange('sisters', sisters, 0, 20, 'Enter a valid number');
 
-    if (currentAddress.pincode.trim() && !isValidPincode(currentAddress.pincode.trim())) {
-      errors.currentpincode = 'Enter 6 digit pincode';
+    if (!currentAddress.addressLine1.trim()) {
+      errors.currentaddressLine1 = 'Address is required';
     }
-    if (!sameAsCurrent && permanentAddress.pincode.trim() && !isValidPincode(permanentAddress.pincode.trim())) {
-      errors.permanentpincode = 'Enter 6 digit pincode';
+    if (!sameAsCurrent && !permanentAddress.addressLine1.trim()) {
+      errors.permanentaddressLine1 = 'Address is required';
     }
     if (annualIncome.trim() && Number(annualIncome) < 0) {
       errors.annualIncome = 'Enter a valid amount';
@@ -2487,17 +2478,18 @@ function AddressEditor({
         label="Address Line 1"
         value={address.addressLine1}
         placeholder="House no, street, area"
+        error={errors[errorKey('addressLine1')]}
         onChangeText={(value) => onChange('addressLine1', value)}
+      />
+      <EditableTextField
+        label="Address Line 2"
+        value={address.addressLine2}
+        placeholder="Landmark, locality (optional)"
+        onChangeText={(value) => onChange('addressLine2', value)}
       />
 
       {isIndia ? (
         <>
-          <EditableTextField
-            label="Taluka"
-            value={address.taluka}
-            placeholder="Taluka"
-            onChangeText={(value) => onChange('taluka', value)}
-          />
           <Text style={styles.label}>State</Text>
           <SearchableDropdown
             placeholder="Select state"
@@ -2518,15 +2510,6 @@ function AddressEditor({
             onSelect={(value) => onChange('district', value)}
             disabled={!address.state}
           />
-          <EditableTextField
-            label="Pincode"
-            value={address.pincode}
-            placeholder="6-digit pincode"
-            error={errors[errorKey('pincode')]}
-            keyboardType="number-pad"
-            maxLength={6}
-            onChangeText={(value) => onChange('pincode', value)}
-          />
         </>
       ) : (
         <>
@@ -2541,12 +2524,6 @@ function AddressEditor({
             value={address.stateOrProvince}
             placeholder="State or Province"
             onChangeText={(value) => onChange('stateOrProvince', value)}
-          />
-          <EditableTextField
-            label="City"
-            value={address.city}
-            placeholder="City"
-            onChangeText={(value) => onChange('city', value)}
           />
           <EditableTextField
             label="Postal Code"

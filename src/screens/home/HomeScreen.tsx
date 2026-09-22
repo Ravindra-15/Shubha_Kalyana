@@ -196,7 +196,7 @@ export default function HomeScreen({ navigation }: any) {
       profession: item.profile?.employment?.designation || '',
       location:
         [
-          addr.city || addr.district || addr.taluka,
+          addr.district,
           addr.state || addr.stateOrProvince,
           addr.country && addr.country !== 'India' ? addr.country : '',
         ]

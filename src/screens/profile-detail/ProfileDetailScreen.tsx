@@ -455,7 +455,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   // account for the active-plan requirement.
   const verified = Boolean(data.verified);
   const caste = basic.caste?.casteName || basic.caste?.name || '';
-  const location = [addr.current?.city, addr.current?.state]
+  const location = [addr.current?.district, addr.current?.state]
     .filter(x => x && !isBlur(x))
     .join(', ');
 
@@ -470,10 +470,10 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
     if (!a || isBlur(a)) return 'blur';
     const parts = [
       a.addressLine1,
-      a.taluka,
-      a.district || a.city,
+      a.addressLine2,
+      a.district,
       a.state || a.stateOrProvince,
-      a.pincode || a.postalCode,
+      a.postalCode,
     ].filter(x => x && !isBlur(x));
     return parts.length ? parts.join(', ') : 'blur';
   };

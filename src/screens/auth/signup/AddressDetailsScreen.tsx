@@ -25,32 +25,28 @@ export default function AddressDetailsScreen({ navigation }: any) {
   // current
   const [residenceType, setResidenceType] = useState<'INDIA' | 'NRI'>(addr.residenceType || 'INDIA');
   const [addressLine1, setAddressLine1] = useState(addr.addressLine1 || '');
-  const [taluka, setTaluka] = useState(addr.taluka || '');
+  const [addressLine2, setAddressLine2] = useState(addr.addressLine2 || '');
   const [district, setDistrict] = useState(addr.district || '');
   const [state, setState] = useState(addr.state || '');
-  const [pincode, setPincode] = useState(addr.pincode || '');
   const [country, setCountry] = useState(addr.country || '');
   const [stateOrProvince, setStateOrProvince] = useState(addr.stateOrProvince || '');
-  const [city, setCity] = useState(addr.city || '');
   const [postalCode, setPostalCode] = useState(addr.postalCode || '');
 
   // permanent
   const [sameAsCurrent, setSameAsCurrent] = useState(addr.sameAsCurrent ?? false);
   const [pResidenceType, setPResidenceType] = useState<'INDIA' | 'NRI'>(addr.pResidenceType || 'INDIA');
   const [pAddressLine1, setPAddressLine1] = useState(addr.pAddressLine1 || '');
-  const [pTaluka, setPTaluka] = useState(addr.pTaluka || '');
+  const [pAddressLine2, setPAddressLine2] = useState(addr.pAddressLine2 || '');
   const [pDistrict, setPDistrict] = useState(addr.pDistrict || '');
   const [pState, setPState] = useState(addr.pState || '');
-  const [pPincode, setPPincode] = useState(addr.pPincode || '');
   const [pCountry, setPCountry] = useState(addr.pCountry || '');
   const [pStateOrProvince, setPStateOrProvince] = useState(addr.pStateOrProvince || '');
-  const [pCity, setPCity] = useState(addr.pCity || '');
   const [pPostalCode, setPPostalCode] = useState(addr.pPostalCode || '');
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
   const { scrollRef, registerField, scrollToError } = useScrollToError();
-  const FIELD_ORDER = ['state', 'district', 'pincode', 'country', 'city', 'pState', 'pDistrict', 'pPincode', 'pCountry', 'pCity'];
+  const FIELD_ORDER = ['addressLine1', 'state', 'district', 'country', 'pAddressLine1', 'pState', 'pDistrict', 'pCountry'];
 
   const clearErr = (key: string) => setErrors((e) => ({ ...e, [key]: false }));
 
@@ -58,35 +54,35 @@ export default function AddressDetailsScreen({ navigation }: any) {
     const e: { [k: string]: boolean } = {};
     let msg = '';
 
+    if (!addressLine1.trim()) { e.addressLine1 = true; msg = msg || 'Please enter your Address'; }
+
     if (residenceType === 'INDIA') {
       if (!state.trim()) { e.state = true; msg = msg || 'Please enter your State'; }
       if (!district.trim()) { e.district = true; msg = msg || 'Please enter your District'; }
-      if (pincode.trim() && !/^\d{6}$/.test(pincode.trim())) { e.pincode = true; msg = msg || 'Pincode must be 6 digits'; }
     } else {
       if (!country.trim()) { e.country = true; msg = msg || 'Please enter your Country'; }
-      if (!city.trim()) { e.city = true; msg = msg || 'Please enter your City'; }
     }
 
     if (!sameAsCurrent) {
+      if (!pAddressLine1.trim()) { e.pAddressLine1 = true; msg = msg || 'Please enter Permanent Address'; }
+
       if (pResidenceType === 'INDIA') {
         if (!pState.trim()) { e.pState = true; msg = msg || 'Please enter Permanent State'; }
         if (!pDistrict.trim()) { e.pDistrict = true; msg = msg || 'Please enter Permanent District'; }
-        if (pPincode.trim() && !/^\d{6}$/.test(pPincode.trim())) { e.pPincode = true; msg = msg || 'Permanent Pincode must be 6 digits'; }
       } else {
         if (!pCountry.trim()) { e.pCountry = true; msg = msg || 'Please enter Permanent Country'; }
-        if (!pCity.trim()) { e.pCity = true; msg = msg || 'Please enter Permanent City'; }
       }
     }
 
     return { e, msg };
   };
 
-  const buildAddr = (type: 'INDIA' | 'NRI', line: string, t: string, d: string, s: string, pin: string, c: string, sp: string, ct: string, pc: string) => {
-    const o: any = { residenceType: type, addressLine1: line.trim() };
+  const buildAddr = (type: 'INDIA' | 'NRI', line: string, line2: string, d: string, s: string, c: string, sp: string, pc: string) => {
+    const o: any = { residenceType: type, addressLine1: line.trim(), addressLine2: line2.trim() };
     if (type === 'INDIA') {
-      o.taluka = t.trim(); o.district = d.trim(); o.state = s.trim(); o.pincode = pin.trim();
+      o.district = d.trim(); o.state = s.trim();
     } else {
-      o.country = c.trim(); o.stateOrProvince = sp.trim(); o.city = ct.trim(); o.postalCode = pc.trim();
+      o.country = c.trim(); o.stateOrProvince = sp.trim(); o.postalCode = pc.trim();
     }
     return o;
   };
@@ -99,17 +95,17 @@ export default function AddressDetailsScreen({ navigation }: any) {
       return Alert.alert('Required', msg);
     }
 
-    const current = buildAddr(residenceType, addressLine1, taluka, district, state, pincode, country, stateOrProvince, city, postalCode);
+    const current = buildAddr(residenceType, addressLine1, addressLine2, district, state, country, stateOrProvince, postalCode);
 
     const permanent = sameAsCurrent
       ? { sameAsCurrent: true, ...current }
-      : { sameAsCurrent: false, ...buildAddr(pResidenceType, pAddressLine1, pTaluka, pDistrict, pState, pPincode, pCountry, pStateOrProvince, pCity, pPostalCode) };
+      : { sameAsCurrent: false, ...buildAddr(pResidenceType, pAddressLine1, pAddressLine2, pDistrict, pState, pCountry, pStateOrProvince, pPostalCode) };
 
     try {
       setLoading(true);
       const addrNow = {
-        residenceType, addressLine1, taluka, district, state, pincode, country, stateOrProvince, city, postalCode,
-        sameAsCurrent, pResidenceType, pAddressLine1, pTaluka, pDistrict, pState, pPincode, pCountry, pStateOrProvince, pCity, pPostalCode,
+        residenceType, addressLine1, addressLine2, district, state, country, stateOrProvince, postalCode,
+        sameAsCurrent, pResidenceType, pAddressLine1, pAddressLine2, pDistrict, pState, pCountry, pStateOrProvince, pPostalCode,
       };
       // skip API if unchanged (prevents backend step rewind)
       if (JSON.stringify(data.address || {}) === JSON.stringify(addrNow)) {
@@ -129,13 +125,11 @@ export default function AddressDetailsScreen({ navigation }: any) {
     type: 'INDIA' | 'NRI',
     setType: (v: 'INDIA' | 'NRI') => void,
     line: string, setLine: (v: string) => void,
-    t: string, setT: (v: string) => void,
+    line2: string, setLine2: (v: string) => void,
     d: string, setD: (v: string) => void,
     s: string, setS: (v: string) => void,
-    pin: string, setPin: (v: string) => void,
     c: string, setC: (v: string) => void,
     sp: string, setSp: (v: string) => void,
-    ct: string, setCt: (v: string) => void,
     pc: string, setPc: (v: string) => void,
     prefix: string
   ) => {
@@ -151,8 +145,18 @@ export default function AddressDetailsScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.label}>Address Line</Text>
-      <TextInput style={styles.input} placeholder="House no, street, area" placeholderTextColor="#999" value={line} onChangeText={setLine} />
+      <Text style={styles.label}>Address Line 1 <Text style={styles.star}>*</Text></Text>
+      <TextInput
+        ref={registerField(key('addressLine1', 'AddressLine1')) as any}
+        style={[styles.input, errors[key('addressLine1', 'AddressLine1')] && styles.inputError]}
+        placeholder="House no, street, area"
+        placeholderTextColor="#999"
+        value={line}
+        onChangeText={(v) => { setLine(v); clearErr(key('addressLine1', 'AddressLine1')); }}
+      />
+
+      <Text style={styles.label}>Address Line 2</Text>
+      <TextInput style={styles.input} placeholder="Landmark, locality (optional)" placeholderTextColor="#999" value={line2} onChangeText={setLine2} />
 
       {type === 'INDIA' ? (
         <>
@@ -186,17 +190,11 @@ export default function AddressDetailsScreen({ navigation }: any) {
               disabled={!s}
             />
           </View>
-          <Text style={styles.label}>Taluka</Text>
-          <TextInput style={styles.input} placeholder="Taluka" placeholderTextColor="#999" value={t} onChangeText={setT} />
-          <Text style={styles.label}>Pincode</Text>
-          <TextInput ref={registerField(key('pincode', 'Pincode')) as any} style={[styles.input, errors[key('pincode', 'Pincode')] && styles.inputError]} placeholder="6-digit pincode" placeholderTextColor="#999" value={pin} onChangeText={(v) => { setPin(v); clearErr(key('pincode', 'Pincode')); }} keyboardType="number-pad" maxLength={6} />
         </>
       ) : (
         <>
           <Text style={styles.label}>Country <Text style={styles.star}>*</Text></Text>
           <TextInput ref={registerField(key('country', 'Country')) as any} style={[styles.input, errors[key('country', 'Country')] && styles.inputError]} placeholder="Country" placeholderTextColor="#999" value={c} onChangeText={(v) => { setC(v); clearErr(key('country', 'Country')); }} />
-          <Text style={styles.label}>City <Text style={styles.star}>*</Text></Text>
-          <TextInput ref={registerField(key('city', 'City')) as any} style={[styles.input, errors[key('city', 'City')] && styles.inputError]} placeholder="City" placeholderTextColor="#999" value={ct} onChangeText={(v) => { setCt(v); clearErr(key('city', 'City')); }} />
           <Text style={styles.label}>State / Province</Text>
           <TextInput style={styles.input} placeholder="State or Province" placeholderTextColor="#999" value={sp} onChangeText={setSp} />
           <Text style={styles.label}>Postal Code</Text>
@@ -222,8 +220,8 @@ export default function AddressDetailsScreen({ navigation }: any) {
           <Text style={styles.section}>Current Address</Text>
           {renderFields(
             residenceType, setResidenceType, addressLine1, setAddressLine1,
-            taluka, setTaluka, district, setDistrict, state, setState, pincode, setPincode,
-            country, setCountry, stateOrProvince, setStateOrProvince, city, setCity, postalCode, setPostalCode, ''
+            addressLine2, setAddressLine2, district, setDistrict, state, setState,
+            country, setCountry, stateOrProvince, setStateOrProvince, postalCode, setPostalCode, ''
           )}
 
           <Text style={styles.section}>Permanent Address</Text>
@@ -237,8 +235,8 @@ export default function AddressDetailsScreen({ navigation }: any) {
           {!sameAsCurrent &&
             renderFields(
               pResidenceType, setPResidenceType, pAddressLine1, setPAddressLine1,
-              pTaluka, setPTaluka, pDistrict, setPDistrict, pState, setPState, pPincode, setPPincode,
-              pCountry, setPCountry, pStateOrProvince, setPStateOrProvince, pCity, setPCity, pPostalCode, setPPostalCode, 'p'
+              pAddressLine2, setPAddressLine2, pDistrict, setPDistrict, pState, setPState,
+              pCountry, setPCountry, pStateOrProvince, setPStateOrProvince, pPostalCode, setPPostalCode, 'p'
             )}
 
           <View style={styles.spacer} />

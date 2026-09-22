@@ -46,7 +46,7 @@ const mapInterest = (item: any) => {
     profession: p.employment?.designation || '',
     location:
       [
-        addr.city || addr.district || addr.taluka,
+        addr.district,
         addr.state || addr.stateOrProvince,
         addr.country && addr.country !== 'India' ? addr.country : '',
       ]
