@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   subtitle: {
     fontSize: 15,
-    fontFamily: 'Outfit-Regular',
+    fontFamily: 'Outfit-Bold',
     color: '#666',
     textAlign: 'center',
     marginBottom: 30,

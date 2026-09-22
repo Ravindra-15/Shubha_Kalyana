@@ -8,13 +8,33 @@ import {
   StyleSheet,
   Dimensions,
   FlatList,
+  Platform,
 } from 'react-native';
+import { BlurView } from '@react-native-community/blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 
 const { width, height } = Dimensions.get('window');
+
+// A light frosted panel behind the slide text only, so the white/red words stay
+// readable over the red areas of the photos without hiding the image.
+const textBlurProps =
+  Platform.OS === 'android'
+    ? {
+        blurType: 'dark' as const,
+        blurAmount: 6,
+        blurRadius: 6,
+        downsampleFactor: 6,
+        overlayColor: 'rgba(0,0,0,0.12)',
+        autoUpdate: true,
+      }
+    : {
+        blurType: 'dark' as const,
+        blurAmount: 6,
+        reducedTransparencyFallbackColor: 'rgba(0,0,0,0.35)',
+      };
 
 const RING_RADIUS = 35;
 const CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -80,11 +100,14 @@ const goNext = () => {
                 resizeMode="contain"
               />
               <View style={styles.bottom}>
+                <View style={styles.textPanel}>
+                <BlurView pointerEvents="none" style={styles.textBlur} {...textBlurProps} />
                 <Text style={styles.heading}>
                   {item.line1}{'\n'}
                   <Text style={styles.highlight}>{item.highlight}</Text>
                   {item.line2 ? `\n${item.line2}` : ''}
                 </Text>
+                </View>
               </View>
             </SafeAreaView>
           </ImageBackground>
@@ -155,6 +178,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
+  },
+  textPanel: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  textBlur: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   heading: {
     fontSize: 40,

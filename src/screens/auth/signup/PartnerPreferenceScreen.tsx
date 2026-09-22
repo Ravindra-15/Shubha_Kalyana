@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ProgressBar from '../../../components/ProgressBar';
 import SearchableDropdown from '../../../components/SearchableDropdown';
+import MultiSelectDropdown from '../../../components/MultiSelectDropdown';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { getCastes, getReligionOptions, Caste } from '../../../api/caste';
@@ -74,6 +75,7 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
   const [maritalStatus, setMaritalStatus] = useState<string[]>(pp.maritalStatus || []);
   const [religion, setReligion] = useState<string[]>(pp.religion || []);
   const [casteIds, setCasteIds] = useState<string[]>(pp.casteIds || []);
+  const [subCaste, setSubCaste] = useState<string[]>(pp.subCaste || []);
   const [education, setEducation] = useState<string[]>(pp.education || []);
   const [profession, setProfession] = useState<string[]>(pp.profession || []);
   const [resident, setResident] = useState<string[]>(pp.resident || []);
@@ -97,16 +99,32 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
     setArr(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
   };
 
-  const toggleCaste = (val: string) => {
-    if (val === ANY_CASTE_VALUE) {
-      setCasteIds(casteIds.includes(ANY_CASTE_VALUE) ? [] : [ANY_CASTE_VALUE]);
+  // Same rule the chips had: "Any Caste" on its own clears the specific
+  // castes, and picking a specific caste drops "Any Caste".
+  const handleCasteChange = (next: string[]) => {
+    if (next.includes(ANY_CASTE_VALUE) && !casteIds.includes(ANY_CASTE_VALUE)) {
+      setCasteIds([ANY_CASTE_VALUE]);
       return;
     }
-    const withoutAny = casteIds.filter((x) => x !== ANY_CASTE_VALUE);
-    setCasteIds(
-      withoutAny.includes(val) ? withoutAny.filter((x) => x !== val) : [...withoutAny, val],
-    );
+    setCasteIds(next.filter((x) => x !== ANY_CASTE_VALUE));
   };
+
+  // Sub castes come from the selected castes only (same as the web form).
+  const subCasteOptions = useMemo(() => {
+    const selected = castes.filter((c) => casteIds.includes(c._id));
+    const values = [...new Set(selected.flatMap((c) => c.subCastes || []))].sort();
+    return values.map((v) => ({ label: v, value: v }));
+  }, [castes, casteIds]);
+
+  // Drop sub castes whose caste was unselected.
+  useEffect(() => {
+    if (!castes.length) return;
+    const allowed = new Set(subCasteOptions.map((o) => o.value));
+    setSubCaste((current) => {
+      const kept = current.filter((v) => allowed.has(v));
+      return kept.length === current.length ? current : kept;
+    });
+  }, [castes.length, subCasteOptions]);
 
   const goToNextStep = async () => {
     const resumeScreen = await getResumeScreen();
@@ -135,13 +153,14 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
     if (religion.length) payload.religion = religion;
     const realCasteIds = casteIds.filter((id) => id !== ANY_CASTE_VALUE);
     if (realCasteIds.length) payload.caste = realCasteIds;
+    if (realCasteIds.length && subCaste.length) payload.subCaste = subCaste;
     if (education.length) payload.education = education;
     if (profession.length) payload.profession = profession;
     if (resident.length) payload.ressident = resident;
 
     try {
       setLoading(true);
-      const ppNow = { ageMin, ageMax, maritalStatus, religion, casteIds, education, profession, resident };
+      const ppNow = { ageMin, ageMax, maritalStatus, religion, casteIds, subCaste, education, profession, resident };
       // skip API if unchanged (prevents backend step rewind)
       if (JSON.stringify(data.partnerPreference || {}) === JSON.stringify(ppNow)) {
         return await goToNextStep();
@@ -204,27 +223,42 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
           />
 
           <Text style={styles.label}>Preferred Caste</Text>
-          <Chips
+          <MultiSelectDropdown
+            placeholder="Select preferred caste"
             options={[
               { label: 'Any Caste', value: ANY_CASTE_VALUE },
               ...castes.map((c) => ({ label: c.casteName, value: c._id })),
             ]}
-            selected={casteIds}
-            onToggle={toggleCaste}
+            value={casteIds}
+            onChange={handleCasteChange}
           />
 
+          {subCasteOptions.length ? (
+            <>
+              <Text style={styles.label}>Preferred Sub Caste</Text>
+              <MultiSelectDropdown
+                placeholder="Select preferred sub caste"
+                options={subCasteOptions}
+                value={subCaste}
+                onChange={setSubCaste}
+              />
+            </>
+          ) : null}
+
           <Text style={styles.label}>Preferred Education</Text>
-          <Chips
+          <MultiSelectDropdown
+            placeholder="Select preferred education"
             options={EDUCATION.map((e) => ({ label: e, value: e }))}
-            selected={education}
-            onToggle={(v) => toggle(education, setEducation, v)}
+            value={education}
+            onChange={setEducation}
           />
 
           <Text style={styles.label}>Preferred Profession</Text>
-          <Chips
+          <MultiSelectDropdown
+            placeholder="Select preferred profession"
             options={PROFESSION.map((p) => ({ label: p, value: p }))}
-            selected={profession}
-            onToggle={(v) => toggle(profession, setProfession, v)}
+            value={profession}
+            onChange={setProfession}
           />
 
           <Text style={styles.label}>Preferred Resident</Text>
