@@ -7,14 +7,21 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { pick, types } from '@react-native-documents/picker';
 import ProgressBar from '../../../components/ProgressBar';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
+import { resolveImageUrl } from '../../../utils/imageUrl';
 
 const AADHAAR_LENGTH = 12;
+
+// PDFs cannot be drawn with <Image>, so they keep showing just the file name.
+const looksLikeImage = (type?: string | null, name?: string | null) =>
+  (type && type !== 'null' ? type.startsWith('image/') : false) ||
+  /\.(jpe?g|png|webp|heic|heif)$/i.test(name || '');
 
 type AadhaarAvailability = 'idle' | 'checking' | 'available' | 'duplicate' | 'error';
 
@@ -220,9 +227,27 @@ export default function UploadAadhaarScreen({ navigation }: any) {
           <TouchableOpacity style={styles.dropZone} onPress={pickFile} activeOpacity={0.7}>
             <Text style={styles.uploadIcon}>⬆</Text>
             {file ? (
-              <Text style={styles.fileName}>{file.name}</Text>
+              <>
+                {looksLikeImage(file.type, file.name) ? (
+                  <Image
+                    source={{ uri: file.uri }}
+                    style={styles.preview}
+                    resizeMode="contain"
+                  />
+                ) : null}
+                <Text style={styles.fileName} numberOfLines={1}>{file.name}</Text>
+              </>
             ) : existingDocumentUrl ? (
-              <Text style={styles.fileName}>Aadhaar document already uploaded</Text>
+              <>
+                {looksLikeImage(null, existingDocumentUrl.split('?')[0]) ? (
+                  <Image
+                    source={{ uri: resolveImageUrl(existingDocumentUrl) }}
+                    style={styles.preview}
+                    resizeMode="contain"
+                  />
+                ) : null}
+                <Text style={styles.fileName}>Aadhaar document already uploaded</Text>
+              </>
             ) : (
               <>
                 <Text style={styles.dropTitle}>Choose a file or drag{'\n'}& drop it here</Text>
@@ -280,6 +305,13 @@ const styles = StyleSheet.create({
   uploadIcon: { fontSize: 28, color: '#666', marginBottom: 10 },
   dropTitle: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#333', textAlign: 'center' },
   dropHint: { fontSize: 12, color: '#999', marginTop: 8, marginBottom: 16 },
+  preview: {
+    width: '100%',
+    height: 180,
+    borderRadius: 10,
+    backgroundColor: '#f6f6f6',
+    marginBottom: 10,
+  },
   fileName: { fontSize: 14, color: '#D20236', fontFamily: 'Outfit-SemiBold', marginBottom: 16, marginTop: 4 },
   browseBtn: {
     borderWidth: 1,

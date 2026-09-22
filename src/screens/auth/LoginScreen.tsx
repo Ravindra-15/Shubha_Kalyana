@@ -8,19 +8,39 @@ import {
   StyleSheet,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import KeyboardWrapper from '../../components/KeyboardWrapper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getResumeScreen } from '../../utils/resumeOnboarding';
+import apiClient from '../../api/client';
+import { handleLoginOtpError } from '../../utils/loginOtpErrors';
 
 export default function LoginScreen({ navigation }: any) {
   const { t } = useTranslation();
   const [mobile, setMobile] = useState('');
+  const [sending, setSending] = useState(false);
 
-  const handleLogin = () => {
-    if (!mobile.trim()) return Alert.alert(t('common.error'), t('login.errorEnterMobile'));
-    navigation.navigate('LoginOtp', { mobile: mobile.trim() });
+  // Send the OTP from here, and only move to the OTP screen once it has
+  // actually gone out -- unknown numbers and profiles still under review stay
+  // on this screen with a clear message.
+  const handleLogin = async () => {
+    const trimmed = mobile.trim();
+    if (!trimmed) return Alert.alert(t('common.error'), t('login.errorEnterMobile'));
+    if (sending) return;
+
+    const normalized = trimmed.includes('@') ? trimmed.toLowerCase() : trimmed;
+    try {
+      setSending(true);
+      await apiClient.post('/auth/mobile/login/otp/send', { mobile: normalized });
+      navigation.navigate('LoginOtp', { mobile: trimmed, otpSent: true });
+    } catch (err: any) {
+      const alreadySent = handleLoginOtpError(err, { onSignup: handleSignup });
+      if (alreadySent) navigation.navigate('LoginOtp', { mobile: trimmed, otpSent: true });
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleSignup = async () => {
@@ -79,8 +99,13 @@ export default function LoginScreen({ navigation }: any) {
           <TouchableOpacity
             style={styles.loginBtn}
             onPress={handleLogin}
+            disabled={sending}
           >
-            <Text style={styles.loginText}>{t('login.logIn')}</Text>
+            {sending ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.loginText}>{t('login.logIn')}</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.signupRow}>

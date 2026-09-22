@@ -41,6 +41,7 @@ import {
   Caste,
   getCasteOptions,
   getReligionOptions,
+  isShownAsPreferredReligion,
 } from '../../api/caste';
 import { INDIAN_STATE_OPTIONS } from '../../constants/indianStates';
 import { getDistrictOptionsForStates } from '../../constants/districtsByState';
@@ -1187,7 +1188,9 @@ export default function EditProfileScreen({ navigation }: any) {
         { label: 'Buddhist', value: 'Buddhist' },
       ];
   // "Any Religion" is only meaningful as a partner preference, not the user's own religion.
-  const preferredReligionOptions = religionOptions.map((option) =>
+  const preferredReligionOptions = religionOptions
+    .filter((option) => isShownAsPreferredReligion(option.value))
+    .map((option) =>
     option.value === 'Other' ? { ...option, label: 'Any Religion' } : option,
   );
 

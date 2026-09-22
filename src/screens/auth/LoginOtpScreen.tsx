@@ -13,20 +13,23 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import apiClient from '../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { handleLoginOtpError } from '../../utils/loginOtpErrors';
 
 export default function LoginOtpScreen({ route, navigation }: any) {
   const initialMobile = route.params?.mobile || '';
   const [mobile, setMobile] = useState(initialMobile);
   const isEmail = mobile.includes('@');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [sent, setSent] = useState(false);
+  // The Login screen now sends the OTP itself before coming here.
+  const otpAlreadySent = Boolean(route.params?.otpSent);
+  const [sent, setSent] = useState(otpAlreadySent);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const otpRefs = useRef<Array<TextInput | null>>([]);
 
   // auto-send OTP if mobile already provided
   useEffect(() => {
-    if (initialMobile) sendOtp(initialMobile);
+    if (initialMobile && !otpAlreadySent) sendOtp(initialMobile);
   }, []);
 
   const sendOtp = async (num: string) => {
@@ -41,7 +44,12 @@ export default function LoginOtpScreen({ route, navigation }: any) {
       setSent(true);
       setOtp(['', '', '', '', '', '']);
     } catch (err: any) {
-      Alert.alert('Failed', err?.response?.data?.message || 'Could not send OTP');
+      if (handleLoginOtpError(err)) {
+        setSent(true);
+      } else if (initialMobile) {
+        // Nothing was sent, so there is nothing to type in -- go back to login.
+        navigation.goBack();
+      }
     } finally {
       setLoading(false);
     }

@@ -14,7 +14,7 @@ import SearchableDropdown from '../../../components/SearchableDropdown';
 import MultiSelectDropdown from '../../../components/MultiSelectDropdown';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
-import { getCastes, getReligionOptions, Caste } from '../../../api/caste';
+import { getCastes, getReligionOptions, isShownAsPreferredReligion, Caste } from '../../../api/caste';
 import { useSignup } from '../../../context/SignupContext';
 import { getResumeScreen } from '../../../utils/resumeOnboarding';
 
@@ -217,7 +217,7 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
 
           <Text style={styles.label}>Preferred Religion</Text>
           <Chips
-            options={religions.map((r) => ({ label: r === 'Other' ? 'Any Religion' : r, value: r }))}
+            options={religions.filter(isShownAsPreferredReligion).map((r) => ({ label: r === 'Other' ? 'Any Religion' : r, value: r }))}
             selected={religion}
             onToggle={(v) => toggle(religion, setReligion, v)}
           />
