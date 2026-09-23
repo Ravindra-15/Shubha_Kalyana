@@ -13,6 +13,8 @@ import SearchableDropdown from '../../../components/SearchableDropdown';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 const RASHIS = [
   { label: 'Mesha (Aries)', value: 'MESHA' },
@@ -38,6 +40,7 @@ const NAKSHATRAS = [
 ];
 
 export default function HoroscopeScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { data, setField } = useSignup();
   const horo = data.horoscope || {};
   const [rashi, setRashi] = useState(horo.rashi || '');
@@ -86,28 +89,32 @@ export default function HoroscopeScreen({ navigation }: any) {
 
           <ProgressBar step={8} total={16} />
 
-          <Text style={styles.title}>
-            Your <Text style={styles.titleRed}>Horoscope</Text>
-          </Text>
+          <SplitTitle
+            style={styles.title}
+            highlightStyle={styles.titleRed}
+            pre={t('signup.horoscope.titlePre')}
+            highlight={t('signup.horoscope.titleHighlight')}
+            post={t('signup.horoscope.titlePost')}
+          />
 
-          <Text style={styles.label}>Rashi (Moon Sign)</Text>
+          <Text style={styles.label}>{t('signup.horoscope.rashi')}</Text>
           {/* <SearchableDropdown
-            placeholder="Select your Rashi"
+            placeholder={t('signup.horoscope.rashiPlaceholder')}
             value={rashi}
             options={RASHIS}
             onSelect={(val) => setRashi(val)}
             allowCustom
           /> */}
           <SearchableDropdown
-            placeholder="Select your Rashi"
+            placeholder={t('signup.horoscope.rashiPlaceholder')}
             value={rashi}
             options={RASHIS}
             onSelect={(val) => setRashi(val)}
           />
 
-          <Text style={styles.label}>Nakshatra (Birth Star)</Text>
+          <Text style={styles.label}>{t('signup.horoscope.nakshatra')}</Text>
           {/* <SearchableDropdown
-            placeholder="Select your Nakshatra"
+            placeholder={t('signup.horoscope.nakshatraPlaceholder')}
             value={nakshatra}
             options={NAKSHATRAS.map((n) => ({ label: n, value: n }))}
             onSelect={(val) => setNakshatra(val)}
@@ -115,7 +122,7 @@ export default function HoroscopeScreen({ navigation }: any) {
           /> */}
 
           <SearchableDropdown
-            placeholder="Select your Nakshatra"
+            placeholder={t('signup.horoscope.nakshatraPlaceholder')}
             value={nakshatra}
             options={NAKSHATRAS.map((n) => ({ label: n, value: n }))}
             onSelect={(val) => setNakshatra(val)}
@@ -124,11 +131,11 @@ export default function HoroscopeScreen({ navigation }: any) {
           <View style={styles.spacer} />
 
           <TouchableOpacity style={styles.nextBtn} onPress={() => submit(false)} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>Next  →</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>{t('signup.common.next')}</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.skipBtn} onPress={() => submit(true)}>
-            <Text style={styles.skipText}>Skip</Text>
+            <Text style={styles.skipText}>{t('signup.common.skip')}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardWrapper>

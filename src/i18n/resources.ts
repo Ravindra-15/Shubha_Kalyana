@@ -7,6 +7,8 @@
 // languages — these renditions should be spot-checked by a native
 // speaker before relying on them for production copy.
 
+import signupTranslations from './signupResources';
+
 const resources = {
   en: {
     translation: {
@@ -415,5 +417,12 @@ const resources = {
     },
   },
 };
+
+// Onboarding (signup) strings live in their own file. Only en/kn/hi are
+// translated there; every other language keeps falling back to English.
+Object.entries(signupTranslations).forEach(([language, value]) => {
+  const entry = (resources as any)[language];
+  if (entry?.translation) entry.translation.signup = value;
+});
 
 export default resources;

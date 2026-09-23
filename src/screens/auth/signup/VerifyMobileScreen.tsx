@@ -12,8 +12,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ProgressBar from '../../../components/ProgressBar';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 export default function VerifyMobileScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -103,12 +106,16 @@ export default function VerifyMobileScreen({ navigation }: any) {
 
         <ProgressBar step={8} total={9} />
 
-        <Text style={styles.title}>
-          Verify your{'\n'}
-          <Text style={styles.titleRed}>Mobile Number</Text>
-        </Text>
+        <SplitTitle
+          style={styles.title}
+          highlightStyle={styles.titleRed}
+          newLine
+          pre={t('signup.verifyMobile.titlePre')}
+          highlight={t('signup.verifyMobile.titleHighlight')}
+          post={t('signup.verifyMobile.titlePost')}
+        />
 
-        <Text style={styles.subtitle}>We will sent you an OTP to</Text>
+        <Text style={styles.subtitle}>{t('signup.verifyMobile.subtitle')}</Text>
         {data.mobile ? (
           <Text style={styles.phone}>+91 {data.mobile}</Text>
         ) : null}
@@ -116,7 +123,7 @@ export default function VerifyMobileScreen({ navigation }: any) {
         {verified ? (
           <View style={styles.card}>
             <Text style={styles.check}>✓</Text>
-            <Text style={styles.cardText}>Mobile number verified</Text>
+            <Text style={styles.cardText}>{t('signup.verifyMobile.verifiedCard')}</Text>
           </View>
         ) : (
           <>
@@ -146,7 +153,7 @@ export default function VerifyMobileScreen({ navigation }: any) {
               ) : (
                 <TouchableOpacity onPress={sendOtp} disabled={sending}>
                   <Text style={styles.resend}>
-                    {sending ? 'Sending...' : 'Resend OTP'}
+                    {sending ? 'Sending...' : t('signup.verifyMobile.resend')}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -166,7 +173,7 @@ export default function VerifyMobileScreen({ navigation }: any) {
               {verifying ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.nextText}>Next →</Text>
+                <Text style={styles.nextText}>{t('signup.common.nextShort')}</Text>
               )}
             </TouchableOpacity>
           </>

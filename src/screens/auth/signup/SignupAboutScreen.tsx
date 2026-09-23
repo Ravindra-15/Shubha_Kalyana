@@ -15,6 +15,8 @@ import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import ProgressBar from '../../../components/ProgressBar';
 import { useSignup } from '../../../context/SignupContext';
 import { useScrollToError } from '../../../hooks/useScrollToError';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
 const MONTH_OPTIONS = [
@@ -60,6 +62,7 @@ const getCurrentAge = (dobString: string) => {
 type DobPickerType = 'day' | 'month' | 'year' | null;
 
 export default function SignupAboutScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { data, setField } = useSignup();
   const [firstName, setFirstName] = useState(data.firstName || '');
   const [lastName, setLastName] = useState(data.lastName || '');
@@ -72,7 +75,8 @@ export default function SignupAboutScreen({ navigation }: any) {
   const [activePicker, setActivePicker] = useState<DobPickerType>(null);
 
   // dynamic label: male profile = Groom, female = Bride
-  const personLabel = data.gender === 'MALE' ? 'Groom' : 'Bride';
+  const personLabel =
+    data.gender === 'MALE' ? t('signup.about.groom') : t('signup.about.bride');
 
   const liveDob = day && month && year ? `${year}-${month}-${day}` : '';
   const currentAge = getCurrentAge(liveDob);
@@ -163,17 +167,21 @@ const dd = parseInt(day, 10);
             resizeMode="contain"
           />
         </View>
-        <Text style={styles.title}>
-          About <Text style={styles.titleRed}>Yourself</Text>
-        </Text>
+        <SplitTitle
+          style={styles.title}
+          highlightStyle={styles.titleRed}
+          pre={t('signup.about.titlePre')}
+          highlight={t('signup.about.titleHighlight')}
+          post={t('signup.about.titlePost')}
+        />
 
         <Text style={styles.label}>
-          Name of {personLabel} <Text style={styles.star}>*</Text>
+          {t('signup.about.nameOf', { person: personLabel })} <Text style={styles.star}>*</Text>
         </Text>
         <TextInput
           ref={registerField('firstName') as any}
           style={[styles.input, errors.firstName && styles.inputError]}
-          placeholder="First Name"
+          placeholder={t('signup.about.firstName')}
           placeholderTextColor="#999"
           value={firstName}
           onChangeText={t => {
@@ -184,7 +192,7 @@ const dd = parseInt(day, 10);
         <TextInput
           ref={registerField('lastName') as any}
           style={[styles.input, errors.lastName && styles.inputError]}
-          placeholder="Last Name"
+          placeholder={t('signup.about.lastName')}
           placeholderTextColor="#999"
           value={lastName}
           onChangeText={t => {
@@ -193,7 +201,7 @@ const dd = parseInt(day, 10);
           }}
         />
 
-        <Text style={styles.label}>Date of Birth</Text>
+        <Text style={styles.label}>{t('signup.about.dateOfBirth')}</Text>
         <View
           style={styles.dobRow}
           ref={(node: any) => {
@@ -207,7 +215,7 @@ const dd = parseInt(day, 10);
             onPress={() => setActivePicker('day')}
           >
             <Text style={day ? styles.dobPickerText : styles.dobPickerPlaceholder}>
-              {day || 'Day'}
+              {day || t('signup.about.day')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -215,7 +223,7 @@ const dd = parseInt(day, 10);
             onPress={() => setActivePicker('month')}
           >
             <Text style={month ? styles.dobPickerText : styles.dobPickerPlaceholder}>
-              {month ? MONTH_OPTIONS.find(m => m.value === month)?.label : 'Month'}
+              {month ? MONTH_OPTIONS.find(m => m.value === month)?.label : t('signup.about.month')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -223,16 +231,20 @@ const dd = parseInt(day, 10);
             onPress={() => setActivePicker('year')}
           >
             <Text style={year ? styles.dobPickerText : styles.dobPickerPlaceholder}>
-              {year || 'Year'}
+              {year || t('signup.about.year')}
             </Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.label}>Current Age</Text>
+        <Text style={styles.label}>{t('signup.about.currentAge')}</Text>
         <View style={styles.ageBox}>
           <Text style={styles.ageText}>
             {currentAge
-              ? `${currentAge.years} years, ${currentAge.months} months, ${currentAge.days} days`
+              ? t('signup.about.ageValue', {
+                  years: currentAge.years,
+                  months: currentAge.months,
+                  days: currentAge.days,
+                })
               : '-'}
           </Text>
         </View>
@@ -290,7 +302,7 @@ const dd = parseInt(day, 10);
         </Modal>
 
         <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
-          <Text style={styles.continueText}>Continue →</Text>
+          <Text style={styles.continueText}>{t('signup.common.continueArrow')}</Text>
         </TouchableOpacity>
         </View>
       </KeyboardWrapper>

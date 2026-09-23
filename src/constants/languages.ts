@@ -12,3 +12,12 @@ export const LANGUAGES = [
   { label: 'Konkani', native: 'कोंकणी', value: 'kok' },
   { label: 'Kodava', native: 'ಕೊಡವ', value: 'kod' },
 ] as const;
+
+// The three languages the product is actually translated into. The onboarding
+// "Select Language" screen shows only these, matching the website's language
+// switcher.
+export const ONBOARDING_LANGUAGE_VALUES = ['en', 'kn', 'hi'];
+
+export const ONBOARDING_LANGUAGES = LANGUAGES.filter((language) =>
+  ONBOARDING_LANGUAGE_VALUES.includes(language.value),
+);

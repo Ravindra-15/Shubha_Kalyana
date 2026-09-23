@@ -13,19 +13,22 @@ import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import ProgressBar from '../../../components/ProgressBar';
 import { useSignup } from '../../../context/SignupContext';
 import { useScrollToError } from '../../../hooks/useScrollToError';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
+// Only the labels are translated -- the values sent to the server stay as-is.
 const PROFILE_OPTIONS = [
-  { label: 'Myself', value: 'Myself' },
-  { label: 'My Son', value: 'My Son' },
-  { label: 'Daughter', value: 'My Daughter' },
-  { label: 'Sister', value: 'My Sister' },
-  { label: 'Brother', value: 'My Brother' },
-  { label: 'Friend', value: 'My Friend' },
+  { labelKey: 'signup.profileFor.myself', value: 'Myself' },
+  { labelKey: 'signup.profileFor.mySon', value: 'My Son' },
+  { labelKey: 'signup.profileFor.daughter', value: 'My Daughter' },
+  { labelKey: 'signup.profileFor.sister', value: 'My Sister' },
+  { labelKey: 'signup.profileFor.brother', value: 'My Brother' },
+  { labelKey: 'signup.profileFor.friend', value: 'My Friend' },
 ];
 
 const GENDER_OPTIONS = [
-  { label: 'Male', value: 'MALE' },
-  { label: 'Female', value: 'FEMALE' },
+  { labelKey: 'signup.profileFor.male', value: 'MALE' },
+  { labelKey: 'signup.profileFor.female', value: 'FEMALE' },
 ];
 
 const getLookingForFromGender = (selectedGender: string) => {
@@ -56,6 +59,7 @@ const OTHER_RELATIONS = [
 ];
 
 export default function SignupProfileForScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { data, setField } = useSignup();
   const [profileFor, setProfileFor] = useState(data.profileFor || '');
   const [gender, setGender] = useState(data.gender || '');
@@ -98,9 +102,13 @@ export default function SignupProfileForScreen({ navigation }: any) {
           />
         </View>
 
-        <Text style={styles.title}>
-          This <Text style={styles.titleRed}>Profile</Text> is for
-        </Text>
+        <SplitTitle
+          style={styles.title}
+          highlightStyle={styles.titleRed}
+          pre={t('signup.profileFor.titlePre')}
+          highlight={t('signup.profileFor.titleHighlight')}
+          post={t('signup.profileFor.titlePost')}
+        />
 
         <View ref={registerField('profileFor')} style={[styles.grid, errors.profileFor && styles.errorBorder]}>
           {PROFILE_OPTIONS.map(opt => (
@@ -134,7 +142,7 @@ export default function SignupProfileForScreen({ navigation }: any) {
                   profileFor === opt.value && styles.pillTextActive,
                 ]}
               >
-                {opt.label}
+                {t(opt.labelKey)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -149,7 +157,7 @@ export default function SignupProfileForScreen({ navigation }: any) {
         >
           <View style={[styles.radio, Boolean(otherRelation) && styles.radioActive]} />
           <Text style={[styles.pillText, Boolean(otherRelation) && styles.pillTextActive]}>
-            {otherRelation || 'Add other Relation'}
+            {otherRelation || t('signup.profileFor.addOtherRelation')}
           </Text>
         </TouchableOpacity>
 
@@ -181,7 +189,7 @@ export default function SignupProfileForScreen({ navigation }: any) {
             </View>
             <TextInput
               style={styles.input}
-              placeholder="Or type relation"
+              placeholder={t('signup.profileFor.orTypeRelation')}
               placeholderTextColor="#999"
               value={otherRelation}
               onChangeText={setOtherRelation}
@@ -189,7 +197,7 @@ export default function SignupProfileForScreen({ navigation }: any) {
           </>
         )}
 
-        <Text style={styles.genderTitle}>Gender</Text>
+        <Text style={styles.genderTitle}>{t('signup.profileFor.gender')}</Text>
         <View ref={registerField('gender')} style={[styles.genderRow, errors.gender && styles.errorBorder]}>
           {GENDER_OPTIONS.map(opt => (
             <TouchableOpacity
@@ -213,21 +221,17 @@ export default function SignupProfileForScreen({ navigation }: any) {
                   gender === opt.value && styles.pillTextActive,
                 ]}
               >
-                {opt.label}
+                {t(opt.labelKey)}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
         <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
-          <Text style={styles.continueText}>Continue →</Text>
+          <Text style={styles.continueText}>{t('signup.common.continueArrow')}</Text>
         </TouchableOpacity>
 
-        <Text style={styles.disclaimer}>
-          Shubhakalyana is built for genuine match makers. Any falsification or
-          commercial use or marriage bureaus are strictly prohibited & may
-          reported to law enforcement
-        </Text>
+        <Text style={styles.disclaimer}>{t('signup.profileFor.disclaimer')}</Text>
         </View>
       </KeyboardWrapper>
     </SafeAreaView>

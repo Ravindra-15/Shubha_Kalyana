@@ -4,8 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import ProgressBar from '../../../components/ProgressBar';
 import { useSignup } from '../../../context/SignupContext';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 export default function ReviewProfileScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { reset } = useSignup();
 
   // Onboarding is complete on this screen, so going back is not allowed.
@@ -30,14 +33,15 @@ export default function ReviewProfileScreen({ navigation }: any) {
         <ProgressBar step={16} total={16} />
 
         <View style={styles.content}>
-          <Text style={styles.title}>
-            Your profile has been created,{' '}
-            <Text style={styles.titleRed}>Congratulations!</Text>
-          </Text>
+          <SplitTitle
+            style={styles.title}
+            highlightStyle={styles.titleRed}
+            pre={t('signup.review.titlePre')}
+            highlight={t('signup.review.titleHighlight')}
+            post={t('signup.review.titlePost')}
+          />
 
-          <Text style={styles.subtitle}>
-            We are reviewing your profile, stay tuned.
-          </Text>
+          <Text style={styles.subtitle}>{t('signup.review.subtitle')}</Text>
 
           <Image
             source={require('../../../assets/images/review-profile.png')}
@@ -45,18 +49,15 @@ export default function ReviewProfileScreen({ navigation }: any) {
             resizeMode="contain"
           />
 
-          <Text style={styles.note}>
-            Your profile has been submitted for verification. Our team will
-            review it shortly. You'll be able to log in once it's approved.
-          </Text>
+          <Text style={styles.note}>{t('signup.review.note')}</Text>
 
           <Text style={[styles.note, styles.noteNotification]}>
-            You will receive a notification on your contact number and email address.
+            {t('signup.review.notification')}
           </Text>
         </View>
 
         <TouchableOpacity style={styles.btn} onPress={goToLogin}>
-          <Text style={styles.btnText}>Go to Login</Text>
+          <Text style={styles.btnText}>{t('signup.review.goToLogin')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

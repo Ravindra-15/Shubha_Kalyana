@@ -15,6 +15,8 @@ import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
 import { useScrollToError } from '../../../hooks/useScrollToError';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 
 const MARITAL_STATUS = [
@@ -51,6 +53,7 @@ const DRINKING = [
 const HEALTH_DETAILS_MAX = 500;
 
 export default function BasicLifestyleScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { data, setField } = useSignup();
   const bl = data.basicLifestyle || {};
   const initialHealthCondition =
@@ -194,14 +197,18 @@ const submit = async (skip = false) => {
 
         <ProgressBar step={5} total={16} />
 
-        <Text style={styles.title}>
-          Martial <Text style={styles.titleRed}>Status</Text>
-        </Text>
+        <SplitTitle
+          style={styles.title}
+          highlightStyle={styles.titleRed}
+          pre={t('signup.basic.titlePre')}
+          highlight={t('signup.basic.titleHighlight')}
+          post={t('signup.basic.titlePost')}
+        />
 
-        <Text style={styles.label}>Maritial Status</Text>
+        <Text style={styles.label}>{t('signup.basic.maritalStatus')}</Text>
         <View ref={registerField('maritalStatus')}>
           <SearchableDropdown
-            placeholder="Select Your Martial Status"
+            placeholder={t('signup.basic.maritalPlaceholder')}
             value={maritalStatus}
             options={MARITAL_STATUS}
             onSelect={(val) => {
@@ -212,13 +219,13 @@ const submit = async (skip = false) => {
           />
         </View>
 
-        <Text style={styles.label}>Height</Text>
+        <Text style={styles.label}>{t('signup.basic.height')}</Text>
         <View style={styles.row}>
           <View style={styles.half}>
             <View style={[styles.unitInputWrap, !!feetError && styles.inputError]}>
               <TextInput
                 style={styles.unitInput}
-                placeholder="Ft"
+                placeholder={t('signup.basic.feet')}
                 placeholderTextColor="#999"
                 value={feet}
                 onChangeText={(text) => {
@@ -236,7 +243,7 @@ const submit = async (skip = false) => {
             <View style={[styles.unitInputWrap, !!inchesError && styles.inputError]}>
               <TextInput
                 style={styles.unitInput}
-                placeholder="Inches"
+                placeholder={t('signup.basic.inches')}
                 placeholderTextColor="#999"
                 value={inches}
                 onChangeText={(text) => {
@@ -252,11 +259,11 @@ const submit = async (skip = false) => {
           </View>
         </View>
 
-        <Text style={styles.label}>Weight</Text>
+        <Text style={styles.label}>{t('signup.basic.weight')}</Text>
         <View style={[styles.unitInputWrap, !!weightError && styles.inputError]}>
           <TextInput
             style={styles.unitInput}
-            placeholder="Enter Weight"
+            placeholder={t('signup.basic.weightPlaceholder')}
             placeholderTextColor="#999"
             value={weight}
             onChangeText={(text) => {
@@ -269,7 +276,7 @@ const submit = async (skip = false) => {
         </View>
         {!!weightError && <Text style={styles.fieldErrorText}>{weightError}</Text>}
 
-        <Text style={styles.label}>Diet</Text>
+        <Text style={styles.label}>{t('signup.basic.diet')}</Text>
         <View style={styles.dietRow}>
           {DIET.map((d) => (
             <TouchableOpacity
@@ -284,25 +291,23 @@ const submit = async (skip = false) => {
           ))}
         </View>
 
-        <Text style={styles.label}>Smoking</Text>
+        <Text style={styles.label}>{t('signup.basic.smoking')}</Text>
         <SearchableDropdown
-          placeholder="Select smoking habit"
+          placeholder={t('signup.basic.smokingPlaceholder')}
           value={smoking}
           options={SMOKING}
           onSelect={(val) => setSmoking(val)}
         />
 
-        <Text style={styles.label}>Drinking</Text>
+        <Text style={styles.label}>{t('signup.basic.drinking')}</Text>
         <SearchableDropdown
-          placeholder="Select drinking habit"
+          placeholder={t('signup.basic.drinkingPlaceholder')}
           value={drinking}
           options={DRINKING}
           onSelect={(val) => setDrinking(val)}
         />
 
-        <Text style={styles.label}>
-          Is there any ongoing health condition you'd like us to be aware of?
-        </Text>
+        <Text style={styles.label}>{t('signup.basic.healthQuestion')}</Text>
         <View style={styles.healthRow}>
           {HEALTH_CONDITION.map((option, index) => (
             <TouchableOpacity
@@ -334,10 +339,10 @@ const submit = async (skip = false) => {
 
         {healthCondition === 'YES' ? (
           <>
-            <Text style={styles.label}>Please share a brief note</Text>
+            <Text style={styles.label}>{t('signup.basic.healthNote')}</Text>
             <TextInput
               style={[styles.textArea, healthConditionDetailsError && styles.inputError]}
-              placeholder="Briefly describe the condition or any relevant support needs"
+              placeholder={t('signup.basic.healthNotePlaceholder')}
               placeholderTextColor="#999"
               value={healthConditionDetails}
               onChangeText={(text) => {
@@ -360,11 +365,11 @@ const submit = async (skip = false) => {
         <View style={styles.spacer} />
 
         <TouchableOpacity style={styles.nextBtn} onPress={() => submit(false)} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>Next  →</Text>}
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>{t('signup.common.next')}</Text>}
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.skipBtn} onPress={() => submit(true)}>
-          <Text style={styles.skipText}>Skip</Text>
+          <Text style={styles.skipText}>{t('signup.common.skip')}</Text>
         </TouchableOpacity>
         </View>
       </KeyboardWrapper>

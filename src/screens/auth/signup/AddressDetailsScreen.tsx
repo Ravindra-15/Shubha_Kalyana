@@ -17,8 +17,11 @@ import SearchableDropdown from '../../../components/SearchableDropdown';
 import { INDIAN_STATE_OPTIONS } from '../../../constants/indianStates';
 import { getDistrictOptionsForStates } from '../../../constants/districtsByState';
 import { useScrollToError } from '../../../hooks/useScrollToError';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 export default function AddressDetailsScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { data, setField } = useSignup();
   const addr = data.address || {};
 
@@ -138,32 +141,32 @@ export default function AddressDetailsScreen({ navigation }: any) {
     <>
       <View style={styles.toggleRow}>
         <TouchableOpacity style={[styles.toggle, type === 'INDIA' && styles.toggleActive]} onPress={() => setType('INDIA')}>
-          <Text style={[styles.toggleText, type === 'INDIA' && styles.toggleTextActive]}>India</Text>
+          <Text style={[styles.toggleText, type === 'INDIA' && styles.toggleTextActive]}>{t('signup.address.india')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.toggle, type === 'NRI' && styles.toggleActive]} onPress={() => setType('NRI')}>
-          <Text style={[styles.toggleText, type === 'NRI' && styles.toggleTextActive]}>NRI</Text>
+          <Text style={[styles.toggleText, type === 'NRI' && styles.toggleTextActive]}>{t('signup.address.nri')}</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.label}>Address Line 1 <Text style={styles.star}>*</Text></Text>
+      <Text style={styles.label}>{t('signup.address.addressLine1')} <Text style={styles.star}>*</Text></Text>
       <TextInput
         ref={registerField(key('addressLine1', 'AddressLine1')) as any}
         style={[styles.input, errors[key('addressLine1', 'AddressLine1')] && styles.inputError]}
-        placeholder="House no, street, area"
+        placeholder={t('signup.address.addressLine1Placeholder')}
         placeholderTextColor="#999"
         value={line}
         onChangeText={(v) => { setLine(v); clearErr(key('addressLine1', 'AddressLine1')); }}
       />
 
-      <Text style={styles.label}>Address Line 2</Text>
-      <TextInput style={styles.input} placeholder="Landmark, locality (optional)" placeholderTextColor="#999" value={line2} onChangeText={setLine2} />
+      <Text style={styles.label}>{t('signup.address.addressLine2')}</Text>
+      <TextInput style={styles.input} placeholder={t('signup.address.addressLine2Placeholder')} placeholderTextColor="#999" value={line2} onChangeText={setLine2} />
 
       {type === 'INDIA' ? (
         <>
-          <Text style={styles.label}>State <Text style={styles.star}>*</Text></Text>
+          <Text style={styles.label}>{t('signup.address.state')} <Text style={styles.star}>*</Text></Text>
           <View ref={registerField(prefix ? `${prefix}State` : 'state')}>
             <SearchableDropdown
-              placeholder="Select State"
+              placeholder={t('signup.address.statePlaceholder')}
               value={s}
               options={INDIAN_STATE_OPTIONS}
               onSelect={(v) => {
@@ -176,10 +179,10 @@ export default function AddressDetailsScreen({ navigation }: any) {
               error={Boolean(errors[prefix ? `${prefix}State` : 'state'])}
             />
           </View>
-          <Text style={styles.label}>District <Text style={styles.star}>*</Text></Text>
+          <Text style={styles.label}>{t('signup.address.district')} <Text style={styles.star}>*</Text></Text>
           <View ref={registerField(key('district', 'District')) as any}>
             <SearchableDropdown
-              placeholder={s ? 'Select District' : 'Select state first'}
+              placeholder={s ? t('signup.address.selectDistrict') : t('signup.address.selectStateFirst')}
               value={d}
               options={getDistrictOptionsForStates(s ? [s] : [])}
               onSelect={(v) => {
@@ -193,12 +196,12 @@ export default function AddressDetailsScreen({ navigation }: any) {
         </>
       ) : (
         <>
-          <Text style={styles.label}>Country <Text style={styles.star}>*</Text></Text>
-          <TextInput ref={registerField(key('country', 'Country')) as any} style={[styles.input, errors[key('country', 'Country')] && styles.inputError]} placeholder="Country" placeholderTextColor="#999" value={c} onChangeText={(v) => { setC(v); clearErr(key('country', 'Country')); }} />
-          <Text style={styles.label}>State / Province</Text>
-          <TextInput style={styles.input} placeholder="State or Province" placeholderTextColor="#999" value={sp} onChangeText={setSp} />
-          <Text style={styles.label}>Postal Code</Text>
-          <TextInput style={styles.input} placeholder="Postal code" placeholderTextColor="#999" value={pc} onChangeText={setPc} keyboardType="number-pad" />
+          <Text style={styles.label}>{t('signup.address.country')} <Text style={styles.star}>*</Text></Text>
+          <TextInput ref={registerField(key('country', 'Country')) as any} style={[styles.input, errors[key('country', 'Country')] && styles.inputError]} placeholder={t('signup.address.countryPlaceholder')} placeholderTextColor="#999" value={c} onChangeText={(v) => { setC(v); clearErr(key('country', 'Country')); }} />
+          <Text style={styles.label}>{t('signup.address.stateProvince')}</Text>
+          <TextInput style={styles.input} placeholder={t('signup.address.stateProvincePlaceholder')} placeholderTextColor="#999" value={sp} onChangeText={setSp} />
+          <Text style={styles.label}>{t('signup.address.postalCode')}</Text>
+          <TextInput style={styles.input} placeholder={t('signup.address.postalCodePlaceholder')} placeholderTextColor="#999" value={pc} onChangeText={setPc} keyboardType="number-pad" />
         </>
       )}
     </>
@@ -215,21 +218,27 @@ export default function AddressDetailsScreen({ navigation }: any) {
 
           <ProgressBar step={9} total={16} />
 
-          <Text style={styles.title}>Where do you <Text style={styles.titleRed}>Live</Text></Text>
+          <SplitTitle
+            style={styles.title}
+            highlightStyle={styles.titleRed}
+            pre={t('signup.address.titlePre')}
+            highlight={t('signup.address.titleHighlight')}
+            post={t('signup.address.titlePost')}
+          />
 
-          <Text style={styles.section}>Current Address</Text>
+          <Text style={styles.section}>{t('signup.address.currentAddress')}</Text>
           {renderFields(
             residenceType, setResidenceType, addressLine1, setAddressLine1,
             addressLine2, setAddressLine2, district, setDistrict, state, setState,
             country, setCountry, stateOrProvince, setStateOrProvince, postalCode, setPostalCode, ''
           )}
 
-          <Text style={styles.section}>Permanent Address</Text>
+          <Text style={styles.section}>{t('signup.address.permanentAddress')}</Text>
           <TouchableOpacity style={styles.checkRow} onPress={() => setSameAsCurrent(!sameAsCurrent)}>
             <View style={[styles.checkbox, sameAsCurrent && styles.checkboxActive]}>
               {sameAsCurrent && <Text style={styles.checkmark}>✓</Text>}
             </View>
-            <Text style={styles.checkLabel}>Same as current</Text>
+            <Text style={styles.checkLabel}>{t('signup.address.sameAsCurrent')}</Text>
           </TouchableOpacity>
 
           {!sameAsCurrent &&
@@ -242,11 +251,11 @@ export default function AddressDetailsScreen({ navigation }: any) {
           <View style={styles.spacer} />
 
           <TouchableOpacity style={styles.nextBtn} onPress={() => submit(false)} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>Next  →</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>{t('signup.common.next')}</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.skipBtn} onPress={() => submit(true)}>
-            <Text style={styles.skipText}>Skip</Text>
+            <Text style={styles.skipText}>{t('signup.common.skip')}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardWrapper>

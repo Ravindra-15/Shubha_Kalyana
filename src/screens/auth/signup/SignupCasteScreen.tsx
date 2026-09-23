@@ -18,6 +18,8 @@ import SearchableDropdown from '../../../components/SearchableDropdown';
 import { useScrollToError } from '../../../hooks/useScrollToError';
 import apiClient from '../../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 const getLookingForFromGender = (selectedGender?: string) => {
   if (selectedGender === 'MALE') return 'Groom';
@@ -55,6 +57,7 @@ const RELIGIONS = [
 ];
 
 export default function SignupCasteScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { data, setField } = useSignup();
   const [religion, setReligion] = useState(data.religion || '');
   const [casteId, setCasteId] = useState(data.caste || '');
@@ -159,16 +162,20 @@ const visibleCastes = religion
           />
         </View>
 
-        <Text style={styles.title}>
-          Select <Text style={styles.titleRed}>Caste</Text>
-        </Text>
+        <SplitTitle
+          style={styles.title}
+          highlightStyle={styles.titleRed}
+          pre={t('signup.caste.titlePre')}
+          highlight={t('signup.caste.titleHighlight')}
+          post={t('signup.caste.titlePost')}
+        />
 
         <Text style={styles.label}>
-          Religion <Text style={styles.star}>*</Text>
+          {t('signup.caste.religion')} <Text style={styles.star}>*</Text>
         </Text>
         <View ref={registerField('religion')}>
           <SearchableDropdown
-            placeholder="Select Religion"
+            placeholder={t('signup.caste.selectReligion')}
             value={religion}
             options={RELIGIONS.map(r => ({ label: r, value: r }))}
             onSelect={val => {
@@ -183,14 +190,14 @@ const visibleCastes = religion
         </View>
 
         <Text style={styles.label}>
-          Select Caste <Text style={styles.star}>*</Text>
+          {t('signup.caste.selectCaste')} <Text style={styles.star}>*</Text>
         </Text>
         {loading ? (
           <ActivityIndicator color="#D20236" style={{ marginVertical: 16 }} />
         ) : (
           <View ref={registerField('casteId')}>
             <SearchableDropdown
-              placeholder="Caste"
+              placeholder={t('signup.caste.castePlaceholder')}
               value={casteId}
               options={visibleCastes.map(c => ({ label: c.casteName, value: c._id }))}
               onSelect={val => {
@@ -204,7 +211,7 @@ const visibleCastes = religion
         )}
         <View ref={registerField('subCaste')}>
           <SearchableDropdown
-            placeholder="Sub- Caste"
+            placeholder={t('signup.caste.subCastePlaceholder')}
             value={subCaste}
             options={subCasteOptions.map(sc => ({ label: sc, value: sc }))}
             onSelect={val => {
@@ -218,12 +225,12 @@ const visibleCastes = religion
         </View>
 
         <Text style={styles.label}>
-          Living In <Text style={styles.star}>*</Text>
+          {t('signup.caste.livingIn')} <Text style={styles.star}>*</Text>
         </Text>
         <TextInput
           ref={registerField('livingIn') as any}
           style={[styles.input, errors.livingIn && styles.inputError]}
-          placeholder="Enter city / place"
+          placeholder={t('signup.caste.livingInPlaceholder')}
           placeholderTextColor="#999"
           value={livingIn}
           onChangeText={t => {
@@ -233,11 +240,11 @@ const visibleCastes = religion
         />
 
         <Text style={styles.label}>
-          Mother Tongue <Text style={styles.star}>*</Text>
+          {t('signup.caste.motherTongue')} <Text style={styles.star}>*</Text>
         </Text>
         <View ref={registerField('motherTongue')}>
           <SearchableDropdown
-            placeholder="Select Mother Tongue"
+            placeholder={t('signup.caste.motherTonguePlaceholder')}
             value={motherTongue}
             options={MOTHER_TONGUES.map(tongue => ({ label: tongue, value: tongue }))}
             onSelect={val => {
@@ -257,7 +264,7 @@ const visibleCastes = religion
           {submitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.continueText}>Submit →</Text>
+            <Text style={styles.continueText}>{t('signup.common.submitArrow')}</Text>
           )}
         </TouchableOpacity>
         </View>

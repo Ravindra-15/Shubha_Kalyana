@@ -15,6 +15,8 @@ import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
 import { useScrollToError } from '../../../hooks/useScrollToError';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 const EMPLOYED_TYPES = [
   { label: 'Private', value: 'PRIVATE' },
@@ -78,6 +80,7 @@ const EXPERIENCE_PRESETS = [
 ];
 
 export default function EmploymentScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { data, setField } = useSignup();
   const emp = data.employment || {};
 
@@ -162,14 +165,19 @@ export default function EmploymentScreen({ navigation }: any) {
 
           <ProgressBar step={10} total={16} />
 
-          <Text style={styles.title}>
-            Add your{'\n'}<Text style={styles.titleRed}>Employment Details</Text>
-          </Text>
+          <SplitTitle
+            style={styles.title}
+            highlightStyle={styles.titleRed}
+            newLine
+            pre={t('signup.employment.titlePre')}
+            highlight={t('signup.employment.titleHighlight')}
+            post={t('signup.employment.titlePost')}
+          />
 
-          <Text style={styles.label}>Employment Type <Text style={styles.star}>*</Text></Text>
+          <Text style={styles.label}>{t('signup.employment.employmentType')} <Text style={styles.star}>*</Text></Text>
           <View ref={registerField('employedType')}>
             <SearchableDropdown
-              placeholder="Select Employment Type"
+              placeholder={t('signup.employment.employmentTypePlaceholder')}
               value={employedType}
               options={EMPLOYED_TYPES}
               onSelect={(val) => {
@@ -182,9 +190,9 @@ export default function EmploymentScreen({ navigation }: any) {
 
           {showDesignation && (
             <>
-              <Text style={styles.label}>You work as</Text>
+              <Text style={styles.label}>{t('signup.employment.youWorkAs')}</Text>
               <SearchableDropdown
-                placeholder="Select your designation"
+                placeholder={t('signup.employment.designationPlaceholder')}
                 value={designation}
                 options={DESIGNATIONS}
                 onSelect={setDesignation}
@@ -194,27 +202,27 @@ export default function EmploymentScreen({ navigation }: any) {
 
           {isBusiness ? (
             <>
-              <Text style={styles.label}>Firm Name</Text>
+              <Text style={styles.label}>{t('signup.employment.firmName')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Firm name"
+                placeholder={t('signup.employment.firmNamePlaceholder')}
                 placeholderTextColor="#999"
                 value={companyName}
                 onChangeText={setCompanyName}
               />
 
-              <Text style={styles.label}>Type of Business</Text>
+              <Text style={styles.label}>{t('signup.employment.typeOfBusiness')}</Text>
               <SearchableDropdown
-                placeholder="Select type of business"
+                placeholder={t('signup.employment.businessPlaceholder')}
                 value={typeOfBusiness}
                 options={BUSINESS_TYPES}
                 onSelect={setTypeOfBusiness}
               />
 
-              <Text style={styles.label}>Firm Location</Text>
+              <Text style={styles.label}>{t('signup.employment.firmLocation')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Firm location"
+                placeholder={t('signup.employment.firmLocationPlaceholder')}
                 placeholderTextColor="#999"
                 value={companyLocation}
                 onChangeText={setCompanyLocation}
@@ -222,19 +230,19 @@ export default function EmploymentScreen({ navigation }: any) {
             </>
           ) : isJobType ? (
             <>
-              <Text style={styles.label}>You work with</Text>
+              <Text style={styles.label}>{t('signup.employment.youWorkWith')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Company name"
+                placeholder={t('signup.employment.companyPlaceholder')}
                 placeholderTextColor="#999"
                 value={companyName}
                 onChangeText={setCompanyName}
               />
 
-              <Text style={styles.label}>Company Location</Text>
+              <Text style={styles.label}>{t('signup.employment.companyLocation')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your company location"
+                placeholder={t('signup.employment.companyLocationPlaceholder')}
                 placeholderTextColor="#999"
                 value={companyLocation}
                 onChangeText={setCompanyLocation}
@@ -242,24 +250,24 @@ export default function EmploymentScreen({ navigation }: any) {
             </>
           ) : null}
 
-          <Text style={styles.label}>Add your Annual Income Details</Text>
+          <Text style={styles.label}>{t('signup.employment.annualIncome')}</Text>
           {isCustomIncome ? (
             <>
               <TextInput
                 style={styles.input}
-                placeholder="Enter annual income"
+                placeholder={t('signup.employment.incomePlaceholder')}
                 placeholderTextColor="#999"
                 value={annualIncome}
                 onChangeText={setAnnualIncome}
                 keyboardType="number-pad"
               />
               <TouchableOpacity onPress={() => { setIsCustomIncome(false); setAnnualIncome(''); }}>
-                <Text style={styles.linkText}>Choose from list instead</Text>
+                <Text style={styles.linkText}>{t('signup.common.chooseFromListInstead')}</Text>
               </TouchableOpacity>
             </>
           ) : (
             <SearchableDropdown
-              placeholder="Select Income Slab"
+              placeholder={t('signup.employment.incomeSlabPlaceholder')}
               value={annualIncome}
               options={INCOME_SLABS}
               onSelect={(val) => {
@@ -275,13 +283,13 @@ export default function EmploymentScreen({ navigation }: any) {
 
           {showExperience && (
             <>
-              <Text style={styles.label}>Total Experience</Text>
+              <Text style={styles.label}>{t('signup.employment.totalExperience')}</Text>
               {isCustomExperience ? (
                 <>
                   <View style={styles.row}>
                     <TextInput
                       style={[styles.input, styles.flexInput]}
-                      placeholder="Years"
+                      placeholder={t('signup.employment.yearsPlaceholder')}
                       placeholderTextColor="#999"
                       value={expYears}
                       onChangeText={(t) => {
@@ -293,7 +301,7 @@ export default function EmploymentScreen({ navigation }: any) {
                     />
                     <TextInput
                       style={[styles.input, styles.flexInput]}
-                      placeholder="Months"
+                      placeholder={t('signup.employment.monthsPlaceholder')}
                       placeholderTextColor="#999"
                       value={expMonths}
                       onChangeText={(t) => {
@@ -312,12 +320,12 @@ export default function EmploymentScreen({ navigation }: any) {
                       setExpMonths('');
                     }}
                   >
-                    <Text style={styles.linkText}>Choose from list instead</Text>
+                    <Text style={styles.linkText}>{t('signup.common.chooseFromListInstead')}</Text>
                   </TouchableOpacity>
                 </>
               ) : (
                 <SearchableDropdown
-                  placeholder="Select experience"
+                  placeholder={t('signup.employment.experiencePlaceholder')}
                   value={expPreset}
                   options={EXPERIENCE_PRESETS}
                   onSelect={(val) => {
@@ -342,7 +350,7 @@ export default function EmploymentScreen({ navigation }: any) {
 
           {showLinkedIn && (
             <>
-              <Text style={styles.label}>LinkedIn Link</Text>
+              <Text style={styles.label}>{t('signup.employment.linkedin')}</Text>
               <TextInput
                 style={[styles.input, errors.linkedIn && styles.inputError]}
                 placeholder="https://linkedin.com/in/your-name"
@@ -360,11 +368,11 @@ export default function EmploymentScreen({ navigation }: any) {
           <View style={styles.spacer} />
 
           <TouchableOpacity style={styles.nextBtn} onPress={() => submit(false)} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>Next  →</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>{t('signup.common.next')}</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.skipBtn} onPress={() => submit(true)}>
-            <Text style={styles.skipText}>Skip</Text>
+            <Text style={styles.skipText}>{t('signup.common.skip')}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardWrapper>

@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
-import { LANGUAGES } from '../../../constants/languages';
+import { ONBOARDING_LANGUAGES } from '../../../constants/languages';
 
 export default function SelectLanguageScreen({ navigation }: any) {
   const { t, i18n } = useTranslation();
@@ -37,7 +37,7 @@ export default function SelectLanguageScreen({ navigation }: any) {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         >
-          {LANGUAGES.map((lang) => (
+          {ONBOARDING_LANGUAGES.map((lang) => (
             <TouchableOpacity
               key={lang.value}
               style={styles.option}

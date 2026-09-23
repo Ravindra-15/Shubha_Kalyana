@@ -15,6 +15,8 @@ import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
 import { useScrollToError } from '../../../hooks/useScrollToError';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 const QUALIFICATIONS = [
   'B.Tech', 'B.E', 'B.Sc', 'B.Com', 'B.A', 'BBA', 'BCA', 'B.Pharm', 'LLB', 'MBBS',
   'M.Tech', 'M.E', 'M.Sc', 'M.Com', 'M.A', 'MBA', 'MCA', 'M.Pharm', 'LLM',
@@ -22,6 +24,7 @@ const QUALIFICATIONS = [
 ];
 
 export default function QualificationScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { data, setField } = useSignup();
   const [qualification, setQualification] = useState(data.education?.highestQualification || '');
   const [college, setCollege] = useState(data.education?.college || '');
@@ -68,14 +71,19 @@ export default function QualificationScreen({ navigation }: any) {
 
         <ProgressBar step={6} total={16} />
 
-        <Text style={styles.title}>
-          Select your{'\n'}<Text style={styles.titleRed}>Qualification</Text>
-        </Text>
+        <SplitTitle
+          style={styles.title}
+          highlightStyle={styles.titleRed}
+          newLine
+          pre={t('signup.qualification.titlePre')}
+          highlight={t('signup.qualification.titleHighlight')}
+          post={t('signup.qualification.titlePost')}
+        />
 
-        <Text style={styles.label}>Highest Qualification <Text style={styles.star}>*</Text></Text>
+        <Text style={styles.label}>{t('signup.qualification.highestQualification')} <Text style={styles.star}>*</Text></Text>
         <View ref={registerField('qualification')}>
           <SearchableDropdown
-            placeholder="Select or type qualification"
+            placeholder={t('signup.qualification.qualificationPlaceholder')}
             value={qualification}
             options={QUALIFICATIONS.map((q) => ({ label: q, value: q }))}
             onSelect={(val) => { setQualification(val); setErrors({}); }}
@@ -84,10 +92,10 @@ export default function QualificationScreen({ navigation }: any) {
           />
         </View>
 
-        <Text style={styles.label}>College / University</Text>
+        <Text style={styles.label}>{t('signup.qualification.college')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter your University name"
+          placeholder={t('signup.qualification.collegePlaceholder')}
           placeholderTextColor="#999"
           value={college}
           onChangeText={setCollege}
@@ -96,11 +104,11 @@ export default function QualificationScreen({ navigation }: any) {
         <View style={styles.spacer} />
 
         <TouchableOpacity style={styles.nextBtn} onPress={() => submit(false)} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>Next  →</Text>}
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>{t('signup.common.next')}</Text>}
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.skipBtn} onPress={() => submit(true)}>
-          <Text style={styles.skipText}>Skip</Text>
+          <Text style={styles.skipText}>{t('signup.common.skip')}</Text>
         </TouchableOpacity>
         </View>
       </KeyboardWrapper>

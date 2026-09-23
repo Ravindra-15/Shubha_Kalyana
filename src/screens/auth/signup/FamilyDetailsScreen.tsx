@@ -16,6 +16,8 @@ import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
 import { useScrollToError } from '../../../hooks/useScrollToError';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 const FAMILY_TYPES = [
   { label: 'Joint Family', value: 'JOINT' },
@@ -34,6 +36,7 @@ const SIBLING_LABELS: { [k: string]: string } = {
 type SiblingPickerType = 'brothers' | 'sisters' | null;
 
 export default function FamilyDetailsScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { data, setField } = useSignup();
   const fam = data.family || {};
 
@@ -108,7 +111,7 @@ export default function FamilyDetailsScreen({ navigation }: any) {
         <>
           <TextInput
             style={styles.input}
-            placeholder="Enter number"
+            placeholder={t('signup.family.enterNumber')}
             placeholderTextColor="#999"
             value={value}
             onChangeText={(t) => {
@@ -119,7 +122,7 @@ export default function FamilyDetailsScreen({ navigation }: any) {
             maxLength={2}
           />
           <TouchableOpacity onPress={() => { setIsCustom(false); setValue(''); }}>
-            <Text style={styles.linkText}>Choose from list</Text>
+            <Text style={styles.linkText}>{t('signup.common.chooseFromList')}</Text>
           </TouchableOpacity>
         </>
       ) : (
@@ -142,49 +145,54 @@ export default function FamilyDetailsScreen({ navigation }: any) {
 
           <ProgressBar step={7} total={16} />
 
-          <Text style={styles.title}>
-            Enter your{'\n'}<Text style={styles.titleRed}>Family Details</Text>
-          </Text>
+          <SplitTitle
+            style={styles.title}
+            highlightStyle={styles.titleRed}
+            newLine
+            pre={t('signup.family.titlePre')}
+            highlight={t('signup.family.titleHighlight')}
+            post={t('signup.family.titlePost')}
+          />
 
-           <Text style={styles.label}>Father's Name <Text style={styles.star}>*</Text></Text>
+           <Text style={styles.label}>{t('signup.family.fatherName')} <Text style={styles.star}>*</Text></Text>
           <TextInput
             ref={registerField('fatherName') as any}
             style={[styles.input, errors.fatherName && styles.inputError]}
-            placeholder="Enter Father's name"
+            placeholder={t('signup.family.fatherNamePlaceholder')}
             placeholderTextColor="#999"
             value={fatherName}
             onChangeText={(t) => { setFatherName(t); setErrors((e) => ({ ...e, fatherName: false })); }}
           />
 
-          <Text style={styles.label}>Father's Occupation</Text>
+          <Text style={styles.label}>{t('signup.family.fatherOccupation')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Occupation"
+            placeholder={t('signup.family.occupationPlaceholder')}
             placeholderTextColor="#999"
             value={fatherOccupation}
             onChangeText={setFatherOccupation}
           />
 
-          <Text style={styles.label}>Mother's Name <Text style={styles.star}>*</Text></Text>
+          <Text style={styles.label}>{t('signup.family.motherName')} <Text style={styles.star}>*</Text></Text>
           <TextInput
             ref={registerField('motherName') as any}
             style={[styles.input, errors.motherName && styles.inputError]}
-            placeholder="Enter Mother's name"
+            placeholder={t('signup.family.motherNamePlaceholder')}
             placeholderTextColor="#999"
             value={motherName}
             onChangeText={(t) => { setMotherName(t); setErrors((e) => ({ ...e, motherName: false })); }}
           />
 
-          <Text style={styles.label}>Mother's Occupation</Text>
+          <Text style={styles.label}>{t('signup.family.motherOccupation')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Occupation"
+            placeholder={t('signup.family.occupationPlaceholder')}
             placeholderTextColor="#999"
             value={motherOccupation}
             onChangeText={setMotherOccupation}
           />
 
-          <Text style={styles.label}>Family Type <Text style={styles.star}>*</Text></Text>
+          <Text style={styles.label}>{t('signup.family.familyType')} <Text style={styles.star}>*</Text></Text>
           <View style={styles.row} ref={registerField('familyType')}>
             {FAMILY_TYPES.map((opt) => (
               <TouchableOpacity
@@ -211,7 +219,7 @@ export default function FamilyDetailsScreen({ navigation }: any) {
             ))}
           </View>
 
-          <Text style={styles.label}>Siblings</Text>
+          <Text style={styles.label}>{t('signup.family.siblings')}</Text>
           <View style={styles.row}>
             {renderSiblingField('Brother', brothers, setBrothers, isCustomBrothers, setIsCustomBrothers, 'brothers')}
             {renderSiblingField('Sister', sisters, setSisters, isCustomSisters, setIsCustomSisters, 'sisters')}
@@ -261,11 +269,11 @@ export default function FamilyDetailsScreen({ navigation }: any) {
           <View style={styles.spacer} />
 
           <TouchableOpacity style={styles.nextBtn} onPress={() => submit(false)} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>Next  →</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>{t('signup.common.next')}</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.skipBtn} onPress={() => submit(true)}>
-            <Text style={styles.skipText}>Skip</Text>
+            <Text style={styles.skipText}>{t('signup.common.skip')}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardWrapper>

@@ -17,51 +17,49 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { validateProfilePhotoAsset } from '../../../utils/profilePhotoValidation';
 import { requestCameraPermission, showCameraPermissionAlert } from '../../../utils/cameraPermission';
 import GalleryPhotoRow from '../../../components/GalleryPhotoRow';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 const guidelineItems = [
   {
     source: require('../../../assets/images/profile-guidelines/closeup.png'),
-    label: 'Close up',
+    labelKey: 'signup.photo.closeUp',
     ok: true,
   },
   {
     source: require('../../../assets/images/profile-guidelines/halfview.png'),
-    label: 'Half View',
+    labelKey: 'signup.photo.halfView',
     ok: true,
   },
   {
     source: require('../../../assets/images/profile-guidelines/fullview.png'),
-    label: 'Full View',
+    labelKey: 'signup.photo.fullView',
     ok: true,
   },
   {
     source: require('../../../assets/images/profile-guidelines/sideface.png'),
-    label: 'Side Face',
+    labelKey: 'signup.photo.sideFace',
     ok: false,
   },
   {
     source: require('../../../assets/images/profile-guidelines/unclear.png'),
-    label: 'Unclear',
+    labelKey: 'signup.photo.unclear',
     ok: false,
   },
   {
     source: require('../../../assets/images/profile-guidelines/group.png'),
-    label: 'Group',
+    labelKey: 'signup.photo.group',
     ok: false,
   },
 ];
 
-const doGuidelines = [
-  'Your photo should be front facing and your entire face should be visible.',
-  'Ensure that your photo is recent and not with a group.',
-  'Use a JPG or PNG photo up to 5MB.',
-];
+// The lists hold translation keys; the screen renders them with t().
+const doGuidelines = ['signup.photo.do1', 'signup.photo.do2', 'signup.photo.do3'];
 
-const dontGuidelines = [
-  'Watermarked, morphed, unclear or irrelevant photographs may be rejected.',
-];
+const dontGuidelines = ['signup.photo.dont1'];
 
 export default function ProfilePhotoScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const [photo, setPhoto] = useState<any>(null);
   const [existingPhotoUrl, setExistingPhotoUrl] = useState('');
   const [galleryPhotos, setGalleryPhotos] = useState<any[]>([]);
@@ -220,15 +218,15 @@ export default function ProfilePhotoScreen({ navigation }: any) {
 
           <ProgressBar step={13} total={16} />
 
-          <Text style={styles.title}>
-            Almost there! Let's add your <Text style={styles.titleRed}>photo</Text>
-          </Text>
-          <Text style={styles.subtitle}>
-            Upload photo and get better matches
-          </Text>
-          <Text style={styles.recentPhotoMessage}>
-            Please upload your most recent photo
-          </Text>
+          <SplitTitle
+            style={styles.title}
+            highlightStyle={styles.titleRed}
+            pre={t('signup.photo.titlePre')}
+            highlight={t('signup.photo.titleHighlight')}
+            post={t('signup.photo.titlePost')}
+          />
+          <Text style={styles.subtitle}>{t('signup.photo.subtitle')}</Text>
+          <Text style={styles.recentPhotoMessage}>{t('signup.photo.recentPhoto')}</Text>
 
           <TouchableOpacity
             style={styles.avatarWrap}
@@ -259,7 +257,7 @@ export default function ProfilePhotoScreen({ navigation }: any) {
             disabled={picking || loading}
           >
             <Text style={styles.uploadText}>
-              {loading ? 'Uploading...' : picking ? 'Opening...' : 'Upload photo'}
+              {loading ? 'Uploading...' : picking ? 'Opening...' : t('signup.photo.uploadPhoto')}
             </Text>
           </TouchableOpacity>
 
@@ -273,13 +271,13 @@ export default function ProfilePhotoScreen({ navigation }: any) {
           <View style={styles.guidelinesSection}>
             <View style={styles.guidelinesHeader}>
               <View style={styles.guidelinesLine} />
-              <Text style={styles.guidelinesTitle}>Photo Guidelines</Text>
+              <Text style={styles.guidelinesTitle}>{t('signup.photo.guidelines')}</Text>
               <View style={styles.guidelinesLine} />
             </View>
 
             <View style={styles.guidelineGrid}>
               {guidelineItems.map(item => (
-                <View key={item.label} style={styles.guidelineTile}>
+                <View key={item.labelKey} style={styles.guidelineTile}>
                   <View style={styles.guidelineImageWrap}>
                     <Image source={item.source} style={styles.guidelineImage} />
                     <View
@@ -293,27 +291,27 @@ export default function ProfilePhotoScreen({ navigation }: any) {
                       </Text>
                     </View>
                   </View>
-                  <Text style={styles.guidelineLabel}>{item.label}</Text>
+                  <Text style={styles.guidelineLabel}>{t(item.labelKey)}</Text>
                 </View>
               ))}
             </View>
 
             <View style={styles.guidelineCopy}>
-              <Text style={styles.guidelineSubTitle}>Do's</Text>
+              <Text style={styles.guidelineSubTitle}>{t('signup.photo.dos')}</Text>
               {doGuidelines.map(item => (
                 <View key={item} style={styles.guidelinePoint}>
                   <View style={[styles.guidelineDot, styles.okDot]} />
-                  <Text style={styles.guidelinePointText}>{item}</Text>
+                  <Text style={styles.guidelinePointText}>{t(item)}</Text>
                 </View>
               ))}
 
               <Text style={[styles.guidelineSubTitle, styles.dontTitle]}>
-                Don't
+                {t('signup.photo.donts')}
               </Text>
               {dontGuidelines.map(item => (
                 <View key={item} style={styles.guidelinePoint}>
                   <View style={[styles.guidelineDot, styles.noDot]} />
-                  <Text style={styles.guidelinePointText}>{item}</Text>
+                  <Text style={styles.guidelinePointText}>{t(item)}</Text>
                 </View>
               ))}
             </View>
@@ -329,7 +327,7 @@ export default function ProfilePhotoScreen({ navigation }: any) {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.nextText}>Next →</Text>
+              <Text style={styles.nextText}>{t('signup.common.nextShort')}</Text>
             )}
           </TouchableOpacity>
         </View>

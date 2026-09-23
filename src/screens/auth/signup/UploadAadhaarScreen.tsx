@@ -15,6 +15,7 @@ import ProgressBar from '../../../components/ProgressBar';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { resolveImageUrl } from '../../../utils/imageUrl';
+import { useTranslation } from 'react-i18next';
 
 const AADHAAR_LENGTH = 12;
 
@@ -62,6 +63,7 @@ const checkAadhaarAvailability = async (aadhaarNumber: string) => {
 };
 
 export default function UploadAadhaarScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const [aadhaarNumber, setAadhaarNumber] = useState('');
   const [file, setFile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -193,16 +195,16 @@ export default function UploadAadhaarScreen({ navigation }: any) {
 
           <ProgressBar step={15} total={16} />
 
-          <Text style={styles.congrats}>One Last Thing !</Text>
+          <Text style={styles.congrats}>{t('signup.aadhaar.congrats')}</Text>
           <Text style={styles.title}>
-            Upload your Aadhar Card <Text style={styles.star}>*</Text>
+            {t('signup.aadhaar.title')} <Text style={styles.star}>*</Text>
           </Text>
-          <Text style={styles.subtitle}>Upload document for verification</Text>
+          <Text style={styles.subtitle}>{t('signup.aadhaar.subtitle')}</Text>
 
           <Text style={styles.label}>Aadhaar Number <Text style={styles.star}>*</Text></Text>
           <TextInput
             style={[styles.input, errNum && styles.inputError]}
-            placeholder="12-digit Aadhaar number"
+            placeholder={t('signup.aadhaar.aadhaarPlaceholder')}
             placeholderTextColor="#999"
             value={aadhaarNumber}
             onChangeText={(t) => {
@@ -246,23 +248,23 @@ export default function UploadAadhaarScreen({ navigation }: any) {
                     resizeMode="contain"
                   />
                 ) : null}
-                <Text style={styles.fileName}>Aadhaar document already uploaded</Text>
+                <Text style={styles.fileName}>{t('signup.aadhaar.alreadyUploaded')}</Text>
               </>
             ) : (
               <>
-                <Text style={styles.dropTitle}>Choose a file or drag{'\n'}& drop it here</Text>
-                <Text style={styles.dropHint}>JPG, PNG, PDF formats, up to 5MB</Text>
+                <Text style={styles.dropTitle}>{t('signup.aadhaar.dropTitle')}</Text>
+                <Text style={styles.dropHint}>{t('signup.aadhaar.dropHint')}</Text>
               </>
             )}
             <View style={styles.browseBtn}>
-              <Text style={styles.browseText}>Browse File</Text>
+              <Text style={styles.browseText}>{t('signup.aadhaar.browse')}</Text>
             </View>
           </TouchableOpacity>
 
           <View style={styles.spacer} />
 
           <TouchableOpacity style={styles.nextBtn} onPress={upload} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>Next  →</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>{t('signup.common.next')}</Text>}
           </TouchableOpacity>
         </View>
       </KeyboardWrapper>

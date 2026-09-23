@@ -16,8 +16,11 @@ import { useSignup } from '../../../context/SignupContext';
 import apiClient from '../../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useScrollToError } from '../../../hooks/useScrollToError';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 export default function SignupContactScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { data, setField } = useSignup();
   const [mobile, setMobile] = useState(data.mobile || '');
   const [email, setEmail] = useState(data.email || '');
@@ -194,15 +197,19 @@ export default function SignupContactScreen({ navigation }: any) {
           />
         </View>
 
-          <Text style={styles.title}>
-            <Text style={styles.titleRed}>Contact</Text> Details
-          </Text>
+          <SplitTitle
+            style={styles.title}
+            highlightStyle={styles.titleRed}
+            pre={t('signup.contact.titlePre')}
+            highlight={t('signup.contact.titleHighlight')}
+            post={t('signup.contact.titlePost')}
+          />
 
-          <Text style={styles.label}>Mobile number <Text style={styles.star}>*</Text></Text>
+          <Text style={styles.label}>{t('signup.contact.mobile')} <Text style={styles.star}>*</Text></Text>
           <View style={styles.row} ref={registerField('mobile')}>
             <TextInput
               style={[styles.input, styles.flexInput, errors.mobile && styles.inputError]}
-              placeholder="Enter your mobile number"
+              placeholder={t('signup.contact.mobilePlaceholder')}
               placeholderTextColor="#999"
               value={mobile}
               editable={!mobileVerified}
@@ -225,7 +232,7 @@ export default function SignupContactScreen({ navigation }: any) {
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <Text style={styles.otpBtnText}>
-                    {mobileOtpSent ? 'Resend' : 'Get OTP'}
+                    {mobileOtpSent ? t('signup.contact.resendShort') : t('signup.contact.getOtp')}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -241,7 +248,7 @@ export default function SignupContactScreen({ navigation }: any) {
             <View style={styles.row}>
               <TextInput
                 style={[styles.input, styles.flexInput]}
-                placeholder="Enter OTP"
+                placeholder={t('signup.common.enterOtp')}
                 placeholderTextColor="#999"
                 value={mobileOtpValue}
                 onChangeText={setMobileOtpValue}
@@ -258,15 +265,15 @@ export default function SignupContactScreen({ navigation }: any) {
                 {mobileVerifying ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.otpBtnText}>Verify</Text>
+                  <Text style={styles.otpBtnText}>{t('signup.common.verify')}</Text>
                 )}
               </TouchableOpacity>
             </View>
           )}
           {errors.mobile ? <Text style={styles.errorText}>{errors.mobile}</Text> : null}
-          {mobileVerified && <Text style={styles.verifiedText}>✓ Mobile verified</Text>}
+          {mobileVerified && <Text style={styles.verifiedText}>{t('signup.contact.mobileVerified')}</Text>}
 
-          <Text style={[styles.label, { marginTop: 20 }]}>Email ID (optional)</Text>
+          <Text style={[styles.label, { marginTop: 20 }]}>{t('signup.contact.email')}</Text>
           <View style={styles.row} ref={registerField('email')}>
             <TextInput
               style={[
@@ -275,7 +282,7 @@ export default function SignupContactScreen({ navigation }: any) {
                 errors.email && styles.inputError,
                 (!mobileVerified || emailVerified) && styles.inputDisabled,
               ]}
-              placeholder="Enter your email address"
+              placeholder={t('signup.contact.emailPlaceholder')}
               placeholderTextColor="#999"
               value={email}
               editable={mobileVerified && !emailVerified}
@@ -298,7 +305,7 @@ export default function SignupContactScreen({ navigation }: any) {
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <Text style={styles.otpBtnText}>
-                    {emailOtpSent ? 'Resend' : 'Get OTP'}
+                    {emailOtpSent ? t('signup.contact.resendShort') : t('signup.contact.getOtp')}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -314,7 +321,7 @@ export default function SignupContactScreen({ navigation }: any) {
             <View style={styles.row}>
               <TextInput
                 style={[styles.input, styles.flexInput]}
-                placeholder="Enter OTP"
+                placeholder={t('signup.common.enterOtp')}
                 placeholderTextColor="#999"
                 value={emailOtpValue}
                 onChangeText={setEmailOtpValue}
@@ -330,26 +337,26 @@ export default function SignupContactScreen({ navigation }: any) {
                 {emailVerifying ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.otpBtnText}>Verify</Text>
+                  <Text style={styles.otpBtnText}>{t('signup.common.verify')}</Text>
                 )}
               </TouchableOpacity>
             </View>
           )}
           {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
-          {emailVerified && <Text style={styles.verifiedText}>✓ Email verified</Text>}
+          {emailVerified && <Text style={styles.verifiedText}>{t('signup.contact.emailVerified')}</Text>}
 
           <TouchableOpacity style={styles.checkRow} onPress={() => setAgreedToTerms(!agreedToTerms)}>
             <View style={[styles.checkbox, agreedToTerms && styles.checkboxActive]}>
               {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
             </View>
             <Text style={styles.checkLabel}>
-              By creating an account, you agree to our{' '}
+              {t('signup.contact.termsPrefix')}{' '}
               <Text style={styles.checkLink} onPress={() => navigation.navigate('PrivacyPolicy')}>
-                Privacy Policy
+                {t('signup.contact.privacyPolicy')}
               </Text>{' '}
-              and{' '}
+              {t('signup.contact.and')}{' '}
               <Text style={styles.checkLink} onPress={() => navigation.navigate('TermsAndConditions')}>
-                T&C
+                {t('signup.contact.tc')}
               </Text>
             </Text>
           </TouchableOpacity>
@@ -362,7 +369,7 @@ export default function SignupContactScreen({ navigation }: any) {
             onPress={handleContinue}
             disabled={!mobileVerified || !agreedToTerms}
           >
-            <Text style={styles.continueText}>Continue →</Text>
+            <Text style={styles.continueText}>{t('signup.common.continueArrow')}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardWrapper>

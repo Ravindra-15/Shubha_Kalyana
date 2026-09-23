@@ -13,8 +13,11 @@ import ProgressBar from '../../../components/ProgressBar';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 export default function AboutYouScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { data, setField } = useSignup();
   const [aboutMe, setAboutMe] = useState(data.about || '');
   const [loading, setLoading] = useState(false);
@@ -70,14 +73,18 @@ export default function AboutYouScreen({ navigation }: any) {
 
           <ProgressBar step={11} total={16} />
 
-          <Text style={styles.title}>
-            About <Text style={styles.titleRed}>Yourself</Text>
-          </Text>
+          <SplitTitle
+            style={styles.title}
+            highlightStyle={styles.titleRed}
+            pre={t('signup.aboutYou.titlePre')}
+            highlight={t('signup.aboutYou.titleHighlight')}
+            post={t('signup.aboutYou.titlePost')}
+          />
 
-          <Text style={styles.label}>Tell us about yourself</Text>
+          <Text style={styles.label}>{t('signup.aboutYou.label')}</Text>
           <TextInput
             style={[styles.textArea, error && styles.inputError]}
-            placeholder="Write a few lines about yourself, your values, interests, what you're looking for..."
+            placeholder={t('signup.aboutYou.placeholder')}
             placeholderTextColor="#999"
             value={aboutMe}
             onChangeText={(t) => { setAboutMe(t.slice(0, MAX)); setError(false); }}
@@ -89,11 +96,11 @@ export default function AboutYouScreen({ navigation }: any) {
           <View style={styles.spacer} />
 
           <TouchableOpacity style={styles.nextBtn} onPress={() => submit(false)} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>Next  →</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>{t('signup.common.next')}</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.skipBtn} onPress={() => submit(true)}>
-            <Text style={styles.skipText}>Skip</Text>
+            <Text style={styles.skipText}>{t('signup.common.skip')}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardWrapper>

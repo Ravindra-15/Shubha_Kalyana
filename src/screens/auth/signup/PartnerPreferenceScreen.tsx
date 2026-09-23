@@ -17,6 +17,8 @@ import apiClient from '../../../api/client';
 import { getCastes, getReligionOptions, isShownAsPreferredReligion, Caste } from '../../../api/caste';
 import { useSignup } from '../../../context/SignupContext';
 import { getResumeScreen } from '../../../utils/resumeOnboarding';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 // The partner being searched for is (usually) the opposite gender of the
 // logged-in user, so the "Widowed" label is shown as it would describe them.
@@ -68,6 +70,7 @@ function Chips({
 }
 
 export default function PartnerPreferenceScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { data, setField } = useSignup();
   const pp = data.partnerPreference || {};
   const [ageMin, setAgeMin] = useState(pp.ageMin || '');
@@ -185,25 +188,30 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
 
           <ProgressBar step={12} total={16} />
 
-          <Text style={styles.title}>
-            Select your{'\n'}<Text style={styles.titleRed}>Partner Preferences</Text>
-          </Text>
+          <SplitTitle
+            style={styles.title}
+            highlightStyle={styles.titleRed}
+            newLine
+            pre={t('signup.partner.titlePre')}
+            highlight={t('signup.partner.titleHighlight')}
+            post={t('signup.partner.titlePost')}
+          />
 
-          <Text style={styles.label}>Age Range</Text>
+          <Text style={styles.label}>{t('signup.partner.ageRange')}</Text>
           <View style={styles.row}>
             <TextInput
               style={[styles.input, styles.ageInput, errors.age && styles.inputError]}
-              placeholder="Min"
+              placeholder={t('signup.partner.min')}
               placeholderTextColor="#999"
               value={ageMin}
               onChangeText={(t) => { setAgeMin(t); setErrors({}); }}
               keyboardType="number-pad"
               maxLength={2}
             />
-            <Text style={styles.toText}>To</Text>
+            <Text style={styles.toText}>{t('signup.partner.to')}</Text>
             <TextInput
               style={[styles.input, styles.ageInput, errors.age && styles.inputError]}
-              placeholder="Max"
+              placeholder={t('signup.partner.max')}
               placeholderTextColor="#999"
               value={ageMax}
               onChangeText={(t) => { setAgeMax(t); setErrors({}); }}
@@ -212,19 +220,19 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
             />
           </View>
 
-          <Text style={styles.label}>Preferred Marital Status</Text>
+          <Text style={styles.label}>{t('signup.partner.maritalStatus')}</Text>
           <Chips options={getMaritalOptions(data.gender)} selected={maritalStatus} onToggle={(v) => toggle(maritalStatus, setMaritalStatus, v)} />
 
-          <Text style={styles.label}>Preferred Religion</Text>
+          <Text style={styles.label}>{t('signup.partner.religion')}</Text>
           <Chips
             options={religions.filter(isShownAsPreferredReligion).map((r) => ({ label: r === 'Other' ? 'Any Religion' : r, value: r }))}
             selected={religion}
             onToggle={(v) => toggle(religion, setReligion, v)}
           />
 
-          <Text style={styles.label}>Preferred Caste</Text>
+          <Text style={styles.label}>{t('signup.partner.caste')}</Text>
           <MultiSelectDropdown
-            placeholder="Select preferred caste"
+            placeholder={t('signup.partner.castePlaceholder')}
             options={[
               { label: 'Any Caste', value: ANY_CASTE_VALUE },
               ...castes.map((c) => ({ label: c.casteName, value: c._id })),
@@ -235,9 +243,9 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
 
           {subCasteOptions.length ? (
             <>
-              <Text style={styles.label}>Preferred Sub Caste</Text>
+              <Text style={styles.label}>{t('signup.partner.subCaste')}</Text>
               <MultiSelectDropdown
-                placeholder="Select preferred sub caste"
+                placeholder={t('signup.partner.subCastePlaceholder')}
                 options={subCasteOptions}
                 value={subCaste}
                 onChange={setSubCaste}
@@ -245,33 +253,33 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
             </>
           ) : null}
 
-          <Text style={styles.label}>Preferred Education</Text>
+          <Text style={styles.label}>{t('signup.partner.education')}</Text>
           <MultiSelectDropdown
-            placeholder="Select preferred education"
+            placeholder={t('signup.partner.educationPlaceholder')}
             options={EDUCATION.map((e) => ({ label: e, value: e }))}
             value={education}
             onChange={setEducation}
           />
 
-          <Text style={styles.label}>Preferred Profession</Text>
+          <Text style={styles.label}>{t('signup.partner.profession')}</Text>
           <MultiSelectDropdown
-            placeholder="Select preferred profession"
+            placeholder={t('signup.partner.professionPlaceholder')}
             options={PROFESSION.map((p) => ({ label: p, value: p }))}
             value={profession}
             onChange={setProfession}
           />
 
-          <Text style={styles.label}>Preferred Resident</Text>
+          <Text style={styles.label}>{t('signup.partner.resident')}</Text>
           <Chips options={RESIDENT} selected={resident} onToggle={(v) => toggle(resident, setResident, v)} />
 
           <View style={{ height: 20 }} />
 
           <TouchableOpacity style={styles.nextBtn} onPress={() => submit(false)} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>Next  →</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>{t('signup.common.next')}</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.skipBtn} onPress={() => submit(true)}>
-            <Text style={styles.skipText}>Skip</Text>
+            <Text style={styles.skipText}>{t('signup.common.skip')}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardWrapper>

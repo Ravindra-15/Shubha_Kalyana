@@ -12,6 +12,8 @@ import ProgressBar from '../../../components/ProgressBar';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
+import { useTranslation } from 'react-i18next';
+import SplitTitle from '../../../components/SplitTitle';
 
 const GROUPS = [
   {
@@ -29,6 +31,7 @@ const GROUPS = [
 ];
 
 export default function HobbiesScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { data, setField } = useSignup();
   const [selected, setSelected] = useState<string[]>(data.hobbies || []);
   // Each group has its own "Others" chip, but they all share the literal
@@ -98,9 +101,14 @@ export default function HobbiesScreen({ navigation }: any) {
 
           <ProgressBar step={14} total={16} />
 
-          <Text style={styles.title}>
-            Add your Hobbies and{'\n'}<Text style={styles.titleRed}>Interests</Text>
-          </Text>
+          <SplitTitle
+            style={styles.title}
+            highlightStyle={styles.titleRed}
+            newLine
+            pre={t('signup.hobbies.titlePre')}
+            highlight={t('signup.hobbies.titleHighlight')}
+            post={t('signup.hobbies.titlePost')}
+          />
 
           {GROUPS.map((group) => (
             <View key={group.title} style={styles.group}>
@@ -128,11 +136,11 @@ export default function HobbiesScreen({ navigation }: any) {
           <View style={styles.spacer} />
 
           <TouchableOpacity style={styles.nextBtn} onPress={() => submit(false)} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>Next  →</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.nextText}>{t('signup.common.next')}</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.skipBtn} onPress={() => submit(true)}>
-            <Text style={styles.skipText}>Skip</Text>
+            <Text style={styles.skipText}>{t('signup.common.skip')}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardWrapper>
