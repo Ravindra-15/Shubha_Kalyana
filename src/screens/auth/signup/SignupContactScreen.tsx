@@ -28,6 +28,8 @@ export default function SignupContactScreen({ navigation }: any) {
   const { scrollRef, registerField, scrollToError } = useScrollToError();
 
   const [mobileOtpSent, setMobileOtpSent] = useState(false);
+  // Temporary: shown only while the SMS bypass is switched on server-side.
+  const [bypassOtp, setBypassOtp] = useState('');
   const [mobileOtpValue, setMobileOtpValue] = useState('');
   const [mobileVerified, setMobileVerified] = useState(false);
   const [mobileSending, setMobileSending] = useState(false);
@@ -71,6 +73,7 @@ export default function SignupContactScreen({ navigation }: any) {
       const res = await apiClient.post('/onboarding/contact/mobile/send-otp', {
         mobile: mobile.trim(),
       });
+      setBypassOtp(res.data?.data?.bypassOtp || '');
       setMobileOtpSent(true);
       setMobileCooldown(60);
     } catch (err: any) {
@@ -273,6 +276,15 @@ export default function SignupContactScreen({ navigation }: any) {
           {errors.mobile ? <Text style={styles.errorText}>{errors.mobile}</Text> : null}
           {mobileVerified && <Text style={styles.verifiedText}>{t('signup.contact.mobileVerified')}</Text>}
 
+          {bypassOtp && !mobileVerified ? (
+            <View style={styles.bypassBox}>
+              <Text style={styles.bypassNote}>
+                SMS service is temporarily unavailable. Please use this code:
+              </Text>
+              <Text style={styles.bypassCode}>{bypassOtp}</Text>
+            </View>
+          ) : null}
+
           <Text style={[styles.label, { marginTop: 20 }]}>{t('signup.contact.email')}</Text>
           <View style={styles.row} ref={registerField('email')}>
             <TextInput
@@ -427,6 +439,24 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   cooldownText: { color: '#999', fontSize: 14, fontFamily: 'Outfit-SemiBold' },
+  bypassBox: {
+    borderWidth: 1,
+    borderColor: '#f0c36d',
+    backgroundColor: '#fff8e6',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 14,
+  },
+  bypassNote: { fontSize: 12, color: '#8a6d1f', textAlign: 'center' },
+  bypassCode: {
+    fontSize: 22,
+    letterSpacing: 4,
+    textAlign: 'center',
+    marginTop: 4,
+    color: '#D20236',
+    fontFamily: 'Outfit-Bold',
+  },
   errorText: { color: '#D20236', fontSize: 13, marginBottom: 10 },
   verifiedText: { color: '#2e7d32', fontSize: 14, fontFamily: 'Outfit-SemiBold', marginBottom: 10 },
   continueBtn: {

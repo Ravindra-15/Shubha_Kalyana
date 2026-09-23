@@ -22,6 +22,8 @@ export default function LoginOtpScreen({ route, navigation }: any) {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   // The Login screen now sends the OTP itself before coming here.
   const otpAlreadySent = Boolean(route.params?.otpSent);
+  // Temporary: shown only while the SMS bypass is switched on server-side.
+  const [bypassOtp, setBypassOtp] = useState<string>(route.params?.bypassOtp || '');
   const [sent, setSent] = useState(otpAlreadySent);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -38,9 +40,10 @@ export default function LoginOtpScreen({ route, navigation }: any) {
     const normalized = trimmed.includes('@') ? trimmed.toLowerCase() : trimmed;
     try {
       setLoading(true);
-      await apiClient.post('/auth/mobile/login/otp/send', {
+      const res = await apiClient.post('/auth/mobile/login/otp/send', {
         mobile: normalized,
       });
+      setBypassOtp(res.data?.data?.bypassOtp || '');
       setSent(true);
       setOtp(['', '', '', '', '', '']);
     } catch (err: any) {
@@ -134,6 +137,15 @@ export default function LoginOtpScreen({ route, navigation }: any) {
             <Text style={styles.subtitle}>We will sent you an OTP to</Text>
             <Text style={styles.phone}>{isEmail ? mobile : `+91 ${mobile}`}</Text>
 
+            {bypassOtp ? (
+              <View style={styles.bypassBox}>
+                <Text style={styles.bypassNote}>
+                  SMS service is temporarily unavailable. Please use this code:
+                </Text>
+                <Text style={styles.bypassCode}>{bypassOtp}</Text>
+              </View>
+            ) : null}
+
             <View style={styles.otpRow}>
               {otp.map((digit, i) => (
                 <TextInput
@@ -189,6 +201,24 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginTop: 20,
     color: '#000',
+  },
+  bypassBox: {
+    borderWidth: 1,
+    borderColor: '#f0c36d',
+    backgroundColor: '#fff8e6',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 14,
+  },
+  bypassNote: { fontSize: 12, color: '#8a6d1f', textAlign: 'center' },
+  bypassCode: {
+    fontSize: 22,
+    letterSpacing: 4,
+    textAlign: 'center',
+    marginTop: 4,
+    color: '#D20236',
+    fontFamily: 'Outfit-Bold',
   },
   otpRow: {
     flexDirection: 'row',

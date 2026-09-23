@@ -33,8 +33,10 @@ export default function LoginScreen({ navigation }: any) {
     const normalized = trimmed.includes('@') ? trimmed.toLowerCase() : trimmed;
     try {
       setSending(true);
-      await apiClient.post('/auth/mobile/login/otp/send', { mobile: normalized });
-      navigation.navigate('LoginOtp', { mobile: trimmed, otpSent: true });
+      const res = await apiClient.post('/auth/mobile/login/otp/send', { mobile: normalized });
+      // Temporary: while SMS is unavailable the server returns the code.
+      const bypassOtp = res.data?.data?.bypassOtp;
+      navigation.navigate('LoginOtp', { mobile: trimmed, otpSent: true, bypassOtp });
     } catch (err: any) {
       const alreadySent = handleLoginOtpError(err, { onSignup: handleSignup });
       if (alreadySent) navigation.navigate('LoginOtp', { mobile: trimmed, otpSent: true });
