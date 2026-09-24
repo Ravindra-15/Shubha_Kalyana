@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 15,
     fontFamily: 'Outfit-Bold',
-    color: '#666',
+    color: '#000',
     textAlign: 'center',
     marginBottom: 30,
   },

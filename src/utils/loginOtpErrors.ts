@@ -28,8 +28,11 @@ export const handleLoginOtpError = (
 
   if (body.action === 'REVIEW_PENDING') {
     Alert.alert(
-      'Profile under review',
-      'Your profile is in pending review. Once it is approved, you can login.',
+      'Profile Under Review',
+      [
+        'Your profile is currently under review. You will be able to log in once it has been approved.',
+        'Thank you for your patience.',
+      ].join('\n\n'),
     );
     return false;
   }
