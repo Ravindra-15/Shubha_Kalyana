@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
   BackHandler,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import apiClient from '../../api/client';
@@ -17,12 +18,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { handleLoginOtpError } from '../../utils/loginOtpErrors';
 
 const RESEND_SECONDS = 60;
+const OTP_LENGTH = 6;
 
 export default function LoginOtpScreen({ route, navigation }: any) {
   const initialMobile = route.params?.mobile || '';
   const [mobile, setMobile] = useState(initialMobile);
   const isEmail = mobile.includes('@');
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   // The Login screen now sends the OTP itself before coming here.
   const otpAlreadySent = Boolean(route.params?.otpSent);
   // Temporary: shown only while the SMS bypass is switched on server-side.
@@ -62,7 +64,7 @@ export default function LoginOtpScreen({ route, navigation }: any) {
       setBypassOtp(res.data?.data?.bypassOtp || '');
       setSent(true);
       setResendIn(RESEND_SECONDS);
-      setOtp(['', '', '', '', '', '']);
+      setOtp(Array(OTP_LENGTH).fill(''));
     } catch (err: any) {
       if (handleLoginOtpError(err)) {
         setSent(true);
@@ -75,31 +77,63 @@ export default function LoginOtpScreen({ route, navigation }: any) {
     }
   };
 
+  const focusBox = (index: number) => otpRefs.current[index]?.focus();
+
   const handleOtpChange = (value: string, index: number) => {
     const digits = value.replace(/\D/g, '');
 
-    // Autofill/paste delivers the whole code to whichever box is focused --
-    // spread it across the remaining boxes instead of dropping it.
+    // Autofill and paste hand the whole code to a box -- and Android can do
+    // that for several boxes in a row. Writing it from the first box every
+    // time keeps the result the same no matter which box received it.
     if (digits.length > 1) {
-      const next = [...otp];
-      for (let i = 0; i < digits.length && index + i < next.length; i++) {
-        next[index + i] = digits[i];
-      }
+      const code = digits.slice(0, OTP_LENGTH).split('');
+      const next = Array.from({ length: OTP_LENGTH }, (_, i) => code[i] || '');
+
       setOtp(next);
-      const lastFilledIndex = Math.min(index + digits.length, next.length) - 1;
-      otpRefs.current[lastFilledIndex]?.focus();
+
+      if (code.length >= OTP_LENGTH) {
+        // Complete: close the keyboard so Submit is visible.
+        otpRefs.current[OTP_LENGTH - 1]?.blur();
+        Keyboard.dismiss();
+      } else {
+        focusBox(code.length);
+      }
+
       return;
     }
 
-    const next = [...otp];
-    next[index] = digits;
-    setOtp(next);
-    if (digits && index < 5) otpRefs.current[index + 1]?.focus();
-    if (!digits && index > 0) otpRefs.current[index - 1]?.focus();
+    const digit = digits.slice(-1);
+
+    setOtp((current) => {
+      const next = [...current];
+      next[index] = digit;
+      return next;
+    });
+
+    if (digit && index < OTP_LENGTH - 1) focusBox(index + 1);
+  };
+
+  // Backspace clears the box you are in, or the one before it when this box is
+  // already empty -- so holding delete walks back through the code.
+  const handleOtpKeyPress = (key: string, index: number) => {
+    if (key !== 'Backspace') return;
+
+    setOtp((current) => {
+      const next = [...current];
+
+      if (next[index]) {
+        next[index] = '';
+      } else if (index > 0) {
+        next[index - 1] = '';
+        focusBox(index - 1);
+      }
+
+      return next;
+    });
   };
 
   const handleBack = () => {
-    setOtp(['', '', '', '', '', '']);
+    setOtp(Array(OTP_LENGTH).fill(''));
 
     // Number typed on this screen: step back to that input instead of leaving.
     if (sent && !initialMobile) {
@@ -123,7 +157,7 @@ export default function LoginOtpScreen({ route, navigation }: any) {
   });
 
   // Submit stays inactive until all six digits are in.
-  const canSubmit = otp.join('').length === 6 && !loading;
+  const canSubmit = otp.join('').length === OTP_LENGTH && !loading;
 
   const verifyOtp = async () => {
     const code = otp.join('');
@@ -204,8 +238,9 @@ export default function LoginOtpScreen({ route, navigation }: any) {
                   style={styles.otpBox}
                   value={digit}
                   onChangeText={(v) => handleOtpChange(v, i)}
+                  onKeyPress={({ nativeEvent }) => handleOtpKeyPress(nativeEvent.key, i)}
                   keyboardType="number-pad"
-                  maxLength={6}
+                  maxLength={OTP_LENGTH}
                   textContentType="oneTimeCode"
                   autoComplete="sms-otp"
                 />
