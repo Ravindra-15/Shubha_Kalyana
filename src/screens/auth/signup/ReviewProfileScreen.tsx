@@ -84,8 +84,9 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   reviewImage: {
-    width: 260,
-    height: 260,
+    // Keeps the artwork's own 1672x941 proportions.
+    width: 300,
+    height: 169,
     marginBottom: 30,
   },
   icon: { fontSize: 60 },
