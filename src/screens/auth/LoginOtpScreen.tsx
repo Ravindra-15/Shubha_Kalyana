@@ -9,11 +9,14 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import apiClient from '../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { handleLoginOtpError } from '../../utils/loginOtpErrors';
+
+const RESEND_SECONDS = 60;
 
 export default function LoginOtpScreen({ route, navigation }: any) {
   const initialMobile = route.params?.mobile || '';
@@ -24,6 +27,9 @@ export default function LoginOtpScreen({ route, navigation }: any) {
   const otpAlreadySent = Boolean(route.params?.otpSent);
   // Temporary: shown only while the SMS bypass is switched on server-side.
   const [bypassOtp, setBypassOtp] = useState<string>(route.params?.bypassOtp || '');
+  // The server refuses another OTP within 60 seconds, so the button waits too.
+  // The code itself stays valid for 10 minutes, which this does not affect.
+  const [resendIn, setResendIn] = useState(otpAlreadySent ? RESEND_SECONDS : 0);
   const [sent, setSent] = useState(otpAlreadySent);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -33,6 +39,16 @@ export default function LoginOtpScreen({ route, navigation }: any) {
   useEffect(() => {
     if (initialMobile && !otpAlreadySent) sendOtp(initialMobile);
   }, []);
+
+  useEffect(() => {
+    if (resendIn <= 0) return undefined;
+
+    const timer = setInterval(() => {
+      setResendIn((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [resendIn > 0]);
 
   const sendOtp = async (num: string) => {
     const trimmed = num.trim();
@@ -45,6 +61,7 @@ export default function LoginOtpScreen({ route, navigation }: any) {
       });
       setBypassOtp(res.data?.data?.bypassOtp || '');
       setSent(true);
+      setResendIn(RESEND_SECONDS);
       setOtp(['', '', '', '', '', '']);
     } catch (err: any) {
       if (handleLoginOtpError(err)) {
@@ -81,6 +98,33 @@ export default function LoginOtpScreen({ route, navigation }: any) {
     if (!digits && index > 0) otpRefs.current[index - 1]?.focus();
   };
 
+  const handleBack = () => {
+    setOtp(['', '', '', '', '', '']);
+
+    // Number typed on this screen: step back to that input instead of leaving.
+    if (sent && !initialMobile) {
+      setSent(false);
+      setResendIn(0);
+      setBypassOtp('');
+      return;
+    }
+
+    navigation.goBack();
+  };
+
+  // Android hardware back should do exactly the same thing.
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleBack();
+      return true;
+    });
+
+    return () => subscription.remove();
+  });
+
+  // Submit stays inactive until all six digits are in.
+  const canSubmit = otp.join('').length === 6 && !loading;
+
   const verifyOtp = async () => {
     const code = otp.join('');
     if (code.length !== 6) return Alert.alert('Error', 'Enter 6-digit OTP');
@@ -108,6 +152,10 @@ export default function LoginOtpScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <TouchableOpacity style={styles.backBtn} onPress={handleBack} hitSlop={12}>
+        <Text style={styles.backArrow}>←</Text>
+      </TouchableOpacity>
+
       <View style={styles.content}>
         <Image
           source={require('../../assets/images/logo-red.png')}
@@ -164,15 +212,28 @@ export default function LoginOtpScreen({ route, navigation }: any) {
               ))}
             </View>
 
+            <View style={styles.resendRow}>
+              <TouchableOpacity
+                onPress={() => sendOtp(mobile)}
+                disabled={resendIn > 0 || loading}
+              >
+                <Text style={[styles.resendText, resendIn > 0 && styles.resendTextWaiting]}>
+                  {resendIn > 0 ? `Resend OTP (${resendIn}s)` : 'Resend OTP'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity
-              style={styles.submitBtn}
+              style={[styles.submitBtn, !canSubmit && styles.submitBtnDisabled]}
               onPress={verifyOtp}
-              disabled={loading}
+              disabled={!canSubmit}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.submitText}>Submit</Text>
+                <Text style={[styles.submitText, !canSubmit && styles.submitTextDisabled]}>
+                  Submit
+                </Text>
               )}
             </TouchableOpacity>
           </>
@@ -184,7 +245,9 @@ export default function LoginOtpScreen({ route, navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  content: { flex: 1, paddingHorizontal: 24, alignItems: 'center', paddingTop: 60 },
+  backBtn: { paddingHorizontal: 24, paddingTop: 12 },
+  backArrow: { fontSize: 24, color: '#000' },
+  content: { flex: 1, paddingHorizontal: 24, alignItems: 'center', paddingTop: 30 },
   logo: { width: 140, height: 100, marginBottom: 30 },
   title: { fontSize: 24, fontFamily: 'Outfit-Bold', color: '#333' },
   titleRed: { fontSize: 24, fontFamily: 'Outfit-Bold', color: '#D20236', marginBottom: 16 },
@@ -243,5 +306,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
+  submitBtnDisabled: { backgroundColor: '#f0b9c4' },
+  submitTextDisabled: { color: '#fff' },
+  resendRow: { width: '100%', alignItems: 'flex-end', marginBottom: 16 },
+  resendText: { fontSize: 14, color: '#D20236', fontFamily: 'Outfit-SemiBold' },
+  resendTextWaiting: { color: '#999' },
   submitText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
 });
