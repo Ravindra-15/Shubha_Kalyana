@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeft, Check } from 'lucide-react-native';
 import i18n from '../../i18n';
 import { getAccountSettings, saveLanguagePreference } from '../../api/settings';
-import { LANGUAGES } from '../../constants/languages';
+import { ONBOARDING_LANGUAGES } from '../../constants/languages';
 
 export default function ChooseLanguageScreen({ navigation }: any) {
   const [selected, setSelected] = useState('en');
@@ -58,7 +58,7 @@ export default function ChooseLanguageScreen({ navigation }: any) {
       ) : (
         <View style={styles.content}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
-            {LANGUAGES.map((lang) => {
+            {ONBOARDING_LANGUAGES.map((lang) => {
               const active = selected === lang.value;
               return (
                 <TouchableOpacity

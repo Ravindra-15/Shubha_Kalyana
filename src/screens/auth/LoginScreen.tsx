@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getResumeScreen } from '../../utils/resumeOnboarding';
 import apiClient from '../../api/client';
 import { handleLoginOtpError } from '../../utils/loginOtpErrors';
+import LanguageSwitcher from '../../components/LanguageSwitcher';
 
 export default function LoginScreen({ navigation }: any) {
   const { t } = useTranslation();
@@ -79,6 +80,12 @@ export default function LoginScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* The Select Language screen cannot be reached again, so the language
+          can be changed from here. */}
+      <View style={styles.topBar}>
+        <LanguageSwitcher />
+      </View>
+
       <KeyboardWrapper>
         <View style={styles.content}>
           <Image
@@ -125,6 +132,7 @@ export default function LoginScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   flex: { flex: 1 },
+  topBar: { alignItems: 'flex-end', paddingHorizontal: 20, paddingTop: 8 },
   content: { paddingHorizontal: 24, paddingVertical: 40, flexGrow: 1, justifyContent: 'center' },
   logo: { width: 180, height: 130, alignSelf: 'center', marginBottom: 40 },
   label: { fontSize: 16, color: '#333', marginBottom: 8, fontFamily: 'Outfit-Medium' },
