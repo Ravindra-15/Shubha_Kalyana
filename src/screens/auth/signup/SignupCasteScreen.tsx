@@ -95,7 +95,6 @@ const visibleCastes = religion
     const newErrors: { [k: string]: boolean } = {};
     if (!religion.trim()) newErrors.religion = true;
     if (!casteId) newErrors.casteId = true;
-    if (!subCaste) newErrors.subCaste = true;
     if (!livingIn.trim()) newErrors.livingIn = true;
     if (!motherTongue.trim()) newErrors.motherTongue = true;
     setErrors(newErrors);

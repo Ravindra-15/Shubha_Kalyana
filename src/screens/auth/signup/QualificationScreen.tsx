@@ -29,16 +29,19 @@ export default function QualificationScreen({ navigation }: any) {
   const [qualification, setQualification] = useState(data.education?.highestQualification || '');
   const [college, setCollege] = useState(data.education?.college || '');
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ qualification?: boolean }>({});
+  const [errors, setErrors] = useState<{ qualification?: boolean; college?: boolean }>({});
   const { scrollRef, registerField, scrollToError } = useScrollToError();
 
   const submit = async (_skip = false) => {
-    if (!qualification.trim()) {
-      setErrors({ qualification: true });
-      scrollToError(['qualification'], ['qualification']);
-      return Alert.alert('Required', 'Please enter your highest qualification');
+    const newErrors: { qualification?: boolean; college?: boolean } = {};
+    if (!qualification.trim()) newErrors.qualification = true;
+    if (!college.trim()) newErrors.college = true;
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      scrollToError(Object.keys(newErrors), ['qualification', 'college']);
+      return Alert.alert('Required', 'Please fill all mandatory fields');
     }
-    setErrors({});
 
     try {
       setLoading(true);
@@ -92,14 +95,19 @@ export default function QualificationScreen({ navigation }: any) {
           />
         </View>
 
-        <Text style={styles.label}>{t('signup.qualification.college')}</Text>
-        <TextInput
-          style={styles.input}
-          placeholder={t('signup.qualification.collegePlaceholder')}
-          placeholderTextColor="#999"
-          value={college}
-          onChangeText={setCollege}
-        />
+        <Text style={styles.label}>{t('signup.qualification.college')} <Text style={styles.star}>*</Text></Text>
+        <View ref={registerField('college')}>
+          <TextInput
+            style={[styles.input, errors.college && styles.inputError]}
+            placeholder={t('signup.qualification.collegePlaceholder')}
+            placeholderTextColor="#999"
+            value={college}
+            onChangeText={(value) => {
+              setCollege(value);
+              setErrors((current) => ({ ...current, college: false }));
+            }}
+          />
+        </View>
 
         <View style={styles.spacer} />
 

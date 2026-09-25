@@ -116,16 +116,47 @@ export default function EmploymentScreen({ navigation }: any) {
   const showExperience = isJobType || isBusiness;
   const showLinkedIn = !isAgriculture;
 
-  const submit = async (skip = false) => {
+  const FIELD_ORDER = [
+    'employedType',
+    'designation',
+    'companyName',
+    'companyLocation',
+    'annualIncome',
+    'experience',
+  ];
+
+  const submit = async (_skip = false) => {
+    // Everything shown for the chosen employment type is mandatory, so Skip
+    // has to pass the same checks.
     const newErrors: { [k: string]: boolean } = {};
     if (!employedType) newErrors.employedType = true;
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) {
-      scrollToError(['employedType'], ['employedType']);
-      return Alert.alert('Required', 'Please select employment type');
+
+    if (showDesignation && !designation) newErrors.designation = true;
+
+    if ((isJobType || isBusiness) && !companyName.trim()) {
+      newErrors.companyName = true;
     }
 
-    if (!skip && linkedIn.trim() && !/linkedin\.com/i.test(linkedIn.trim())) {
+    if ((isJobType || isBusiness) && !companyLocation.trim()) {
+      newErrors.companyLocation = true;
+    }
+
+    if (!String(annualIncome).trim()) newErrors.annualIncome = true;
+
+    if (showExperience) {
+      const hasPreset = Boolean(expPreset);
+      const hasExact = String(expYears).trim() !== '' || String(expMonths).trim() !== '';
+      if (!hasPreset && !hasExact) newErrors.experience = true;
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      scrollToError(Object.keys(newErrors), FIELD_ORDER);
+      return Alert.alert('Required', 'Please fill all mandatory fields');
+    }
+
+    if (linkedIn.trim() && !/linkedin\.com/i.test(linkedIn.trim())) {
       setErrors({ linkedIn: true });
       return Alert.alert('Invalid', 'Please enter a valid LinkedIn URL');
     }
@@ -190,25 +221,35 @@ export default function EmploymentScreen({ navigation }: any) {
 
           {showDesignation && (
             <>
-              <Text style={styles.label}>{t('signup.employment.youWorkAs')}</Text>
-              <SearchableDropdown
-                placeholder={t('signup.employment.designationPlaceholder')}
-                value={designation}
-                options={DESIGNATIONS}
-                onSelect={setDesignation}
-              />
+              <Text style={styles.label}>{t('signup.employment.youWorkAs')} <Text style={styles.star}>*</Text></Text>
+              <View ref={registerField('designation')}>
+                <SearchableDropdown
+                  placeholder={t('signup.employment.designationPlaceholder')}
+                  value={designation}
+                  options={DESIGNATIONS}
+                  onSelect={(val) => {
+                    setDesignation(val);
+                    setErrors((e) => ({ ...e, designation: false }));
+                  }}
+                  error={errors.designation}
+                />
+              </View>
             </>
           )}
 
           {isBusiness ? (
             <>
-              <Text style={styles.label}>{t('signup.employment.firmName')}</Text>
+              <Text style={styles.label}>{t('signup.employment.firmName')} <Text style={styles.star}>*</Text></Text>
               <TextInput
-                style={styles.input}
+                ref={registerField('companyName') as any}
+                style={[styles.input, errors.companyName && styles.inputError]}
                 placeholder={t('signup.employment.firmNamePlaceholder')}
                 placeholderTextColor="#999"
                 value={companyName}
-                onChangeText={setCompanyName}
+                onChangeText={(value) => {
+                  setCompanyName(value);
+                  setErrors((e) => ({ ...e, companyName: false }));
+                }}
               />
 
               <Text style={styles.label}>{t('signup.employment.typeOfBusiness')}</Text>
@@ -219,46 +260,62 @@ export default function EmploymentScreen({ navigation }: any) {
                 onSelect={setTypeOfBusiness}
               />
 
-              <Text style={styles.label}>{t('signup.employment.firmLocation')}</Text>
+              <Text style={styles.label}>{t('signup.employment.firmLocation')} <Text style={styles.star}>*</Text></Text>
               <TextInput
-                style={styles.input}
+                ref={registerField('companyLocation') as any}
+                style={[styles.input, errors.companyLocation && styles.inputError]}
                 placeholder={t('signup.employment.firmLocationPlaceholder')}
                 placeholderTextColor="#999"
                 value={companyLocation}
-                onChangeText={setCompanyLocation}
+                onChangeText={(value) => {
+                  setCompanyLocation(value);
+                  setErrors((e) => ({ ...e, companyLocation: false }));
+                }}
               />
             </>
           ) : isJobType ? (
             <>
-              <Text style={styles.label}>{t('signup.employment.youWorkWith')}</Text>
+              <Text style={styles.label}>{t('signup.employment.youWorkWith')} <Text style={styles.star}>*</Text></Text>
               <TextInput
-                style={styles.input}
+                ref={registerField('companyName') as any}
+                style={[styles.input, errors.companyName && styles.inputError]}
                 placeholder={t('signup.employment.companyPlaceholder')}
                 placeholderTextColor="#999"
                 value={companyName}
-                onChangeText={setCompanyName}
+                onChangeText={(value) => {
+                  setCompanyName(value);
+                  setErrors((e) => ({ ...e, companyName: false }));
+                }}
               />
 
-              <Text style={styles.label}>{t('signup.employment.companyLocation')}</Text>
+              <Text style={styles.label}>{t('signup.employment.companyLocation')} <Text style={styles.star}>*</Text></Text>
               <TextInput
-                style={styles.input}
+                ref={registerField('companyLocation') as any}
+                style={[styles.input, errors.companyLocation && styles.inputError]}
                 placeholder={t('signup.employment.companyLocationPlaceholder')}
                 placeholderTextColor="#999"
                 value={companyLocation}
-                onChangeText={setCompanyLocation}
+                onChangeText={(value) => {
+                  setCompanyLocation(value);
+                  setErrors((e) => ({ ...e, companyLocation: false }));
+                }}
               />
             </>
           ) : null}
 
-          <Text style={styles.label}>{t('signup.employment.annualIncome')}</Text>
+          <Text style={styles.label}>{t('signup.employment.annualIncome')} <Text style={styles.star}>*</Text></Text>
           {isCustomIncome ? (
             <>
               <TextInput
-                style={styles.input}
+                ref={registerField('annualIncome') as any}
+                style={[styles.input, errors.annualIncome && styles.inputError]}
                 placeholder={t('signup.employment.incomePlaceholder')}
                 placeholderTextColor="#999"
                 value={annualIncome}
-                onChangeText={setAnnualIncome}
+                onChangeText={(value) => {
+                  setAnnualIncome(value);
+                  setErrors((e) => ({ ...e, annualIncome: false }));
+                }}
                 keyboardType="number-pad"
               />
               <TouchableOpacity onPress={() => { setIsCustomIncome(false); setAnnualIncome(''); }}>
@@ -266,6 +323,7 @@ export default function EmploymentScreen({ navigation }: any) {
               </TouchableOpacity>
             </>
           ) : (
+            <View ref={registerField('annualIncome')}>
             <SearchableDropdown
               placeholder={t('signup.employment.incomeSlabPlaceholder')}
               value={annualIncome}
@@ -277,13 +335,16 @@ export default function EmploymentScreen({ navigation }: any) {
                   return;
                 }
                 setAnnualIncome(val);
+                setErrors((e) => ({ ...e, annualIncome: false }));
               }}
+              error={errors.annualIncome}
             />
+            </View>
           )}
 
           {showExperience && (
             <>
-              <Text style={styles.label}>{t('signup.employment.totalExperience')}</Text>
+              <Text style={styles.label}>{t('signup.employment.totalExperience')} <Text style={styles.star}>*</Text></Text>
               {isCustomExperience ? (
                 <>
                   <View style={styles.row}>

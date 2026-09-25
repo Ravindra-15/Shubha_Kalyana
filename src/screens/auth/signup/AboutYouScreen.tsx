@@ -26,23 +26,18 @@ export default function AboutYouScreen({ navigation }: any) {
   const MAX = 2000;
   const MIN = 20;
 
-  const submit = async (skip = false) => {
-    if (skip) {
-      navigation.navigate('PartnerPreference');
-      return;
+  const submit = async (_skip = false) => {
+    // Mandatory, so Skip has to pass the same checks.
+    if (!aboutMe.trim()) {
+      setError(true);
+      return Alert.alert('Required', 'Please tell us about yourself');
     }
 
-    if (aboutMe.trim() && aboutMe.trim().length < MIN) {
+    if (aboutMe.trim().length < MIN) {
       setError(true);
       return Alert.alert('Too short', `Please write at least ${MIN} characters about yourself`);
     }
     setError(false);
-
-    // nothing entered → just move on
-    if (!aboutMe.trim()) {
-      setField('about', aboutMe.trim());
-      return navigation.navigate('PartnerPreference');
-    }
 
     try {
       setLoading(true);
@@ -81,7 +76,7 @@ export default function AboutYouScreen({ navigation }: any) {
             post={t('signup.aboutYou.titlePost')}
           />
 
-          <Text style={styles.label}>{t('signup.aboutYou.label')}</Text>
+          <Text style={styles.label}>{t('signup.aboutYou.label')} <Text style={styles.star}>*</Text></Text>
           <TextInput
             style={[styles.textArea, error && styles.inputError]}
             placeholder={t('signup.aboutYou.placeholder')}
@@ -115,6 +110,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 30 },
   titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 10 },
+  star: { color: '#D20236' },
   textArea: {
     borderWidth: 1,
     borderColor: '#e0e0e0',

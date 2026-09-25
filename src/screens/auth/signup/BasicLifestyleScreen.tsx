@@ -79,31 +79,26 @@ export default function BasicLifestyleScreen({ navigation }: any) {
   const [inchesError, setInchesError] = useState('');
   const [weightError, setWeightError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ maritalStatus?: boolean }>({});
+  const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
   const { scrollRef, registerField, scrollToError } = useScrollToError();
 
-const submit = async (skip = false) => {
-    if (!maritalStatus) {
-      setErrors({ maritalStatus: true });
-      scrollToError(['maritalStatus'], ['maritalStatus']);
-      return Alert.alert('Required', 'Please select your marital status');
-    }
-    setErrors({});
+const FIELD_ORDER = ['maritalStatus', 'feet', 'weight', 'smoking', 'drinking', 'healthCondition'];
 
-    if (skip) {
-      try {
-        setLoading(true);
-        if (data.basicLifestyle?.maritalStatus !== maritalStatus) {
-          await apiClient.patch('/onboarding/profile', { maritalStatus });
-          setField('basicLifestyle', { ...(data.basicLifestyle || {}), maritalStatus });
-        }
-        navigation.navigate('Qualification');
-      } catch (err: any) {
-        Alert.alert('Error', err?.response?.data?.message || 'Could not save');
-      } finally {
-        setLoading(false);
-      }
-      return;
+const submit = async (_skip = false) => {
+    // Every field below is mandatory, so Skip has to pass the same checks.
+    const newErrors: { [k: string]: boolean } = {};
+    if (!maritalStatus) newErrors.maritalStatus = true;
+    if (!feet.trim()) newErrors.feet = true;
+    if (!inches.trim()) newErrors.inches = true;
+    if (!weight.trim()) newErrors.weight = true;
+    if (!smoking) newErrors.smoking = true;
+    if (!drinking) newErrors.drinking = true;
+    if (!healthCondition) newErrors.healthCondition = true;
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      scrollToError(Object.keys(newErrors), FIELD_ORDER);
+      return Alert.alert('Required', 'Please fill all mandatory fields');
     }
 
     setFeetError('');
@@ -112,17 +107,17 @@ const submit = async (skip = false) => {
 
     let hasError = false;
 
-    if (feet.trim() && (Number(feet) < 3 || Number(feet) > 8)) {
+    if (Number(feet) < 3 || Number(feet) > 8) {
       setFeetError('Feet must be between 3 and 8');
       hasError = true;
     }
 
-    if (inches.trim() && (Number(inches) < 0 || Number(inches) > 11)) {
+    if (Number(inches) < 0 || Number(inches) > 11) {
       setInchesError('Inches must be between 0 and 11');
       hasError = true;
     }
 
-    if (weight.trim() && (Number(weight) < 30 || Number(weight) > 200)) {
+    if (Number(weight) < 30 || Number(weight) > 200) {
       setWeightError('Weight must be between 30 and 200 kg');
       hasError = true;
     }
@@ -205,7 +200,7 @@ const submit = async (skip = false) => {
           post={t('signup.basic.titlePost')}
         />
 
-        <Text style={styles.label}>{t('signup.basic.maritalStatus')}</Text>
+        <Text style={styles.label}>{t('signup.basic.maritalStatus')} <Text style={styles.star}>*</Text></Text>
         <View ref={registerField('maritalStatus')}>
           <SearchableDropdown
             placeholder={t('signup.basic.maritalPlaceholder')}
@@ -219,7 +214,7 @@ const submit = async (skip = false) => {
           />
         </View>
 
-        <Text style={styles.label}>{t('signup.basic.height')}</Text>
+        <Text style={styles.label}>{t('signup.basic.height')} <Text style={styles.star}>*</Text></Text>
         <View style={styles.row}>
           <View style={styles.half}>
             <View style={[styles.unitInputWrap, !!feetError && styles.inputError]}>
@@ -259,7 +254,7 @@ const submit = async (skip = false) => {
           </View>
         </View>
 
-        <Text style={styles.label}>{t('signup.basic.weight')}</Text>
+        <Text style={styles.label}>{t('signup.basic.weight')} <Text style={styles.star}>*</Text></Text>
         <View style={[styles.unitInputWrap, !!weightError && styles.inputError]}>
           <TextInput
             style={styles.unitInput}
@@ -291,24 +286,36 @@ const submit = async (skip = false) => {
           ))}
         </View>
 
-        <Text style={styles.label}>{t('signup.basic.smoking')}</Text>
-        <SearchableDropdown
-          placeholder={t('signup.basic.smokingPlaceholder')}
-          value={smoking}
-          options={SMOKING}
-          onSelect={(val) => setSmoking(val)}
-        />
+        <Text style={styles.label}>{t('signup.basic.smoking')} <Text style={styles.star}>*</Text></Text>
+        <View ref={registerField('smoking')}>
+          <SearchableDropdown
+            placeholder={t('signup.basic.smokingPlaceholder')}
+            value={smoking}
+            options={SMOKING}
+            onSelect={(val) => {
+              setSmoking(val);
+              setErrors((current) => ({ ...current, smoking: false }));
+            }}
+            error={errors.smoking}
+          />
+        </View>
 
-        <Text style={styles.label}>{t('signup.basic.drinking')}</Text>
-        <SearchableDropdown
-          placeholder={t('signup.basic.drinkingPlaceholder')}
-          value={drinking}
-          options={DRINKING}
-          onSelect={(val) => setDrinking(val)}
-        />
+        <Text style={styles.label}>{t('signup.basic.drinking')} <Text style={styles.star}>*</Text></Text>
+        <View ref={registerField('drinking')}>
+          <SearchableDropdown
+            placeholder={t('signup.basic.drinkingPlaceholder')}
+            value={drinking}
+            options={DRINKING}
+            onSelect={(val) => {
+              setDrinking(val);
+              setErrors((current) => ({ ...current, drinking: false }));
+            }}
+            error={errors.drinking}
+          />
+        </View>
 
-        <Text style={styles.label}>{t('signup.basic.healthQuestion')}</Text>
-        <View style={styles.healthRow}>
+        <Text style={styles.label}>{t('signup.basic.healthQuestion')} <Text style={styles.star}>*</Text></Text>
+        <View style={styles.healthRow} ref={registerField('healthCondition')}>
           {HEALTH_CONDITION.map((option, index) => (
             <TouchableOpacity
               key={option.value}
@@ -316,9 +323,11 @@ const submit = async (skip = false) => {
                 styles.healthPill,
                 index === 0 && styles.healthPillFirst,
                 healthCondition === option.value && styles.healthPillActive,
+                errors.healthCondition && !healthCondition && styles.inputError,
               ]}
               onPress={() => {
                 setHealthCondition(option.value);
+                setErrors((current) => ({ ...current, healthCondition: false }));
                 if (option.value === 'NO') {
                   setHealthConditionDetails('');
                   setHealthConditionDetailsError(false);
@@ -384,6 +393,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 30 },
   titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 10 },
+  star: { color: '#D20236' },
   input: {
     borderWidth: 1,
     borderColor: '#e0e0e0',

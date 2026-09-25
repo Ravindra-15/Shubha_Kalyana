@@ -15,6 +15,7 @@ import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
 import { useTranslation } from 'react-i18next';
 import SplitTitle from '../../../components/SplitTitle';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 const RASHIS = [
   { label: 'Mesha (Aries)', value: 'MESHA' },
@@ -46,22 +47,22 @@ export default function HoroscopeScreen({ navigation }: any) {
   const [rashi, setRashi] = useState(horo.rashi || '');
   const [nakshatra, setNakshatra] = useState(horo.nakshatra || '');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
+  const { scrollRef, registerField, scrollToError } = useScrollToError();
 
-  const submit = async (skip = false) => {
-    if (skip) {
-      navigation.navigate('AddressDetails');
-      return;
+  const submit = async (_skip = false) => {
+    // Both are mandatory, so Skip has to pass the same checks.
+    const newErrors: { [k: string]: boolean } = {};
+    if (!rashi) newErrors.rashi = true;
+    if (!nakshatra) newErrors.nakshatra = true;
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      scrollToError(Object.keys(newErrors), ['rashi', 'nakshatra']);
+      return Alert.alert('Required', 'Please fill all mandatory fields');
     }
 
-    const horoscopeDetail: any = {};
-    if (rashi) horoscopeDetail.rashi = rashi;
-    if (nakshatra) horoscopeDetail.nakshatra = nakshatra;
-
-    // nothing entered → just move on
-    if (!rashi && !nakshatra) {
-      setField('horoscope', { rashi, nakshatra });
-      return navigation.navigate('AddressDetails');
-    }
+    const horoscopeDetail: any = { rashi, nakshatra };
     try {
       setLoading(true);
       // skip API if unchanged (prevents backend step rewind)
@@ -81,7 +82,7 @@ export default function HoroscopeScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardWrapper>
+      <KeyboardWrapper ref={scrollRef}>
         <View style={styles.inner}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.back}>←</Text>
@@ -97,7 +98,7 @@ export default function HoroscopeScreen({ navigation }: any) {
             post={t('signup.horoscope.titlePost')}
           />
 
-          <Text style={styles.label}>{t('signup.horoscope.rashi')}</Text>
+          <Text style={styles.label}>{t('signup.horoscope.rashi')} <Text style={styles.star}>*</Text></Text>
           {/* <SearchableDropdown
             placeholder={t('signup.horoscope.rashiPlaceholder')}
             value={rashi}
@@ -105,14 +106,20 @@ export default function HoroscopeScreen({ navigation }: any) {
             onSelect={(val) => setRashi(val)}
             allowCustom
           /> */}
-          <SearchableDropdown
-            placeholder={t('signup.horoscope.rashiPlaceholder')}
-            value={rashi}
-            options={RASHIS}
-            onSelect={(val) => setRashi(val)}
-          />
+          <View ref={registerField('rashi')}>
+            <SearchableDropdown
+              placeholder={t('signup.horoscope.rashiPlaceholder')}
+              value={rashi}
+              options={RASHIS}
+              onSelect={(val) => {
+                setRashi(val);
+                setErrors((current) => ({ ...current, rashi: false }));
+              }}
+              error={errors.rashi}
+            />
+          </View>
 
-          <Text style={styles.label}>{t('signup.horoscope.nakshatra')}</Text>
+          <Text style={styles.label}>{t('signup.horoscope.nakshatra')} <Text style={styles.star}>*</Text></Text>
           {/* <SearchableDropdown
             placeholder={t('signup.horoscope.nakshatraPlaceholder')}
             value={nakshatra}
@@ -121,12 +128,18 @@ export default function HoroscopeScreen({ navigation }: any) {
             allowCustom
           /> */}
 
-          <SearchableDropdown
-            placeholder={t('signup.horoscope.nakshatraPlaceholder')}
-            value={nakshatra}
-            options={NAKSHATRAS.map((n) => ({ label: n, value: n }))}
-            onSelect={(val) => setNakshatra(val)}
-          />
+          <View ref={registerField('nakshatra')}>
+            <SearchableDropdown
+              placeholder={t('signup.horoscope.nakshatraPlaceholder')}
+              value={nakshatra}
+              options={NAKSHATRAS.map((n) => ({ label: n, value: n }))}
+              onSelect={(val) => {
+                setNakshatra(val);
+                setErrors((current) => ({ ...current, nakshatra: false }));
+              }}
+              error={errors.nakshatra}
+            />
+          </View>
 
           <View style={styles.spacer} />
 
@@ -150,6 +163,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontFamily: 'Outfit-Regular', color: '#000', textAlign: 'center', marginBottom: 36 },
   titleRed: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 10, marginTop: 6 },
+  star: { color: '#D20236' },
   spacer: { minHeight: 60 },
   nextBtn: {
     backgroundColor: '#D20236',

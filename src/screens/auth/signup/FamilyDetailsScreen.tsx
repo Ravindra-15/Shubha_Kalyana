@@ -59,7 +59,15 @@ export default function FamilyDetailsScreen({ navigation }: any) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [k: string]: boolean }>({});
   const { scrollRef, registerField, scrollToError } = useScrollToError();
-  const FIELD_ORDER = ['fatherName', 'motherName', 'familyType'];
+  const FIELD_ORDER = [
+    'fatherName',
+    'fatherOccupation',
+    'motherName',
+    'motherOccupation',
+    'familyType',
+    'brothers',
+    'sisters',
+  ];
 
   const maxAllowed = familyType === 'JOINT' ? 20 : 10;
 
@@ -67,7 +75,12 @@ export default function FamilyDetailsScreen({ navigation }: any) {
     const newErrors: { [k: string]: boolean } = {};
     if (!familyType) newErrors.familyType = true;
     if (!fatherName.trim()) newErrors.fatherName = true;
+    if (!fatherOccupation.trim()) newErrors.fatherOccupation = true;
     if (!motherName.trim()) newErrors.motherName = true;
+    if (!motherOccupation.trim()) newErrors.motherOccupation = true;
+    // "0" is a valid answer, so only an empty value is an error.
+    if (String(brothers).trim() === '') newErrors.brothers = true;
+    if (String(sisters).trim() === '') newErrors.sisters = true;
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
       scrollToError(Object.keys(newErrors), FIELD_ORDER);
@@ -104,19 +117,21 @@ export default function FamilyDetailsScreen({ navigation }: any) {
     isCustom: boolean,
     setIsCustom: (v: boolean) => void,
     pickerType: SiblingPickerType,
+    fieldName: string,
   ) => (
-    <View style={styles.half}>
+    <View style={styles.half} ref={registerField(fieldName) as any}>
       <Text style={styles.smallLabel}>{label}</Text>
       {isCustom ? (
         <>
           <TextInput
-            style={styles.input}
+            style={[styles.input, errors[fieldName] && styles.inputError]}
             placeholder={t('signup.family.enterNumber')}
             placeholderTextColor="#999"
             value={value}
             onChangeText={(t) => {
               const raw = t.replace(/\D/g, '');
               setValue(raw && Number(raw) > maxAllowed ? String(maxAllowed) : raw);
+              setErrors((e) => ({ ...e, [fieldName]: false }));
             }}
             keyboardType="number-pad"
             maxLength={2}
@@ -126,7 +141,10 @@ export default function FamilyDetailsScreen({ navigation }: any) {
           </TouchableOpacity>
         </>
       ) : (
-        <TouchableOpacity style={styles.input} onPress={() => setActivePicker(pickerType)}>
+        <TouchableOpacity
+          style={[styles.input, errors[fieldName] && styles.inputError]}
+          onPress={() => setActivePicker(pickerType)}
+        >
           <Text style={value ? styles.pickerText : styles.pickerPlaceholder}>
             {value ? (SIBLING_LABELS[value] || value) : 'Select'}
           </Text>
@@ -164,13 +182,17 @@ export default function FamilyDetailsScreen({ navigation }: any) {
             onChangeText={(t) => { setFatherName(t); setErrors((e) => ({ ...e, fatherName: false })); }}
           />
 
-          <Text style={styles.label}>{t('signup.family.fatherOccupation')}</Text>
+          <Text style={styles.label}>{t('signup.family.fatherOccupation')} <Text style={styles.star}>*</Text></Text>
           <TextInput
-            style={styles.input}
+            ref={registerField('fatherOccupation') as any}
+            style={[styles.input, errors.fatherOccupation && styles.inputError]}
             placeholder={t('signup.family.occupationPlaceholder')}
             placeholderTextColor="#999"
             value={fatherOccupation}
-            onChangeText={setFatherOccupation}
+            onChangeText={(value) => {
+              setFatherOccupation(value);
+              setErrors((e) => ({ ...e, fatherOccupation: false }));
+            }}
           />
 
           <Text style={styles.label}>{t('signup.family.motherName')} <Text style={styles.star}>*</Text></Text>
@@ -183,13 +205,17 @@ export default function FamilyDetailsScreen({ navigation }: any) {
             onChangeText={(t) => { setMotherName(t); setErrors((e) => ({ ...e, motherName: false })); }}
           />
 
-          <Text style={styles.label}>{t('signup.family.motherOccupation')}</Text>
+          <Text style={styles.label}>{t('signup.family.motherOccupation')} <Text style={styles.star}>*</Text></Text>
           <TextInput
-            style={styles.input}
+            ref={registerField('motherOccupation') as any}
+            style={[styles.input, errors.motherOccupation && styles.inputError]}
             placeholder={t('signup.family.occupationPlaceholder')}
             placeholderTextColor="#999"
             value={motherOccupation}
-            onChangeText={setMotherOccupation}
+            onChangeText={(value) => {
+              setMotherOccupation(value);
+              setErrors((e) => ({ ...e, motherOccupation: false }));
+            }}
           />
 
           <Text style={styles.label}>{t('signup.family.familyType')} <Text style={styles.star}>*</Text></Text>
@@ -219,10 +245,10 @@ export default function FamilyDetailsScreen({ navigation }: any) {
             ))}
           </View>
 
-          <Text style={styles.label}>{t('signup.family.siblings')}</Text>
+          <Text style={styles.label}>{t('signup.family.siblings')} <Text style={styles.star}>*</Text></Text>
           <View style={styles.row}>
-            {renderSiblingField('Brother', brothers, setBrothers, isCustomBrothers, setIsCustomBrothers, 'brothers')}
-            {renderSiblingField('Sister', sisters, setSisters, isCustomSisters, setIsCustomSisters, 'sisters')}
+            {renderSiblingField('Brother', brothers, setBrothers, isCustomBrothers, setIsCustomBrothers, 'brothers', 'brothers')}
+            {renderSiblingField('Sister', sisters, setSisters, isCustomSisters, setIsCustomSisters, 'sisters', 'sisters')}
           </View>
 
           <Modal
