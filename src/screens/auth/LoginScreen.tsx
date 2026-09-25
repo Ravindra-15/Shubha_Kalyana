@@ -125,6 +125,10 @@ export default function LoginScreen({ navigation }: any) {
           </View>
         </View>
       </KeyboardWrapper>
+
+      <Text style={styles.copyright}>
+        © 2026 Shubhakalyana. All Rights Reserved.
+      </Text>
     </SafeAreaView>
   );
 }
@@ -156,5 +160,12 @@ const styles = StyleSheet.create({
   loginText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   signupRow: { flexDirection: 'row', justifyContent: 'center' },
   signupText: { color: '#333', fontSize: 16,fontFamily: 'Outfit-Medium' },
-  signupLink: { color: '#D20236', fontSize: 16, fontFamily: 'Outfit-Medium' },
+  signupLink: { color: '#D20236', fontSize: 16, fontFamily: 'Outfit-Bold' },
+  copyright: {
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 12,
+    fontFamily: 'Outfit-Regular',
+    paddingBottom: 16,
+  },
 });
