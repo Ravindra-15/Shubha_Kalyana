@@ -958,6 +958,74 @@ export default function EditProfileScreen({ navigation }: any) {
       if (dobError) errors.dobRequest = dobError;
     }
 
+    // The fields the client marked mandatory. Checked only when the field is
+    // part of this form, so a locked field can never block saving.
+    const requireValue = (key: string, value: string, message: string) => {
+      if (!String(value ?? '').trim()) errors[key] = message;
+    };
+
+    requireValue('maritalStatus', maritalStatus, 'Marital status is required');
+    requireValue('heightFeet', heightFeet, 'Height is required');
+    requireValue('heightInches', heightInches, 'Height is required');
+    requireValue('weight', weight, 'Weight is required');
+    requireValue('smoking', smoking, 'Smoking is required');
+    requireValue('drinking', drinking, 'Drinking is required');
+    requireValue('healthCondition', healthCondition, 'Please select yes or no');
+    requireValue('qualification', qualification, 'Highest qualification is required');
+    requireValue('college', college, 'College / University is required');
+    requireValue('fatherName', fatherName, "Father's name is required");
+    requireValue('fatherOccupation', fatherOccupation, "Father's occupation is required");
+    requireValue('motherName', motherName, "Mother's name is required");
+    requireValue('motherOccupation', motherOccupation, "Mother's occupation is required");
+    requireValue('brothers', brothers, 'Number of brothers is required');
+    requireValue('sisters', sisters, 'Number of sisters is required');
+    requireValue('rashi', rashi, 'Rashi is required');
+    requireValue('nakshatra', nakshatra, 'Nakshatra is required');
+    requireValue('aboutMe', aboutMe, 'Please tell us about yourself');
+    requireValue('employedType', employedType, 'Employment type is required');
+    requireValue('annualIncome', annualIncome, 'Annual income is required');
+
+    if (showDesignation) {
+      requireValue('designation', designation, 'This field is required');
+    }
+
+    if (isJobType || isBusiness) {
+      requireValue(
+        'companyName',
+        companyName,
+        isBusiness ? 'Firm name is required' : 'Company name is required',
+      );
+      requireValue(
+        'companyLocation',
+        companyLocation,
+        isBusiness ? 'Firm location is required' : 'Company location is required',
+      );
+    }
+
+    if (showExperience && !expPreset.trim() && !expYears.trim() && !expMonths.trim()) {
+      errors.totalExperience = 'Experience is required';
+    }
+
+    const requireAddress = (
+      prefix: string,
+      address: AddressFields,
+    ) => {
+      if (!address.addressLine1.trim()) {
+        errors[`${prefix}addressLine1`] = 'Address is required';
+      }
+
+      if (address.residenceType === 'NRI') {
+        if (!address.country.trim()) errors[`${prefix}country`] = 'Country is required';
+        return;
+      }
+
+      if (!address.state.trim()) errors[`${prefix}state`] = 'State is required';
+      if (!address.district.trim()) errors[`${prefix}district`] = 'District is required';
+    };
+
+    requireAddress('current', currentAddress);
+    if (!sameAsCurrent) requireAddress('permanent', permanentAddress);
+
     const numberInRange = (key: string, value: string, min: number, max: number, message: string) => {
       if (!value.trim()) return;
       const parsed = Number(value);
@@ -984,12 +1052,6 @@ export default function EditProfileScreen({ navigation }: any) {
     numberInRange('brothers', brothers, 0, 20, 'Enter a valid number');
     numberInRange('sisters', sisters, 0, 20, 'Enter a valid number');
 
-    if (!currentAddress.addressLine1.trim()) {
-      errors.currentaddressLine1 = 'Address is required';
-    }
-    if (!sameAsCurrent && !permanentAddress.addressLine1.trim()) {
-      errors.permanentaddressLine1 = 'Address is required';
-    }
     if (annualIncome.trim() && Number(annualIncome) < 0) {
       errors.annualIncome = 'Enter a valid amount';
     }
@@ -1539,6 +1601,7 @@ export default function EditProfileScreen({ navigation }: any) {
 
           <EditableTextField
             label="Weight"
+            required
             value={weight}
             placeholder="Enter weight"
             error={fieldErrors.weight}
@@ -1585,7 +1648,7 @@ export default function EditProfileScreen({ navigation }: any) {
             />
           </TieredField>
 
-          <Text style={styles.label}>Rashi</Text>
+          <FieldLabel label="Rashi" required />
           <SearchableDropdown
             placeholder="Select Rashi"
             value={rashi}
@@ -1596,7 +1659,7 @@ export default function EditProfileScreen({ navigation }: any) {
             }}
           />
 
-          <Text style={styles.label}>Nakshatra</Text>
+          <FieldLabel label="Nakshatra" required />
           <SearchableDropdown
             placeholder="Select Nakshatra"
             value={nakshatra}
@@ -1739,7 +1802,7 @@ export default function EditProfileScreen({ navigation }: any) {
 
           <Text style={styles.sectionTitle}>PROFESSIONAL DETAILS</Text>
 
-          <Text style={styles.label}>Employment Type</Text>
+          <FieldLabel label="Employment Type" required />
           <SearchableDropdown
             placeholder="Select employment type"
             value={employedType}
@@ -1752,7 +1815,7 @@ export default function EditProfileScreen({ navigation }: any) {
 
           {showDesignation && (
             <>
-              <Text style={styles.label}>You work as</Text>
+              <FieldLabel label="You work as" required />
               <SearchableDropdown
                 placeholder="Select your designation"
                 value={designation}
@@ -1769,6 +1832,7 @@ export default function EditProfileScreen({ navigation }: any) {
             <>
               <EditableTextField
                 label="Firm Name"
+                required
                 value={companyName}
                 placeholder="Firm name"
                 onChangeText={(text) => {
@@ -1788,6 +1852,7 @@ export default function EditProfileScreen({ navigation }: any) {
               />
               <EditableTextField
                 label="Firm Location"
+                required
                 value={companyLocation}
                 placeholder="Firm location"
                 onChangeText={(text) => {
@@ -1809,6 +1874,7 @@ export default function EditProfileScreen({ navigation }: any) {
               />
               <EditableTextField
                 label="Company Location"
+                required
                 value={companyLocation}
                 placeholder="Enter your company location"
                 onChangeText={(text) => {
@@ -1819,7 +1885,7 @@ export default function EditProfileScreen({ navigation }: any) {
             </>
           ) : null}
 
-          <Text style={styles.label}>Annual Income</Text>
+          <FieldLabel label="Annual Income" required />
           {isCustomIncome ? (
             <>
               <TextInput
@@ -1859,7 +1925,7 @@ export default function EditProfileScreen({ navigation }: any) {
 
           {showExperience && (
             <>
-              <Text style={styles.label}>Total Experience</Text>
+              <FieldLabel label="Total Experience" required />
               {isCustomExperience ? (
                 <>
                   <View style={styles.row}>
@@ -1952,7 +2018,7 @@ export default function EditProfileScreen({ navigation }: any) {
           )}
 
           <Text style={styles.sectionTitle}>EDUCATION DETAILS</Text>
-          <Text style={styles.label}>Highest Qualification</Text>
+          <FieldLabel label="Highest Qualification" required />
           <SearchableDropdown
             placeholder="Select or type qualification"
             value={qualification}
@@ -1965,6 +2031,7 @@ export default function EditProfileScreen({ navigation }: any) {
           />
           <EditableTextField
             label="University / College"
+            required
             value={college}
             placeholder="College name"
             onChangeText={(text) => {
@@ -1984,7 +2051,7 @@ export default function EditProfileScreen({ navigation }: any) {
               markChanged();
             }}
           />
-          <Text style={styles.label}>Smoking</Text>
+          <FieldLabel label="Smoking" required />
           <SearchableDropdown
             placeholder="Select smoking"
             value={smoking}
@@ -1994,7 +2061,7 @@ export default function EditProfileScreen({ navigation }: any) {
               markChanged();
             }}
           />
-          <Text style={styles.label}>Drinking</Text>
+          <FieldLabel label="Drinking" required />
           <SearchableDropdown
             placeholder="Select drinking"
             value={drinking}
@@ -2044,6 +2111,7 @@ export default function EditProfileScreen({ navigation }: any) {
           <Text style={styles.sectionTitle}>FAMILY DETAILS</Text>
           <EditableTextField
             label="Father Name"
+            required
             value={fatherName}
             placeholder="Father's name"
             onChangeText={(text) => {
@@ -2053,6 +2121,7 @@ export default function EditProfileScreen({ navigation }: any) {
           />
           <EditableTextField
             label="Father Occupation"
+            required
             value={fatherOccupation}
             placeholder="Occupation"
             onChangeText={(text) => {
@@ -2062,6 +2131,7 @@ export default function EditProfileScreen({ navigation }: any) {
           />
           <EditableTextField
             label="Mother Name"
+            required
             value={motherName}
             placeholder="Mother's name"
             onChangeText={(text) => {
@@ -2071,6 +2141,7 @@ export default function EditProfileScreen({ navigation }: any) {
           />
           <EditableTextField
             label="Mother Occupation"
+            required
             value={motherOccupation}
             placeholder="Occupation"
             onChangeText={(text) => {
@@ -2082,6 +2153,7 @@ export default function EditProfileScreen({ navigation }: any) {
             <View style={styles.half}>
               <EditableTextField
                 label="Brother"
+                required
                 value={brothers}
                 placeholder="0"
                 error={fieldErrors.brothers}
@@ -2097,6 +2169,7 @@ export default function EditProfileScreen({ navigation }: any) {
             <View style={styles.half}>
               <EditableTextField
                 label="Sister"
+                required
                 value={sisters}
                 placeholder="0"
                 error={fieldErrors.sisters}
@@ -2271,6 +2344,16 @@ export default function EditProfileScreen({ navigation }: any) {
   );
 }
 
+// Red * for the fields the client marked mandatory.
+function FieldLabel({ label, required }: { label: string; required?: boolean }) {
+  return (
+    <Text style={styles.label}>
+      {label}
+      {required ? <Text style={styles.star}> *</Text> : null}
+    </Text>
+  );
+}
+
 function EditableTextField({
   label,
   value,
@@ -2281,8 +2364,10 @@ function EditableTextField({
   maxLength,
   autoCapitalize,
   unit,
+  required,
 }: {
   label: string;
+  required?: boolean;
   value: string;
   placeholder: string;
   error?: string;
@@ -2294,7 +2379,7 @@ function EditableTextField({
 }) {
   return (
     <>
-      <Text style={styles.label}>{label}</Text>
+      <FieldLabel label={label} required={required} />
       <View style={styles.unitInputWrap}>
         <TextInput
           style={[styles.input, styles.unitInput, error && styles.inputError]}
@@ -2479,6 +2564,7 @@ function AddressEditor({
 
       <EditableTextField
         label="Address Line 1"
+        required
         value={address.addressLine1}
         placeholder="House no, street, area"
         error={errors[errorKey('addressLine1')]}
@@ -2493,7 +2579,7 @@ function AddressEditor({
 
       {isIndia ? (
         <>
-          <Text style={styles.label}>State</Text>
+          <FieldLabel label="State" required />
           <SearchableDropdown
             placeholder="Select state"
             value={address.state}
@@ -2505,7 +2591,7 @@ function AddressEditor({
               onChange('district', '');
             }}
           />
-          <Text style={styles.label}>District</Text>
+          <FieldLabel label="District" required />
           <SearchableDropdown
             placeholder={address.state ? 'Select district' : 'Select state first'}
             value={address.district}
@@ -2733,6 +2819,7 @@ const styles = StyleSheet.create({
   },
   subSectionTitle: { fontSize: 15, fontFamily: 'Outfit-Bold', color: '#111', marginBottom: 12 },
   label: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#333', marginBottom: 8, marginTop: 4 },
+  star: { color: '#D20236' },
   hint: { fontSize: 11, color: '#999', marginTop: -8, marginBottom: 10 },
   input: {
     borderWidth: 1,
