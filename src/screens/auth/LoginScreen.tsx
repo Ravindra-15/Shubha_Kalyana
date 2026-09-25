@@ -31,6 +31,7 @@ export default function LoginScreen({ navigation }: any) {
   const entrance = useRef(new Animated.Value(0)).current;
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
+
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardOpen(true));
     const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardOpen(false));
