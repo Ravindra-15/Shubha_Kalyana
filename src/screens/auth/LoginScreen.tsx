@@ -19,7 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getResumeScreen } from '../../utils/resumeOnboarding';
 import apiClient from '../../api/client';
 import { handleLoginOtpError } from '../../utils/loginOtpErrors';
-import { screenForOnboardingStep } from '../../utils/resumeOnboarding';
+import { resumeToScreen, screenForOnboardingStep } from '../../utils/resumeOnboarding';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 
 export default function LoginScreen({ navigation }: any) {
@@ -92,9 +92,14 @@ export default function LoginScreen({ navigation }: any) {
       // Storage failures are not worth blocking on; the screen still opens.
     }
 
-    navigation.navigate(
-      (screenForOnboardingStep(body?.onboardingStep) as never) || ('SignupProfileFor' as never),
-    );
+    const screen = screenForOnboardingStep(body?.onboardingStep);
+
+    if (screen) {
+      resumeToScreen(navigation, screen);
+      return;
+    }
+
+    navigation.navigate('SignupProfileFor' as never);
   };
 
   const handleSignup = async () => {
@@ -124,7 +129,10 @@ export default function LoginScreen({ navigation }: any) {
             navigation.navigate('SignupProfileFor');
           },
         },
-        { text: t('login.continueLabel'), onPress: () => navigation.navigate(resumeScreen as never) },
+        {
+          text: t('login.continueLabel'),
+          onPress: () => resumeToScreen(navigation, resumeScreen),
+        },
       ]
     );
   };

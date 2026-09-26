@@ -16,6 +16,45 @@ const STEP_TO_SCREEN: Record<string, string> = {
   REJECTED: 'ReviewProfile',
 };
 
+/**
+ * The profile screens, in the order the user walks through them. Registration
+ * (profile-for / name / contact / caste) is already finished by the time we
+ * resume, so it is deliberately not part of this list.
+ */
+export const PROFILE_FLOW = [
+  'BasicLifestyle',
+  'Qualification',
+  'FamilyDetails',
+  'Horoscope',
+  'AddressDetails',
+  'Employment',
+  'AboutYou',
+  'PartnerPreference',
+  'ProfilePhoto',
+  'Hobbies',
+  'UploadAadhaar',
+];
+
+/**
+ * Opens a resumed screen with the earlier screens behind it, so Back walks
+ * through the flow instead of dropping the user on Login or Contact Details.
+ */
+export function resumeToScreen(navigation: any, screen: string) {
+  const index = PROFILE_FLOW.indexOf(screen);
+
+  if (index < 0) {
+    navigation.navigate(screen);
+    return;
+  }
+
+  const routes = [
+    { name: 'Login' },
+    ...PROFILE_FLOW.slice(0, index + 1).map((name) => ({ name })),
+  ];
+
+  navigation.reset({ index: routes.length - 1, routes });
+}
+
 /** The screen a given backend step belongs to (null when unknown). */
 export function screenForOnboardingStep(step?: string | null): string | null {
   if (!step) return null;
