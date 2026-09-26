@@ -162,7 +162,7 @@ const SECTIONS: Section[] = [
       'Shubha Kalyana Matrimony maintains a zero-tolerance policy against child sexual abuse and exploitation.',
       'Content moderation and human review may be used to detect and remove prohibited content.',
       'Users are prohibited from soliciting or sharing child sexual abuse material, communicating with minors for inappropriate purposes, grooming, or exploitative behavior.',
-      'Concerns regarding child safety should be reported immediately to support@shubhakalyanamatrimony.com.',
+      'Concerns regarding child safety should be reported immediately to support@shubhakalyana.com.',
     ],
   },
   {

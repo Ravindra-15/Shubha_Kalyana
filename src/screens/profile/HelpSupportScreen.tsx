@@ -63,27 +63,27 @@ export default function HelpSupportScreen({ navigation }: any) {
 
           <TouchableOpacity
             style={styles.contactRow}
-            onPress={() => Linking.openURL('tel:+911800123456')}
+            onPress={() => Linking.openURL('tel:+919686683147')}
           >
             <View style={styles.contactIconWrap}>
               <Phone color="#2b6cb0" size={16} />
             </View>
             <View>
               <Text style={styles.contactLabel}>Support Helpline</Text>
-              <Text style={styles.contactValue}>+91 1800 123 4567</Text>
+              <Text style={styles.contactValue}>+91 96866 83147</Text>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.contactRow}
-            onPress={() => Linking.openURL('mailto:support@shubhakalyanam.com')}
+            onPress={() => Linking.openURL('mailto:support@shubhakalyana.com')}
           >
             <View style={styles.contactIconWrap}>
               <Mail color="#2b6cb0" size={16} />
             </View>
             <View>
               <Text style={styles.contactLabel}>Email Support</Text>
-              <Text style={styles.contactValue}>shubhakalyanam.com</Text>
+              <Text style={styles.contactValue}>support@shubhakalyana.com</Text>
             </View>
           </TouchableOpacity>
         </View>

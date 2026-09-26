@@ -88,9 +88,9 @@ export default function ReportUserScreen({ navigation }: any) {
 
         <View style={styles.sectionCard}>
           <Text style={styles.sectionHeading}>How to Report</Text>
-          <TouchableOpacity onPress={() => Linking.openURL('tel:+918012345678')}>
+          <TouchableOpacity onPress={() => Linking.openURL('tel:+919686683147')}>
             <Text style={styles.sectionParagraph}>
-              Call us at <Text style={styles.link}>+91 80 1234 5678</Text> (10 AM – 7 PM)
+              Call us at <Text style={styles.link}>+91 96866 83147</Text> (10 AM – 7 PM)
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => Linking.openURL('mailto:support@shubhakalyana.com')}>
