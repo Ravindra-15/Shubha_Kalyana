@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getResumeScreen } from '../../utils/resumeOnboarding';
 import apiClient from '../../api/client';
 import { handleLoginOtpError } from '../../utils/loginOtpErrors';
+import { screenForOnboardingStep } from '../../utils/resumeOnboarding';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 
 export default function LoginScreen({ navigation }: any) {
@@ -67,11 +68,33 @@ export default function LoginScreen({ navigation }: any) {
       const bypassOtp = res.data?.data?.bypassOtp;
       navigation.navigate('LoginOtp', { mobile: trimmed, otpSent: true, bypassOtp });
     } catch (err: any) {
-      const alreadySent = handleLoginOtpError(err, { onSignup: handleSignup });
+      const alreadySent = handleLoginOtpError(err, {
+        onSignup: handleSignup,
+        onIncompleteSignup: resumeIncompleteSignup,
+      });
       if (alreadySent) navigation.navigate('LoginOtp', { mobile: trimmed, otpSent: true });
     } finally {
       setSending(false);
     }
+  };
+
+  // The server hands back a fresh onboarding token with this error, so the
+  // user can carry on from where they stopped instead of starting again.
+  const resumeIncompleteSignup = async (body: any) => {
+    try {
+      if (body?.onboardingToken) {
+        await AsyncStorage.setItem('onboardingToken', body.onboardingToken);
+      }
+      if (body?.userId) {
+        await AsyncStorage.setItem('onboardingUserId', String(body.userId));
+      }
+    } catch {
+      // Storage failures are not worth blocking on; the screen still opens.
+    }
+
+    navigation.navigate(
+      (screenForOnboardingStep(body?.onboardingStep) as never) || ('SignupProfileFor' as never),
+    );
   };
 
   const handleSignup = async () => {

@@ -7,7 +7,14 @@ import { Alert } from 'react-native';
  */
 export const handleLoginOtpError = (
   err: any,
-  { onSignup }: { onSignup?: () => void } = {},
+  {
+    onSignup,
+    onIncompleteSignup,
+  }: {
+    onSignup?: () => void;
+    /** Called with the server payload so the caller can resume registration. */
+    onIncompleteSignup?: (body: any) => void;
+  } = {},
 ): boolean => {
   const status = err?.response?.status;
   const body = err?.response?.data || {};
@@ -33,6 +40,21 @@ export const handleLoginOtpError = (
         'Your profile is currently under review. You will be able to log in once it has been approved.',
         'Thank you for your patience.',
       ].join('\n\n'),
+    );
+    return false;
+  }
+
+  // Registered, but never finished the sign-up steps.
+  if (body.action === 'NOT_APPROVED') {
+    Alert.alert(
+      'Complete your registration',
+      'Your registration is not finished yet. Please complete it to continue.',
+      onIncompleteSignup
+        ? [
+            { text: 'OK', style: 'cancel' },
+            { text: 'Complete Sign Up', onPress: () => onIncompleteSignup(body) },
+          ]
+        : undefined,
     );
     return false;
   }

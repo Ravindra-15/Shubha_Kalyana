@@ -1,7 +1,8 @@
 import apiClient from '../api/client';
 
 const STEP_TO_SCREEN: Record<string, string> = {
-  BASIC_DONE: 'Qualification',
+  // First screen after registration is Marital Status, not Qualification.
+  BASIC_DONE: 'BasicLifestyle',
   DETAILS_DONE: 'PartnerPreference',
   // MPIN has been removed from onboarding; the backend now auto-advances
   // straight past it (see upsertPartnerPreference), but these are mapped
