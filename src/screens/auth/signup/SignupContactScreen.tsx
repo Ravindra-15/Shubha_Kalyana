@@ -18,7 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useScrollToError } from '../../../hooks/useScrollToError';
 import { useTranslation } from 'react-i18next';
 import SplitTitle from '../../../components/SplitTitle';
-import { resumeToScreen, screenForOnboardingStep } from '../../../utils/resumeOnboarding';
+import { resumeFromStep, resumeToScreen } from '../../../utils/resumeOnboarding';
 
 export default function SignupContactScreen({ navigation }: any) {
   const { t } = useTranslation();
@@ -134,7 +134,10 @@ export default function SignupContactScreen({ navigation }: any) {
     }
 
     Alert.alert('Welcome back', 'Resuming your previous progress.');
-    resumeToScreen(navigation, screenForOnboardingStep(onboardingStep) || 'BasicLifestyle');
+
+    resumeFromStep(navigation, onboardingStep).then((resumed) => {
+      if (!resumed) resumeToScreen(navigation, 'BasicLifestyle');
+    });
   };
 
   const sendEmailOtp = async () => {

@@ -35,6 +35,44 @@ export const PROFILE_FLOW = [
   'UploadAadhaar',
 ];
 
+/** Which status flag tells us a given screen already holds data. */
+const SCREEN_DONE_FLAG: Record<string, (status: any) => boolean> = {
+  BasicLifestyle: (s) => Boolean(s?.detailsProgress?.basicLifestyle),
+  Qualification: (s) => Boolean(s?.detailsProgress?.qualification),
+  FamilyDetails: (s) => Boolean(s?.detailsProgress?.family),
+  Horoscope: (s) => Boolean(s?.detailsProgress?.horoscope),
+  AddressDetails: (s) => Boolean(s?.detailsProgress?.address),
+  Employment: (s) => Boolean(s?.detailsProgress?.employment),
+  AboutYou: (s) => Boolean(s?.detailsProgress?.about),
+  PartnerPreference: (s) => Boolean(s?.partnerPreferenceCompleted),
+  ProfilePhoto: (s) => Boolean(s?.profilePhotoUploaded),
+  Hobbies: (s) => Boolean(s?.detailsProgress?.hobbies),
+  UploadAadhaar: (s) => Boolean(s?.aadhaarUploaded),
+};
+
+/**
+ * The first screen in the flow that has no data yet. The backend step alone is
+ * too coarse -- it reads DETAILS_DONE after the very first save -- so this
+ * checks what is actually filled and falls back to the step's own screen.
+ */
+export async function firstUnfinishedScreen(fallback: string): Promise<string> {
+  try {
+    const res = await apiClient.get('/onboarding/status');
+    const status = res.data?.data;
+
+    if (!status?.detailsProgress) return fallback;
+
+    const pending = PROFILE_FLOW.find((screen) => {
+      const isDone = SCREEN_DONE_FLAG[screen];
+      return isDone ? !isDone(status) : false;
+    });
+
+    return pending || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 /**
  * Opens a resumed screen with the earlier screens behind it, so Back walks
  * through the flow instead of dropping the user on Login or Contact Details.
@@ -53,6 +91,25 @@ export function resumeToScreen(navigation: any, screen: string) {
   ];
 
   navigation.reset({ index: routes.length - 1, routes });
+}
+
+/**
+ * Resume from a backend step: works out the exact screen, then opens it with
+ * the earlier screens behind it.
+ */
+export async function resumeFromStep(navigation: any, step?: string | null) {
+  const mapped = screenForOnboardingStep(step);
+
+  if (!mapped) return false;
+
+  // Only the profile screens need the finer check; photo/Aadhaar/review are
+  // already exact.
+  const target = PROFILE_FLOW.includes(mapped)
+    ? await firstUnfinishedScreen(mapped)
+    : mapped;
+
+  resumeToScreen(navigation, target);
+  return true;
 }
 
 /** The screen a given backend step belongs to (null when unknown). */
