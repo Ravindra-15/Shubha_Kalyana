@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useScrollToError } from '../../../hooks/useScrollToError';
 import { useTranslation } from 'react-i18next';
 import SplitTitle from '../../../components/SplitTitle';
+import { screenForOnboardingStep } from '../../../utils/resumeOnboarding';
 
 export default function SignupContactScreen({ navigation }: any) {
   const { t } = useTranslation();
@@ -103,9 +104,7 @@ export default function SignupContactScreen({ navigation }: any) {
       }
 
       if (resData.hasExistingProgress) {
-        Alert.alert('Welcome back', 'Resuming your previous progress.');
-        // Navigate to wherever your app's resume logic points, e.g.:
-        navigation.navigate('BasicLifestyle');
+        resumeExistingProgress(resData.onboardingStep);
         return;
       }
 
@@ -116,6 +115,26 @@ export default function SignupContactScreen({ navigation }: any) {
     } finally {
       setMobileVerifying(false);
     }
+  };
+
+  // The server tells us where this account left off. A profile that is already
+  // submitted must not drop back into the form -- it gets the same "under
+  // review" message the login screen shows.
+  const resumeExistingProgress = (onboardingStep?: string) => {
+    if (onboardingStep === 'IN_REVIEW') {
+      Alert.alert(
+        'Profile Under Review',
+        [
+          'Your profile is currently under review. You will be able to log in once it has been approved.',
+          'Thank you for your patience.',
+        ].join('\n\n'),
+        [{ text: 'OK', onPress: () => navigation.navigate('Login') }],
+      );
+      return;
+    }
+
+    Alert.alert('Welcome back', 'Resuming your previous progress.');
+    navigation.navigate(screenForOnboardingStep(onboardingStep) || 'BasicLifestyle');
   };
 
   const sendEmailOtp = async () => {
@@ -152,8 +171,7 @@ export default function SignupContactScreen({ navigation }: any) {
       const resData = res.data?.data || {};
 
       if (resData.hasExistingProgress) {
-        Alert.alert('Welcome back', 'Resuming your previous progress.');
-        navigation.navigate('BasicLifestyle');
+        resumeExistingProgress(resData.onboardingStep);
         return;
       }
 

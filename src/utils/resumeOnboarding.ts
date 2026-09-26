@@ -15,6 +15,12 @@ const STEP_TO_SCREEN: Record<string, string> = {
   REJECTED: 'ReviewProfile',
 };
 
+/** The screen a given backend step belongs to (null when unknown). */
+export function screenForOnboardingStep(step?: string | null): string | null {
+  if (!step) return null;
+  return STEP_TO_SCREEN[step] || null;
+}
+
 export async function getResumeScreen(): Promise<string | null> {
   try {
     const res = await apiClient.get('/onboarding/status');
