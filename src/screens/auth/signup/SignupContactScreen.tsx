@@ -135,7 +135,7 @@ export default function SignupContactScreen({ navigation }: any) {
 
     Alert.alert('Welcome back', 'Resuming your previous progress.');
 
-    resumeFromStep(navigation, onboardingStep).then((resumed) => {
+    resumeFromStep(navigation, onboardingStep, setField).then((resumed) => {
       if (!resumed) resumeToScreen(navigation, 'BasicLifestyle');
     });
   };

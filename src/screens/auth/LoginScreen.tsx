@@ -18,12 +18,14 @@ import KeyboardWrapper from '../../components/KeyboardWrapper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getResumeScreen } from '../../utils/resumeOnboarding';
 import apiClient from '../../api/client';
+import { useSignup } from '../../context/SignupContext';
 import { handleLoginOtpError } from '../../utils/loginOtpErrors';
 import { firstUnfinishedScreen, resumeFromStep, resumeToScreen } from '../../utils/resumeOnboarding';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 
 export default function LoginScreen({ navigation }: any) {
   const { t } = useTranslation();
+  const { setField } = useSignup();
   const [mobile, setMobile] = useState('');
   const [sending, setSending] = useState(false);
 
@@ -92,7 +94,7 @@ export default function LoginScreen({ navigation }: any) {
       // Storage failures are not worth blocking on; the screen still opens.
     }
 
-    const resumed = await resumeFromStep(navigation, body?.onboardingStep);
+    const resumed = await resumeFromStep(navigation, body?.onboardingStep, setField);
 
     if (!resumed) navigation.navigate('SignupProfileFor' as never);
   };
@@ -127,7 +129,7 @@ export default function LoginScreen({ navigation }: any) {
         {
           text: t('login.continueLabel'),
           onPress: async () =>
-            resumeToScreen(navigation, await firstUnfinishedScreen(resumeScreen)),
+            resumeToScreen(navigation, await firstUnfinishedScreen(resumeScreen, setField)),
         },
       ]
     );

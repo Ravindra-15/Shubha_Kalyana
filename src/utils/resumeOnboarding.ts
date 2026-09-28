@@ -35,6 +35,93 @@ export const PROFILE_FLOW = [
   'UploadAadhaar',
 ];
 
+const text = (value: any) => (value === undefined || value === null ? '' : String(value));
+
+/**
+ * Copies what the server already has into the sign-up context, in the shape
+ * each screen reads. Without this, going Back after a resume shows empty
+ * forms even though the answers are saved.
+ */
+export function fillSignupFromDraft(setField: (key: any, value: any) => void, status: any) {
+  const draft = status?.profileDraft;
+  if (!draft) return;
+
+  setField('basicLifestyle', {
+    maritalStatus: draft.maritalStatus || '',
+    feet: text(draft.height?.feet),
+    inches: text(draft.height?.inches),
+    weight: text(draft.weight?.value),
+    diet: draft.lifestyle?.diet || '',
+    smoking: draft.lifestyle?.smoking || '',
+    drinking: draft.lifestyle?.drinking || '',
+    healthCondition:
+      draft.healthDisclosure?.hasCondition === true
+        ? 'YES'
+        : draft.healthDisclosure?.hasCondition === false
+          ? 'NO'
+          : '',
+    healthConditionDetails: draft.healthDisclosure?.details || '',
+  });
+
+  if (draft.education) {
+    setField('education', {
+      highestQualification: draft.education.highestQualification || '',
+      college: draft.education.college || '',
+    });
+  }
+
+  if (draft.family) {
+    setField('family', {
+      familyType: draft.family.familyType || '',
+      fatherName: draft.family.fatherName || '',
+      fatherOccupation: draft.family.fatherOccupation || '',
+      motherName: draft.family.motherName || '',
+      motherOccupation: draft.family.motherOccupation || '',
+      brothers: draft.family.brothers,
+      sisters: draft.family.sisters,
+    });
+  }
+
+  if (draft.horoscopeDetail) {
+    setField('horoscope', {
+      rashi: draft.horoscopeDetail.rashi || '',
+      nakshatra: draft.horoscopeDetail.nakshatra || '',
+    });
+  }
+
+  if (draft.address?.current) {
+    const current = draft.address.current || {};
+    const permanent = draft.address.permanent || {};
+
+    setField('address', {
+      residenceType: current.residenceType || 'INDIA',
+      addressLine1: current.addressLine1 || '',
+      addressLine2: current.addressLine2 || '',
+      district: current.district || '',
+      state: current.state || '',
+      country: current.country || '',
+      stateOrProvince: current.stateOrProvince || '',
+      postalCode: text(current.postalCode),
+      sameAsCurrent: Boolean(permanent.sameAsCurrent),
+      pResidenceType: permanent.residenceType || 'INDIA',
+      pAddressLine1: permanent.addressLine1 || '',
+      pAddressLine2: permanent.addressLine2 || '',
+      pDistrict: permanent.district || '',
+      pState: permanent.state || '',
+      pCountry: permanent.country || '',
+      pStateOrProvince: permanent.stateOrProvince || '',
+      pPostalCode: text(permanent.postalCode),
+    });
+  }
+
+  if (draft.employment) {
+    setField('employment', draft.employment);
+  }
+
+  if (draft.about) setField('about', draft.about);
+  if (draft.hobbiesAndInterests?.length) setField('hobbies', draft.hobbiesAndInterests);
+}
+
 /** Which status flag tells us a given screen already holds data. */
 const SCREEN_DONE_FLAG: Record<string, (status: any) => boolean> = {
   BasicLifestyle: (s) => Boolean(s?.detailsProgress?.basicLifestyle),
@@ -55,10 +142,15 @@ const SCREEN_DONE_FLAG: Record<string, (status: any) => boolean> = {
  * too coarse -- it reads DETAILS_DONE after the very first save -- so this
  * checks what is actually filled and falls back to the step's own screen.
  */
-export async function firstUnfinishedScreen(fallback: string): Promise<string> {
+export async function firstUnfinishedScreen(
+  fallback: string,
+  setField?: (key: any, value: any) => void,
+): Promise<string> {
   try {
     const res = await apiClient.get('/onboarding/status');
     const status = res.data?.data;
+
+    if (setField) fillSignupFromDraft(setField, status);
 
     if (!status?.detailsProgress) return fallback;
 
@@ -97,7 +189,11 @@ export function resumeToScreen(navigation: any, screen: string) {
  * Resume from a backend step: works out the exact screen, then opens it with
  * the earlier screens behind it.
  */
-export async function resumeFromStep(navigation: any, step?: string | null) {
+export async function resumeFromStep(
+  navigation: any,
+  step?: string | null,
+  setField?: (key: any, value: any) => void,
+) {
   const mapped = screenForOnboardingStep(step);
 
   if (!mapped) return false;
@@ -105,7 +201,7 @@ export async function resumeFromStep(navigation: any, step?: string | null) {
   // Only the profile screens need the finer check; photo/Aadhaar/review are
   // already exact.
   const target = PROFILE_FLOW.includes(mapped)
-    ? await firstUnfinishedScreen(mapped)
+    ? await firstUnfinishedScreen(mapped, setField)
     : mapped;
 
   resumeToScreen(navigation, target);
