@@ -26,7 +26,7 @@ const GROUPS = [
   },
   {
     title: 'Fitness & Health',
-    items: ['Gym', 'Yoga', 'Running', 'Meditation', 'Sports', 'Cycling', 'Cricket', 'Others'],
+    items: ['Gym', 'Yoga', 'Running', 'Meditation', 'Sports', 'Cycling','Others'],
   },
 ];
 

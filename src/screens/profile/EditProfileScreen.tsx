@@ -279,7 +279,7 @@ const HOBBY_GROUPS = [
   },
   {
     title: 'Fitness & Health',
-    options: ['Gym', 'Yoga', 'Running', 'Meditation', 'Sports', 'Cycling', 'Cricket', 'Others'],
+    options: ['Gym', 'Yoga', 'Running', 'Meditation', 'Sports', 'Cycling','Others'],
   },
 ];
 
