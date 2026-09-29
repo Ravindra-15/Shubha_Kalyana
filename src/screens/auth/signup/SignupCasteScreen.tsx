@@ -61,6 +61,9 @@ export default function SignupCasteScreen({ navigation }: any) {
   const { data, setField } = useSignup();
   const [religion, setReligion] = useState(data.religion || '');
   const [casteId, setCasteId] = useState(data.caste || '');
+  // True when casteId above holds free-typed text instead of a real caste's
+  // _id (i.e. the user picked "Other" and typed their own caste).
+  const [isCustomCaste, setIsCustomCaste] = useState(data.isCustomCaste || false);
   const [subCaste, setSubCaste] = useState(data.subCaste || '');
   const [motherTongue, setMotherTongue] = useState(data.motherTongue || '');
   const [livingIn, setLivingIn] = useState(data.livingIn || '');
@@ -106,6 +109,7 @@ const visibleCastes = religion
 
     setField('religion', religion.trim());
     setField('caste', casteId);
+    setField('isCustomCaste', isCustomCaste);
     setField('subCaste', subCaste);
     setField('livingIn', livingIn.trim());
     setField('motherTongue', motherTongue.trim());
@@ -119,7 +123,7 @@ const visibleCastes = religion
       religion: religion.trim(),
       caste: casteId,
       subCaste,
-      isCustomCaste: data.isCustomCaste || false,
+      isCustomCaste,
       motherTongue: motherTongue.trim() || 'Kannada',
       lookingFor: data.lookingFor || getLookingForFromGender(data.gender),
     };
@@ -180,6 +184,7 @@ const visibleCastes = religion
             onSelect={val => {
               setReligion(val);
               setCasteId('');
+              setIsCustomCaste(false);
               setSubCaste('');
               setErrors(e => ({ ...e, religion: false }));
             }}
@@ -199,11 +204,17 @@ const visibleCastes = religion
               placeholder={t('signup.caste.castePlaceholder')}
               value={casteId}
               options={visibleCastes.map(c => ({ label: c.casteName, value: c._id }))}
-              onSelect={val => {
+              onSelect={(val, label) => {
+                // A real pick returns one of the option values above (a
+                // caste's _id); free-typed text (via "Use ...") does not
+                // match any of them, so that is what marks it custom.
+                const isKnownCaste = visibleCastes.some(c => c._id === val);
                 setCasteId(val);
+                setIsCustomCaste(Boolean(val) && !isKnownCaste);
                 setSubCaste('');
                 setErrors(e => ({ ...e, casteId: false }));
               }}
+              allowCustom
               error={errors.casteId}
             />
           </View>
@@ -218,7 +229,7 @@ const visibleCastes = religion
               setErrors(e => ({ ...e, subCaste: false }));
             }}
             allowCustom
-            disabled={subCasteOptions.length === 0}
+            disabled={!casteId}
             error={errors.subCaste}
           />
         </View>
