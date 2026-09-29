@@ -18,9 +18,9 @@ export default function GalleryPhotoRow({
   photos = [],
   onAdd,
   onRemove,
-  maxCount = 5,
+  maxCount = 3,
   uploadingSlotIndex = null,
-  title = 'Add up to 5 more photos (optional)',
+  title = 'Add up to 3 more photos (optional)',
 }: Props) {
   const emptySlots = Math.max(0, maxCount - photos.length);
   const isUploading = uploadingSlotIndex !== null;
