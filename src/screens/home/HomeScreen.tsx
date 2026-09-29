@@ -27,7 +27,10 @@ import { resolveImageUrl } from '../../utils/imageUrl';
 import { useFocusEffect } from '@react-navigation/native';
 import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
-import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
+import {
+  getProfileAccess,
+  unlockProfileWithMembership,
+} from '../../api/membershipPayment';
 import { getUnreadCount } from '../../api/notification';
 import { isProfileFullyVerified } from '../../api/profile';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
@@ -53,9 +56,18 @@ export default function HomeScreen({ navigation }: any) {
     show: false,
   });
   const [unreadCount, setUnreadCount] = useState(0);
-  const [accessPrompt, setAccessPrompt] = useState<{ profileId: string; name?: string; access: any; action: 'send' | 'accept' } | null>(null);
+  const [accessPrompt, setAccessPrompt] = useState<{
+    profileId: string;
+    name?: string;
+    access: any;
+    action: 'send' | 'accept';
+  } | null>(null);
 
-  const showAccessRequired = async (profileId: string, name: string | undefined, action: 'send' | 'accept') => {
+  const showAccessRequired = async (
+    profileId: string,
+    name: string | undefined,
+    action: 'send' | 'accept',
+  ) => {
     const access = await getProfileAccess(profileId);
     setAccessPrompt({ profileId, name, action, access });
   };
@@ -70,7 +82,7 @@ export default function HomeScreen({ navigation }: any) {
       loadVendors();
       loadUnread();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeFilters])
+    }, [activeFilters]),
   );
 
   const loadUnread = async () => {
@@ -90,7 +102,8 @@ export default function HomeScreen({ navigation }: any) {
         if (filters.maritalStatus) params.maritalStatus = filters.maritalStatus;
         if (filters.education?.length) params.education = filters.education;
         if (filters.profession?.length) params.profession = filters.profession;
-        if (filters.preferredLocation?.length) params.preferredLocation = filters.preferredLocation;
+        if (filters.preferredLocation?.length)
+          params.preferredLocation = filters.preferredLocation;
         if (filters.district?.length) params.district = filters.district;
       }
       console.log('Search Params:', params);
@@ -201,12 +214,13 @@ export default function HomeScreen({ navigation }: any) {
           addr.country && addr.country !== 'India' ? addr.country : '',
         ]
           .filter(Boolean)
-          .join(', ') ||
-        'Location not added',
+          .join(', ') || 'Location not added',
       image: photo,
       matchPercentage,
       matchPercent: matchPercentage,
-      verified: Boolean(item.profile?.verified || isProfileFullyVerified(item.profile)),
+      verified: Boolean(
+        item.profile?.verified || isProfileFullyVerified(item.profile),
+      ),
       bothHaveActivePlans: Boolean(item.bothHaveActivePlans),
     };
   };
@@ -216,16 +230,21 @@ export default function HomeScreen({ navigation }: any) {
       const [intRes, sentRes, connRes] = await Promise.all([
         apiClient.get('/relationship/interests/me', { params: { limit: 5 } }),
         apiClient.get('/relationship/requests/sent', { params: { limit: 50 } }),
-        apiClient.get('/relationship/connections/me', { params: { limit: 50 } }),
+        apiClient.get('/relationship/connections/me', {
+          params: { limit: 50 },
+        }),
       ]);
       const items = intRes.data?.data?.interests || [];
       const sent = sentRes.data?.data?.requests || [];
-      const conns = connRes.data?.data?.connections || connRes.data?.data?.items || [];
+      const conns =
+        connRes.data?.data?.connections || connRes.data?.data?.items || [];
       // profileId → status (connection wins as ACCEPTED)
       const statusMap = new Map();
       sent
         .filter((r: any) => r.status === 'PENDING' || r.status === 'ACCEPTED')
-        .forEach((r: any) => statusMap.set(String(r.toProfileId || r.profile?._id), r.status));
+        .forEach((r: any) =>
+          statusMap.set(String(r.toProfileId || r.profile?._id), r.status),
+        );
       conns.forEach((c: any) => {
         const pid = c.profile?._id || c.profileId;
         if (pid) statusMap.set(String(pid), 'ACCEPTED');
@@ -269,7 +288,9 @@ export default function HomeScreen({ navigation }: any) {
       );
     } catch (err: any) {
       if (err?.response?.status === 402) {
-        const name = interestedProfiles.find(p => p.profileId === profileId)?.name;
+        const name = interestedProfiles.find(
+          p => p.profileId === profileId,
+        )?.name;
         await showAccessRequired(profileId, name, 'send');
         return;
       }
@@ -297,7 +318,10 @@ export default function HomeScreen({ navigation }: any) {
         await showAccessRequired(profileId, name, 'send');
         return;
       }
-      Alert.alert('Error', err?.response?.data?.message || 'Could not view contact');
+      Alert.alert(
+        'Error',
+        err?.response?.data?.message || 'Could not view contact',
+      );
     }
   };
 
@@ -312,7 +336,10 @@ export default function HomeScreen({ navigation }: any) {
         profileId,
       });
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not start chat');
+      Alert.alert(
+        'Error',
+        err?.response?.data?.message || 'Could not start chat',
+      );
     }
   };
 
@@ -385,13 +412,18 @@ export default function HomeScreen({ navigation }: any) {
     }
   };
 
-  const toggleInterest = async (profileId: string, currentlyInterested: boolean) => {
+  const toggleInterest = async (
+    profileId: string,
+    currentlyInterested: boolean,
+  ) => {
     try {
       if (currentlyInterested) {
         await apiClient.delete(`/relationship/interests/${profileId}`);
         setMatches(prev =>
           prev.map(p =>
-            p.profileId === profileId ? { ...p, _interested: false, isInterested: false } : p,
+            p.profileId === profileId
+              ? { ...p, _interested: false, isInterested: false }
+              : p,
           ),
         );
         loadInterested();
@@ -399,14 +431,19 @@ export default function HomeScreen({ navigation }: any) {
         await apiClient.post(`/relationship/interests/${profileId}`, {});
         setMatches(prev =>
           prev.map(p =>
-            p.profileId === profileId ? { ...p, _interested: true, isInterested: true } : p,
+            p.profileId === profileId
+              ? { ...p, _interested: true, isInterested: true }
+              : p,
           ),
         );
         loadInterested();
         Alert.alert('Added', 'Profile added to your interests');
       }
     } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not update interest');
+      Alert.alert(
+        'Error',
+        err?.response?.data?.message || 'Could not update interest',
+      );
     }
   };
 
@@ -458,7 +495,7 @@ export default function HomeScreen({ navigation }: any) {
       loadInterested(),
       loadVendors(),
       loadUnread(),
-    ])
+    ]),
   );
 
   return (
@@ -498,7 +535,10 @@ export default function HomeScreen({ navigation }: any) {
           const profileId = accessPrompt?.profileId;
           const profileName = accessPrompt?.name;
           setAccessPrompt(null);
-          navigation.navigate('Plans', profileId ? { profileId, profileName } : undefined);
+          navigation.navigate(
+            'Plans',
+            profileId ? { profileId, profileName } : undefined,
+          );
         }}
       />
 
@@ -506,7 +546,12 @@ export default function HomeScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#D20236']} tintColor="#D20236" />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#D20236']}
+            tintColor="#D20236"
+          />
         }
       >
         {/* Header */}
@@ -519,11 +564,16 @@ export default function HomeScreen({ navigation }: any) {
               New verified matches are waiting for you
             </Text>
           </View>
-          <TouchableOpacity style={styles.bellWrap} onPress={() => navigation.navigate('Notifications')}>
+          <TouchableOpacity
+            style={styles.bellWrap}
+            onPress={() => navigation.navigate('Notifications')}
+          >
             <Bell color="#333" size={24} />
             {unreadCount > 0 && (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                <Text style={styles.badgeText}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
@@ -542,7 +592,9 @@ export default function HomeScreen({ navigation }: any) {
           </View>
           <Text style={styles.planSubtitle}>
             {hasActivePlan
-              ? `Explore matches! You have ${unlocksRemaining} unlock${unlocksRemaining === 1 ? '' : 's'} remaining`
+              ? `Explore matches! You have ${unlocksRemaining} unlock${
+                  unlocksRemaining === 1 ? '' : 's'
+                } remaining`
               : 'Unlock full profile access and premium features'}
           </Text>
           <TouchableOpacity
@@ -554,23 +606,24 @@ export default function HomeScreen({ navigation }: any) {
                 : navigation.navigate('Plans')
             }
           >
-            <Text style={styles.upgradeText}>{hasActivePlan ? 'Explore Now' : 'Upgrade Now'}</Text>
+            <Text style={styles.upgradeText}>
+              {hasActivePlan ? 'Explore Now' : 'Upgrade Now'}
+            </Text>
             <ArrowRight color="#E60076" size={18} />
           </TouchableOpacity>
         </LinearGradient>
-
-        {/* Filter bar */}
-        <View style={styles.filterBar}>
+        {/* Filter bar - hidden on Home screen */}
+        <View style={[styles.filterBar, { display: 'none' }]}>
           <TouchableOpacity
             style={styles.filterBtn}
             onPress={() => {
-              // Refresh gender right before opening so the "Widow/Widower"
-              // marital status label is correct even if the earlier
-              // on-mount profile fetch hadn't finished yet.
               apiClient
                 .get('/user/me/profile')
-                .then((res) => setGender(res.data?.data?.profile?.basicInfo?.gender || ''))
+                .then(res =>
+                  setGender(res.data?.data?.profile?.basicInfo?.gender || ''),
+                )
                 .catch(() => {});
+
               setShowFilter(true);
             }}
           >
@@ -587,7 +640,9 @@ export default function HomeScreen({ navigation }: any) {
               Profiles matching your preferences
             </Text>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate('AllMatches', { pushed: true })}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('AllMatches', { pushed: true })}
+          >
             <Text style={styles.viewAll}>View All</Text>
           </TouchableOpacity>
         </View>
@@ -605,7 +660,9 @@ export default function HomeScreen({ navigation }: any) {
               onView={() =>
                 navigation.navigate('ProfileDetail', { profileId: p.profileId })
               }
-              onInterested={() => toggleInterest(p.profileId, p._interested || p.isInterested)}
+              onInterested={() =>
+                toggleInterest(p.profileId, p._interested || p.isInterested)
+              }
             />
           ))
         )}
@@ -655,12 +712,16 @@ export default function HomeScreen({ navigation }: any) {
                   Profiles matching your preferences
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => navigation.navigate('AllInterested', { pushed: true })}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('AllInterested', { pushed: true })
+                }
+              >
                 <Text style={styles.viewAll}>View All</Text>
               </TouchableOpacity>
             </View>
 
-            {interestedProfiles.map((p) => (
+            {interestedProfiles.map(p => (
               <ProfileCard
                 key={p.profileId}
                 profile={p}
@@ -688,7 +749,9 @@ export default function HomeScreen({ navigation }: any) {
                   Explore trusted wedding vendors
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => navigation.navigate('VendorList')}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('VendorList')}
+              >
                 <ArrowRight color="#D20236" size={22} />
               </TouchableOpacity>
             </View>
@@ -766,7 +829,12 @@ const styles = StyleSheet.create({
   badgeText: { color: '#fff', fontSize: 10, fontFamily: 'Outfit-Bold' },
   planCard: { borderRadius: 16, padding: 18, marginBottom: 24 },
   planRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  planTitle: { color: '#fff', fontSize: 17, fontFamily: 'Outfit-Bold', marginLeft: 8 },
+  planTitle: {
+    color: '#fff',
+    fontSize: 17,
+    fontFamily: 'Outfit-Bold',
+    marginLeft: 8,
+  },
   planSubtitle: {
     color: '#ffe0e6',
     fontSize: 14,
@@ -816,7 +884,11 @@ const styles = StyleSheet.create({
   },
   filterText: { fontSize: 14, color: '#333', fontFamily: 'Outfit-SemiBold' },
   vendorSection: { marginTop: 10, marginBottom: 20 },
-  vendorHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  vendorHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
   vendorCard: {
     width: VENDOR_CARD_WIDTH,
     height: 150,
