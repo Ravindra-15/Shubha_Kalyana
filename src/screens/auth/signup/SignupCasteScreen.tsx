@@ -64,6 +64,7 @@ export default function SignupCasteScreen({ navigation }: any) {
   // True when casteId above holds free-typed text instead of a real caste's
   // _id (i.e. the user picked "Other" and typed their own caste).
   const [isCustomCaste, setIsCustomCaste] = useState(data.isCustomCaste || false);
+  const [isCustomSubCaste, setIsCustomSubCaste] = useState(false);
   const [subCaste, setSubCaste] = useState(data.subCaste || '');
   const [motherTongue, setMotherTongue] = useState(data.motherTongue || '');
   const [livingIn, setLivingIn] = useState(data.livingIn || '');
@@ -97,7 +98,7 @@ const visibleCastes = religion
   const handleContinue = async () => {
     const newErrors: { [k: string]: boolean } = {};
     if (!religion.trim()) newErrors.religion = true;
-    if (!casteId) newErrors.casteId = true;
+    if (!casteId.trim()) newErrors.casteId = true;
     if (!livingIn.trim()) newErrors.livingIn = true;
     if (!motherTongue.trim()) newErrors.motherTongue = true;
     setErrors(newErrors);
@@ -108,9 +109,9 @@ const visibleCastes = religion
     }
 
     setField('religion', religion.trim());
-    setField('caste', casteId);
+    setField('caste', isCustomCaste ? casteId.trim() : casteId);
     setField('isCustomCaste', isCustomCaste);
-    setField('subCaste', subCaste);
+    setField('subCaste', subCaste.trim());
     setField('livingIn', livingIn.trim());
     setField('motherTongue', motherTongue.trim());
 
@@ -121,8 +122,8 @@ const visibleCastes = religion
       gender: data.gender,
       dob: data.dob,
       religion: religion.trim(),
-      caste: casteId,
-      subCaste,
+      caste: isCustomCaste ? casteId.trim() : casteId,
+      subCaste: subCaste.trim(),
       isCustomCaste,
       motherTongue: motherTongue.trim() || 'Kannada',
       lookingFor: data.lookingFor || getLookingForFromGender(data.gender),
@@ -185,6 +186,7 @@ const visibleCastes = religion
               setReligion(val);
               setCasteId('');
               setIsCustomCaste(false);
+              setIsCustomSubCaste(false);
               setSubCaste('');
               setErrors(e => ({ ...e, religion: false }));
             }}
@@ -200,38 +202,113 @@ const visibleCastes = religion
           <ActivityIndicator color="#D20236" style={{ marginVertical: 16 }} />
         ) : (
           <View ref={registerField('casteId')}>
-            <SearchableDropdown
-              placeholder={t('signup.caste.castePlaceholder')}
-              value={casteId}
-              options={visibleCastes.map(c => ({ label: c.casteName, value: c._id }))}
-              onSelect={(val, label) => {
-                // A real pick returns one of the option values above (a
-                // caste's _id); free-typed text (via "Use ...") does not
-                // match any of them, so that is what marks it custom.
-                const isKnownCaste = visibleCastes.some(c => c._id === val);
-                setCasteId(val);
-                setIsCustomCaste(Boolean(val) && !isKnownCaste);
-                setSubCaste('');
-                setErrors(e => ({ ...e, casteId: false }));
-              }}
-              allowCustom
-              error={errors.casteId}
-            />
+            {isCustomCaste ? (
+              <>
+                <TextInput
+                  style={[styles.input, errors.casteId && styles.inputError]}
+                  placeholder={t('signup.caste.enterCaste')}
+                  placeholderTextColor="#999"
+                  value={casteId}
+                  onChangeText={value => {
+                    setCasteId(value);
+                    setErrors(e => ({ ...e, casteId: false }));
+                  }}
+                  autoCapitalize="words"
+                />
+                <TouchableOpacity
+                  onPress={() => {
+                    setIsCustomCaste(false);
+                    setCasteId('');
+                    setIsCustomSubCaste(false);
+                    setSubCaste('');
+                  }}
+                >
+                  <Text style={styles.linkText}>{t('signup.common.chooseFromListInstead')}</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <SearchableDropdown
+                  placeholder={t('signup.caste.castePlaceholder')}
+                  value={casteId}
+                  options={[
+                    ...visibleCastes.map(c => ({ label: c.casteName, value: c._id })),
+                    { label: t('signup.caste.otherTypeYourOwn'), value: '__other__' },
+                  ]}
+                  onSelect={val => {
+                    if (val === '__other__') {
+                      setIsCustomCaste(true);
+                      setCasteId('');
+                      setIsCustomSubCaste(false);
+                      setSubCaste('');
+                      setErrors(e => ({ ...e, casteId: false }));
+                      return;
+                    }
+                    setCasteId(val);
+                    setIsCustomCaste(false);
+                    setIsCustomSubCaste(false);
+                    setSubCaste('');
+                    setErrors(e => ({ ...e, casteId: false }));
+                  }}
+                  error={errors.casteId}
+                />
+                {visibleCastes.length > 0 && (
+                  <TouchableOpacity onPress={() => {
+                    setIsCustomCaste(true);
+                    setCasteId('');
+                    setIsCustomSubCaste(false);
+                    setSubCaste('');
+                  }}>
+                    <Text style={styles.linkText}>{t('signup.caste.enterCaste')}</Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
           </View>
         )}
         <View ref={registerField('subCaste')}>
-          <SearchableDropdown
-            placeholder={t('signup.caste.subCastePlaceholder')}
-            value={subCaste}
-            options={subCasteOptions.map(sc => ({ label: sc, value: sc }))}
-            onSelect={val => {
-              setSubCaste(val);
-              setErrors(e => ({ ...e, subCaste: false }));
-            }}
-            allowCustom
-            disabled={!casteId}
-            error={errors.subCaste}
-          />
+          {isCustomSubCaste ? (
+            <>
+              <TextInput
+                style={[styles.input, errors.subCaste && styles.inputError]}
+                placeholder={t('signup.caste.enterSubCaste')}
+                placeholderTextColor="#999"
+                value={subCaste}
+                onChangeText={value => {
+                  setSubCaste(value);
+                  setErrors(e => ({ ...e, subCaste: false }));
+                }}
+                autoCapitalize="words"
+              />
+              <TouchableOpacity onPress={() => {
+                setIsCustomSubCaste(false);
+                setSubCaste('');
+              }}>
+                <Text style={styles.linkText}>{t('signup.common.chooseFromListInstead')}</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <SearchableDropdown
+              placeholder={t('signup.caste.subCastePlaceholder')}
+              value={subCaste}
+              options={[
+                ...subCasteOptions.map(sc => ({ label: sc, value: sc })),
+                { label: t('signup.caste.otherTypeYourOwn'), value: '__other__' },
+              ]}
+              onSelect={val => {
+                if (val === '__other__') {
+                  setIsCustomSubCaste(true);
+                  setSubCaste('');
+                  setErrors(e => ({ ...e, subCaste: false }));
+                  return;
+                }
+                setSubCaste(val);
+                setErrors(e => ({ ...e, subCaste: false }));
+              }}
+              disabled={!casteId}
+              error={errors.subCaste}
+            />
+          )}
         </View>
 
         <Text style={styles.label}>
@@ -327,6 +404,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
+  linkText: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-SemiBold', marginTop: -4, marginBottom: 12, textDecorationLine: 'underline' },
   continueBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,
