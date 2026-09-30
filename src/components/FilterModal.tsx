@@ -170,7 +170,7 @@ export default function FilterModal({ visible, onClose, onApply, initial, gender
               thumbTintColor="#D20236"
             />
 
-            <Text style={styles.label}>Religion</Text>
+            <Text style={styles.label}>Preferred Religion</Text>
             <SearchableDropdown
               placeholder="Select Religion"
               value={religion}
@@ -178,7 +178,7 @@ export default function FilterModal({ visible, onClose, onApply, initial, gender
               onSelect={setReligion}
             />
 
-            <Text style={styles.label}>Caste</Text>
+            <Text style={styles.label}>Preferred Caste</Text>
             <MultiSelectDropdown
               placeholder="Select Caste"
               value={caste}
@@ -186,7 +186,7 @@ export default function FilterModal({ visible, onClose, onApply, initial, gender
               onChange={(vals) => { setCaste(vals); setSubCaste([]); }}
             />
 
-            <Text style={styles.label}>Sub Caste</Text>
+            <Text style={styles.label}>Preferred Sub Caste</Text>
             <MultiSelectDropdown
               placeholder="Select Sub Caste"
               value={subCaste}
@@ -196,7 +196,7 @@ export default function FilterModal({ visible, onClose, onApply, initial, gender
               disabled={uniqueSubCasteOptions.length === 0}
             />
 
-            <Text style={styles.label}>Marital Status</Text>
+            <Text style={styles.label}>Preferred Marital Status</Text>
             <SearchableDropdown
               placeholder="Select Marital Status"
               value={maritalStatus}
@@ -204,7 +204,7 @@ export default function FilterModal({ visible, onClose, onApply, initial, gender
               onSelect={setMaritalStatus}
             />
 
-            <Text style={styles.label}>Education</Text>
+            <Text style={styles.label}>Preferred Education</Text>
             <MultiSelectDropdown
               placeholder="Select Education"
               value={education}
@@ -213,7 +213,7 @@ export default function FilterModal({ visible, onClose, onApply, initial, gender
               allowCustom
             />
 
-            <Text style={styles.label}>Profession</Text>
+            <Text style={styles.label}>Preferred Profession</Text>
             <MultiSelectDropdown
               placeholder="Select Profession"
               value={profession}
@@ -230,7 +230,7 @@ export default function FilterModal({ visible, onClose, onApply, initial, gender
               onChange={(vals) => { setPreferredLocation(vals); setDistrict([]); }}
             />
 
-            <Text style={styles.label}>District / City</Text>
+            <Text style={styles.label}>Preferred District / City</Text>
             <MultiSelectDropdown
               placeholder={
                 districtOptions.length
