@@ -112,6 +112,7 @@ export default function EmploymentScreen({ navigation }: any) {
   const isJobType = employedType === 'PRIVATE' || employedType === 'GOVERNMENT' || employedType === 'SEMI_GOVERNMENT';
   const isBusiness = employedType === 'BUSINESS';
   const isAgriculture = employedType === 'AGRICULTURE';
+  const isManualDesignation = employedType === 'GOVERNMENT' || employedType === 'SEMI_GOVERNMENT' || isBusiness;
   const showDesignation = isJobType || isBusiness;
   const showExperience = isJobType || isBusiness;
   const showLinkedIn = !isAgriculture;
@@ -131,7 +132,7 @@ export default function EmploymentScreen({ navigation }: any) {
     const newErrors: { [k: string]: boolean } = {};
     if (!employedType) newErrors.employedType = true;
 
-    if (showDesignation && !designation) newErrors.designation = true;
+    if (showDesignation && !designation.trim()) newErrors.designation = true;
 
     if ((isJobType || isBusiness) && !companyName.trim()) {
       newErrors.companyName = true;
@@ -223,17 +224,34 @@ export default function EmploymentScreen({ navigation }: any) {
             <>
               <Text style={styles.label}>{t('signup.employment.youWorkAs')} <Text style={styles.star}>*</Text></Text>
               <View ref={registerField('designation')}>
-                <SearchableDropdown
-                  placeholder={t('signup.employment.designationPlaceholder')}
-                  value={designation}
-                  options={DESIGNATIONS}
-                  onSelect={(val) => {
-                    setDesignation(val);
-                    setErrors((e) => ({ ...e, designation: false }));
-                  }}
-                  error={errors.designation}
-                />
+                {isManualDesignation ? (
+                  <TextInput
+                    style={[styles.input, errors.designation && styles.inputError]}
+                    placeholder="Enter your designation"
+                    placeholderTextColor="#999"
+                    value={designation}
+                    onChangeText={(value) => {
+                      setDesignation(value);
+                      setErrors((e) => ({ ...e, designation: false }));
+                    }}
+                    autoCapitalize="words"
+                  />
+                ) : (
+                  <SearchableDropdown
+                    placeholder={t('signup.employment.designationPlaceholder')}
+                    value={designation}
+                    options={DESIGNATIONS}
+                    onSelect={(val) => {
+                      setDesignation(val);
+                      setErrors((e) => ({ ...e, designation: false }));
+                    }}
+                    error={errors.designation}
+                  />
+                )}
               </View>
+              {isManualDesignation && errors.designation && (
+                <Text style={styles.errorText}>This field is required</Text>
+              )}
             </>
           )}
 
@@ -460,6 +478,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
+  errorText: { color: '#D20236', fontSize: 12, marginTop: -14, marginBottom: 12 },
   row: { flexDirection: 'row', gap: 10 },
   flexInput: { flex: 1 },
   linkText: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-SemiBold', marginTop: -12, marginBottom: 16 },

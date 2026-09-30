@@ -489,6 +489,7 @@ export default function EditProfileScreen({ navigation }: any) {
   const isJobType = employedType === 'PRIVATE' || employedType === 'GOVERNMENT' || employedType === 'SEMI_GOVERNMENT';
   const isBusiness = employedType === 'BUSINESS';
   const isAgriculture = employedType === 'AGRICULTURE';
+  const isManualDesignation = employedType === 'GOVERNMENT' || employedType === 'SEMI_GOVERNMENT' || isBusiness;
   const showDesignation = isJobType || isBusiness;
   const showExperience = isJobType || isBusiness;
   const showLinkedIn = !isAgriculture;
@@ -986,7 +987,7 @@ export default function EditProfileScreen({ navigation }: any) {
     requireValue('annualIncome', annualIncome, 'Annual income is required');
 
     if (showDesignation) {
-      requireValue('designation', designation, 'This field is required');
+      requireValue('designation', designation.trim(), 'This field is required');
     }
 
     if (isJobType || isBusiness) {
@@ -1815,16 +1816,32 @@ export default function EditProfileScreen({ navigation }: any) {
 
           {showDesignation && (
             <>
-              <FieldLabel label="You work as" required />
-              <SearchableDropdown
-                placeholder="Select your designation"
-                value={designation}
-                options={DESIGNATIONS}
-                onSelect={(value) => {
-                  setDesignation(value);
-                  markChanged();
-                }}
-              />
+              {isManualDesignation ? (
+                <EditableTextField
+                  label="You work as"
+                  required
+                  value={designation}
+                  placeholder="Enter your designation"
+                  autoCapitalize="words"
+                  onChangeText={(value) => {
+                    setDesignation(value);
+                    markChanged();
+                  }}
+                />
+              ) : (
+                <>
+                  <FieldLabel label="You work as" required />
+                  <SearchableDropdown
+                    placeholder="Select your designation"
+                    value={designation}
+                    options={DESIGNATIONS}
+                    onSelect={(value) => {
+                      setDesignation(value);
+                      markChanged();
+                    }}
+                  />
+                </>
+              )}
             </>
           )}
 
