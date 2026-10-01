@@ -41,7 +41,6 @@ import {
   Caste,
   getCasteOptions,
   getReligionOptions,
-  isShownAsPreferredReligion,
 } from '../../api/caste';
 import { INDIAN_STATE_OPTIONS } from '../../constants/indianStates';
 import { getDistrictOptionsForStates } from '../../constants/districtsByState';
@@ -243,28 +242,6 @@ const EDUCATION_OPTIONS: Option[] = [
   'PhD',
   'CA',
   'CS',
-  'Others',
-].map((item) => ({ label: item, value: item }));
-
-const PROFESSION_OPTIONS: Option[] = [
-  'Software Engineer',
-  'Senior Software Engineer',
-  'Team Lead',
-  'Project Manager',
-  'Doctor',
-  'Teacher',
-  'Professor',
-  'Lawyer',
-  'Business Owner',
-  'Government Officer',
-  'Associate',
-  'Manager',
-  'Mid-Senior',
-  'Senior',
-  'Director',
-  'VP',
-  'Executive',
-  'Senior Executive',
   'Others',
 ].map((item) => ({ label: item, value: item }));
 
@@ -495,15 +472,9 @@ export default function EditProfileScreen({ navigation }: any) {
   const showLinkedIn = !isAgriculture;
 
   const preferredCasteOptions = useMemo(() => {
-    const anyReligionSelected = prefReligionValues.includes('Other');
-    const options = castes
-      .filter((caste) => {
-        if (!prefReligionValues.length || anyReligionSelected) return true;
-        return prefReligionValues.includes(caste.religion || '');
-      })
-      .map((caste) => ({ label: caste.casteName, value: caste._id }));
+    const options = castes.map((caste) => ({ label: caste.casteName, value: caste._id }));
     return [{ label: 'Any Caste', value: ANY_CASTE_VALUE }, ...options];
-  }, [castes, prefReligionValues]);
+  }, [castes]);
 
   const preferredSubCasteOptions = useMemo(() => {
     const selected = castes.filter((caste) => prefCasteIds.includes(caste._id));
@@ -707,27 +678,6 @@ export default function EditProfileScreen({ navigation }: any) {
     clearError(`permanent${String(key)}`);
   };
 
-  const setPreferredReligions = (values: string[]) => {
-    const anyReligionSelected = values.includes('Other');
-    const allowedCastes = anyReligionSelected
-      ? castes
-      : castes.filter((caste) => !values.length || values.includes(caste.religion || ''));
-    const allowedIds = new Set(allowedCastes.map((caste) => caste._id));
-    const casteIds = prefCasteIds.includes(ANY_CASTE_VALUE)
-      ? [ANY_CASTE_VALUE]
-      : prefCasteIds.filter((id) => allowedIds.has(id));
-    const allowedSubs = new Set(
-      castes
-        .filter((caste) => casteIds.includes(caste._id))
-        .flatMap((caste) => caste.subCastes || []),
-    );
-
-    setPrefReligionValues(values);
-    setPrefCasteIds(casteIds);
-    setPrefSubCasteValues((prev) => prev.filter((item) => allowedSubs.has(item)));
-    markChanged();
-  };
-
   const setPreferredCastes = (values: string[]) => {
     if (values.includes(ANY_CASTE_VALUE)) {
       setPrefCasteIds([ANY_CASTE_VALUE]);
@@ -737,13 +687,9 @@ export default function EditProfileScreen({ navigation }: any) {
     }
 
     const selected = castes.filter((caste) => values.includes(caste._id));
-    const casteReligions = selected.map((caste) => caste.religion).filter(Boolean) as string[];
     const allowedSubs = new Set(selected.flatMap((caste) => caste.subCastes || []));
 
     setPrefCasteIds(values);
-    setPrefReligionValues((prev) =>
-      prev.includes('Other') ? prev : [...new Set([...prev, ...casteReligions])],
-    );
     setPrefSubCasteValues((prev) => prev.filter((item) => allowedSubs.has(item)));
     markChanged();
   };
@@ -1250,13 +1196,6 @@ export default function EditProfileScreen({ navigation }: any) {
         { label: 'Sikh', value: 'Sikh' },
         { label: 'Buddhist', value: 'Buddhist' },
       ];
-  // "Any Religion" is only meaningful as a partner preference, not the user's own religion.
-  const preferredReligionOptions = religionOptions
-    .filter((option) => isShownAsPreferredReligion(option.value))
-    .map((option) =>
-    option.value === 'Other' ? { ...option, label: 'Any Religion' } : option,
-  );
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
@@ -2281,13 +2220,6 @@ export default function EditProfileScreen({ navigation }: any) {
           )}
 
           <MultiSelectField
-            label="Preferred Religion"
-            placeholder="Select preferred religion"
-            options={preferredReligionOptions}
-            selected={prefReligionValues}
-            onChange={setPreferredReligions}
-          />
-          <MultiSelectField
             label="Preferred Caste"
             placeholder="Select preferred caste"
             options={preferredCasteOptions}
@@ -2312,16 +2244,6 @@ export default function EditProfileScreen({ navigation }: any) {
             selected={prefEducationValues}
             onChange={(values) => {
               setPrefEducationValues(values);
-              markChanged();
-            }}
-          />
-          <MultiSelectField
-            label="Preferred Profession"
-            placeholder="Select preferred profession"
-            options={PROFESSION_OPTIONS}
-            selected={prefProfessionValues}
-            onChange={(values) => {
-              setPrefProfessionValues(values);
               markChanged();
             }}
           />

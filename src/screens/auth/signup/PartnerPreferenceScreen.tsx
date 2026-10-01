@@ -14,7 +14,7 @@ import SearchableDropdown from '../../../components/SearchableDropdown';
 import MultiSelectDropdown from '../../../components/MultiSelectDropdown';
 import KeyboardWrapper from '../../../components/KeyboardWrapper';
 import apiClient from '../../../api/client';
-import { getCastes, getReligionOptions, isShownAsPreferredReligion, Caste } from '../../../api/caste';
+import { getCastes, Caste } from '../../../api/caste';
 import { useSignup } from '../../../context/SignupContext';
 import { getResumeScreen } from '../../../utils/resumeOnboarding';
 import { useTranslation } from 'react-i18next';
@@ -34,7 +34,6 @@ const getMaritalOptions = (gender?: string) => [
 ];
 // const RELIGIONS = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jain', 'Buddhist', 'Parsi', 'Other'];
 const EDUCATION = ['B.Tech', 'B.E', 'B.Sc', 'B.Com', 'B.A', 'BBA', 'BCA', 'MBBS', 'M.Tech', 'M.Sc', 'MBA', 'MCA', 'PhD', 'Diploma', 'Other'];
-const PROFESSION = ['Engineer', 'Doctor', 'Teacher', 'Business', 'Government Job', 'Lawyer', 'CA', 'Software', 'Banker', 'Other'];
 const RESIDENT = [
   { label: 'Indian', value: 'Indian' },
   { label: 'NRI', value: 'NRI' },
@@ -76,24 +75,22 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
   const [ageMin, setAgeMin] = useState(pp.ageMin || '');
   const [ageMax, setAgeMax] = useState(pp.ageMax || '');
   const [maritalStatus, setMaritalStatus] = useState<string[]>(pp.maritalStatus || []);
-  const [religion, setReligion] = useState<string[]>(pp.religion || []);
+  const [religion] = useState<string[]>(pp.religion || []);
   const [casteIds, setCasteIds] = useState<string[]>(pp.casteIds || []);
   const [subCaste, setSubCaste] = useState<string[]>(pp.subCaste || []);
   const [education, setEducation] = useState<string[]>(pp.education || []);
-  const [profession, setProfession] = useState<string[]>(pp.profession || []);
+  const [profession] = useState<string[]>(pp.profession || []);
   const [resident, setResident] = useState<string[]>(pp.resident || []);
 
   const [castes, setCastes] = useState<Caste[]>([]);
-  const [religions, setReligions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ age?: boolean }>({});
 
   useEffect(() => {
     (async () => {
       try {
-        const [casteList, religionList] = await Promise.all([getCastes(), getReligionOptions()]);
+        const casteList = await getCastes();
         setCastes(casteList);
-        setReligions(religionList);
       } catch {}
     })();
   }, []);
@@ -223,13 +220,6 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
           <Text style={styles.label}>{t('signup.partner.maritalStatus')}</Text>
           <Chips options={getMaritalOptions(data.gender)} selected={maritalStatus} onToggle={(v) => toggle(maritalStatus, setMaritalStatus, v)} />
 
-          <Text style={styles.label}>{t('signup.partner.religion')}</Text>
-          <Chips
-            options={religions.filter(isShownAsPreferredReligion).map((r) => ({ label: r === 'Other' ? 'Any Religion' : r, value: r }))}
-            selected={religion}
-            onToggle={(v) => toggle(religion, setReligion, v)}
-          />
-
           <Text style={styles.label}>{t('signup.partner.caste')}</Text>
           <MultiSelectDropdown
             placeholder={t('signup.partner.castePlaceholder')}
@@ -259,14 +249,6 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
             options={EDUCATION.map((e) => ({ label: e, value: e }))}
             value={education}
             onChange={setEducation}
-          />
-
-          <Text style={styles.label}>{t('signup.partner.profession')}</Text>
-          <MultiSelectDropdown
-            placeholder={t('signup.partner.professionPlaceholder')}
-            options={PROFESSION.map((p) => ({ label: p, value: p }))}
-            value={profession}
-            onChange={setProfession}
           />
 
           <Text style={styles.label}>{t('signup.partner.resident')}</Text>
