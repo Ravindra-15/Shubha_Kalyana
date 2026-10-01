@@ -17,7 +17,7 @@ import apiClient from '../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { handleLoginOtpError } from '../../utils/loginOtpErrors';
 
-const RESEND_SECONDS = 60;
+const RESEND_SECONDS = 120;
 const OTP_LENGTH = 6;
 
 export default function LoginOtpScreen({ route, navigation }: any) {
@@ -29,7 +29,7 @@ export default function LoginOtpScreen({ route, navigation }: any) {
   const otpAlreadySent = Boolean(route.params?.otpSent);
   // Temporary: shown only while the SMS bypass is switched on server-side.
   const [bypassOtp, setBypassOtp] = useState<string>(route.params?.bypassOtp || '');
-  // The server refuses another OTP within 60 seconds, so the button waits too.
+  // Keep the resend button disabled for the two-minute client countdown.
   // The code itself stays valid for 10 minutes, which this does not affect.
   const [resendIn, setResendIn] = useState(otpAlreadySent ? RESEND_SECONDS : 0);
   const [sent, setSent] = useState(otpAlreadySent);

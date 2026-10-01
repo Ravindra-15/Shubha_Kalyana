@@ -43,7 +43,7 @@ export default function VerifyMobileScreen({ navigation }: any) {
       await apiClient.post('/onboarding/otp/send', {
         purpose: 'MOBILE_VERIFY',
       });
-      setTimer(60);
+      setTimer(120);
       setOtp(['', '', '', '', '', '']);
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Could not send OTP';

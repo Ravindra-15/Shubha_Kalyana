@@ -76,7 +76,7 @@ export default function SignupContactScreen({ navigation }: any) {
       });
       setBypassOtp(res.data?.data?.bypassOtp || '');
       setMobileOtpSent(true);
-      setMobileCooldown(60);
+      setMobileCooldown(120);
     } catch (err: any) {
       setErrors((e) => ({ ...e, mobile: err?.response?.data?.message || 'Unable to send OTP' }));
     } finally {
@@ -153,7 +153,7 @@ export default function SignupContactScreen({ navigation }: any) {
         email: email.trim().toLowerCase(),
       });
       setEmailOtpSent(true);
-      setEmailCooldown(60);
+      setEmailCooldown(120);
     } catch (err: any) {
       setErrors((e) => ({ ...e, email: err?.response?.data?.message || 'Unable to send OTP' }));
     } finally {
