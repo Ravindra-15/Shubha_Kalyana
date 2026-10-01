@@ -410,6 +410,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const fam = profile.family || {};
   const horo = profile.horoscopeDetail || {};
   const life = profile.lifestyle || {};
+  const healthDisclosure = profile.healthDisclosure || {};
   const addr = profile.address || {};
   const pref = data.partnerPreference || {};
   const hobbies = profile.hobbiesAndInterests || [];
@@ -465,6 +466,20 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const weightStr = basic.weight
     ? `${basic.weight.value} ${basic.weight.units?.toLowerCase() || 'kg'}`
     : '';
+  const formatChoice = (value: any) =>
+    value && value !== 'blur'
+      ? String(value).toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase())
+      : value;
+  const healthCondition =
+    healthDisclosure.hasCondition === 'blur' || healthDisclosure.details === 'blur'
+      ? 'blur'
+      : healthDisclosure.hasCondition === true
+        ? healthDisclosure.details
+          ? `Yes - ${healthDisclosure.details}`
+          : 'Yes'
+        : healthDisclosure.hasCondition === false
+          ? 'No'
+          : '';
 
   const fmtAddr = (a: any) => {
     if (!a || isBlur(a)) return 'blur';
@@ -725,6 +740,9 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           <Row label="Height" value={heightStr} />
           <Row label="Weight" value={weightStr} />
           <Row label="Diet" value={life.diet || basic.diet} />
+          <Row label="Smoking" value={formatChoice(life.smoking)} />
+          <Row label="Drinking" value={formatChoice(life.drinking)} />
+          <Row label="Health & Condition" value={healthCondition} />
           <Row label="Rashi" value={horo.rashi} />
           <Row label="Nakshatra" value={horo.nakshatra} />
         </Section>
