@@ -36,12 +36,9 @@ const INCOME_SLABS = [
   { label: 'Write your own', value: '__other__' },
 ];
 
-const BUSINESS_TYPES = [
-  { label: 'Manufacturing', value: 'Manufacturing' },
-  { label: 'Trading', value: 'Trading' },
-  { label: 'Services', value: 'Services' },
-  { label: 'Retail', value: 'Retail' },
-  { label: 'Other', value: 'Other' },
+const JOB_TYPES = [
+  { label: 'Permanent', value: 'PERMANENT' },
+  { label: 'Contractor', value: 'CONTRACTOR' },
 ];
 
 // Mirrors the web app's professionOptions (onboarding/onboardingOptions.js)
@@ -86,6 +83,7 @@ export default function EmploymentScreen({ navigation }: any) {
 
   const [employedType, setEmployedType] = useState(emp.employedType || '');
   const [designation, setDesignation] = useState(emp.designation || '');
+  const [jobType, setJobType] = useState(emp.jobType || '');
   const [companyName, setCompanyName] = useState(emp.companyName || '');
   const [typeOfBusiness, setTypeOfBusiness] = useState(emp.typeOfBusiness || '');
   const [companyLocation, setCompanyLocation] = useState(emp.companyLocation || '');
@@ -114,12 +112,14 @@ export default function EmploymentScreen({ navigation }: any) {
   const isAgriculture = employedType === 'AGRICULTURE';
   const isManualDesignation = employedType === 'GOVERNMENT' || employedType === 'SEMI_GOVERNMENT' || isBusiness;
   const showDesignation = isJobType || isBusiness;
-  const showExperience = isJobType || isBusiness;
-  const showLinkedIn = !isAgriculture;
+  const isGovernmentEmployment = employedType === 'GOVERNMENT' || employedType === 'SEMI_GOVERNMENT';
+  const showExperience = isJobType;
+  const showLinkedIn = !isAgriculture && !isBusiness;
 
   const FIELD_ORDER = [
     'employedType',
     'designation',
+    'jobType',
     'companyName',
     'companyLocation',
     'annualIncome',
@@ -133,6 +133,8 @@ export default function EmploymentScreen({ navigation }: any) {
     if (!employedType) newErrors.employedType = true;
 
     if (showDesignation && !designation.trim()) newErrors.designation = true;
+
+    if (isGovernmentEmployment && !jobType) newErrors.jobType = true;
 
     if ((isJobType || isBusiness) && !companyName.trim()) {
       newErrors.companyName = true;
@@ -157,7 +159,7 @@ export default function EmploymentScreen({ navigation }: any) {
       return Alert.alert('Required', 'Please fill all mandatory fields');
     }
 
-    if (linkedIn.trim() && !/linkedin\.com/i.test(linkedIn.trim())) {
+    if (showLinkedIn && linkedIn.trim() && !/linkedin\.com/i.test(linkedIn.trim())) {
       setErrors({ linkedIn: true });
       return Alert.alert('Invalid', 'Please enter a valid LinkedIn URL');
     }
@@ -165,6 +167,7 @@ export default function EmploymentScreen({ navigation }: any) {
     const employment: any = { employedType };
     if (annualIncome) employment.annualIncome = annualIncome;
     if (showDesignation && designation.trim()) employment.designation = designation.trim();
+    if (isGovernmentEmployment && jobType) employment.jobType = jobType;
     if (companyName.trim()) employment.companyName = companyName.trim();
     if (isBusiness && typeOfBusiness) employment.typeOfBusiness = typeOfBusiness;
     if (companyLocation.trim()) employment.companyLocation = companyLocation.trim();
@@ -222,12 +225,12 @@ export default function EmploymentScreen({ navigation }: any) {
 
           {showDesignation && (
             <>
-              <Text style={styles.label}>{t('signup.employment.youWorkAs')} <Text style={styles.star}>*</Text></Text>
+              <Text style={styles.label}>{isGovernmentEmployment ? 'Name of the department' : t('signup.employment.youWorkAs')} <Text style={styles.star}>*</Text></Text>
               <View ref={registerField('designation')}>
                 {isManualDesignation ? (
                   <TextInput
                     style={[styles.input, errors.designation && styles.inputError]}
-                    placeholder="Enter your designation"
+                    placeholder={isGovernmentEmployment ? 'Enter your department.' : 'Enter your designation'}
                     placeholderTextColor="#999"
                     value={designation}
                     onChangeText={(value) => {
@@ -271,11 +274,12 @@ export default function EmploymentScreen({ navigation }: any) {
               />
 
               <Text style={styles.label}>{t('signup.employment.typeOfBusiness')}</Text>
-              <SearchableDropdown
-                placeholder={t('signup.employment.businessPlaceholder')}
+              <TextInput
+                style={styles.input}
+                placeholder="Enter type of business"
+                placeholderTextColor="#999"
                 value={typeOfBusiness}
-                options={BUSINESS_TYPES}
-                onSelect={setTypeOfBusiness}
+                onChangeText={setTypeOfBusiness}
               />
 
               <Text style={styles.label}>{t('signup.employment.firmLocation')} <Text style={styles.star}>*</Text></Text>
@@ -306,11 +310,11 @@ export default function EmploymentScreen({ navigation }: any) {
                 }}
               />
 
-              <Text style={styles.label}>{t('signup.employment.companyLocation')} <Text style={styles.star}>*</Text></Text>
+              <Text style={styles.label}>{isGovernmentEmployment ? 'Work location' : t('signup.employment.companyLocation')} <Text style={styles.star}>*</Text></Text>
               <TextInput
                 ref={registerField('companyLocation') as any}
                 style={[styles.input, errors.companyLocation && styles.inputError]}
-                placeholder={t('signup.employment.companyLocationPlaceholder')}
+                placeholder={isGovernmentEmployment ? 'Enter your work location' : t('signup.employment.companyLocationPlaceholder')}
                 placeholderTextColor="#999"
                 value={companyLocation}
                 onChangeText={(value) => {
@@ -424,6 +428,24 @@ export default function EmploymentScreen({ navigation }: any) {
                   }}
                 />
               )}
+            </>
+          )}
+
+          {isGovernmentEmployment && (
+            <>
+              <Text style={styles.label}>Job Type <Text style={styles.star}>*</Text></Text>
+              <View ref={registerField('jobType')}>
+                <SearchableDropdown
+                  placeholder="Select job type"
+                  value={jobType}
+                  options={JOB_TYPES}
+                  onSelect={(value) => {
+                    setJobType(value);
+                    setErrors((e) => ({ ...e, jobType: false }));
+                  }}
+                  error={errors.jobType}
+                />
+              </View>
             </>
           )}
 
