@@ -222,7 +222,7 @@ export default function FilterModal({ visible, onClose, onApply, initial, gender
               allowCustom
             />
 
-            <Text style={styles.label}>Preferred Location (State)</Text>
+            <Text style={styles.label}>Preferred State</Text>
             <MultiSelectDropdown
               placeholder="Search and select state"
               value={preferredLocation}
@@ -230,7 +230,7 @@ export default function FilterModal({ visible, onClose, onApply, initial, gender
               onChange={(vals) => { setPreferredLocation(vals); setDistrict([]); }}
             />
 
-            <Text style={styles.label}>Preferred District / City</Text>
+            <Text style={styles.label}>Preferred District</Text>
             <MultiSelectDropdown
               placeholder={
                 districtOptions.length
