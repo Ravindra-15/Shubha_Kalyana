@@ -112,8 +112,8 @@ export default function HomeScreen({ navigation }: any) {
 
       console.log('Search Response:', res.data);
 
-      // Server already orders these by the viewer's partner preferences
-      // (age, profession, caste, education) then match percentage -- trust
+      // Server prioritizes preferred age and caste, then other preferences
+      // and match percentage. Keep the server order for both clients.
       // that order instead of re-sorting by match percentage alone here.
       setMatches(res.data?.data?.profiles || []);
     } catch {

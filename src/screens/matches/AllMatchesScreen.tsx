@@ -74,9 +74,8 @@ export default function AllMatchesScreen({ navigation, route }: any) {
         const params = buildParams(pageNum);
         const res = await apiClient.get('/user/search', { params });
         const data = res.data?.data;
-        // Server already orders these by the viewer's partner preferences
-        // (age, profession, caste, education) then match percentage -- trust
-        // that order instead of re-sorting by match percentage alone here.
+        // Server prioritizes preferred age and caste, then other preferences
+        // and match percentage. Keep the server order for both clients.
         const newProfiles = data?.profiles || [];
         setProfiles((prev) => (replace ? newProfiles : [...prev, ...newProfiles]));
         setTotal(data?.pagination?.total || 0);
