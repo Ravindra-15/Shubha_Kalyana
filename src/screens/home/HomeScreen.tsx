@@ -112,7 +112,7 @@ export default function HomeScreen({ navigation }: any) {
 
       console.log('Search Response:', res.data);
 
-      // Server prioritizes the viewer's caste and education. Keep its order.
+      // Server prioritizes the viewer's age and caste, then partner preferences.
       // that order instead of re-sorting by match percentage alone here.
       setMatches(res.data?.data?.profiles || []);
     } catch {
