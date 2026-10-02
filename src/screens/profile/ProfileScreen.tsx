@@ -13,6 +13,7 @@ import { getProfileViewersSummary, getNavbarCounts, isProfileFullyVerified } fro
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import GalleryPreviewGrid from '../../components/GalleryPreviewGrid';
+import GalleryLightboxModal from '../../components/GalleryLightboxModal';
 
 
 const getAge = (dob?: string) => {
@@ -58,6 +59,7 @@ export default function ProfileScreen({ navigation }: any) {
     totalProfileViews: 0,
   });
   const [connectionCount, setConnectionCount] = useState(0);
+  const [showPhotoLightbox, setShowPhotoLightbox] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -160,13 +162,17 @@ export default function ProfileScreen({ navigation }: any) {
       >
         <View style={styles.content}>
           <View style={styles.identityRow}>
-            <View style={styles.avatarRing}>
+            <TouchableOpacity
+              style={styles.avatarRing}
+              disabled={!photo}
+              onPress={() => setShowPhotoLightbox(true)}
+            >
               {photo ? (
                 <Image source={{ uri: resolveImageUrl(photo) }} style={styles.avatar} />
               ) : (
                 <View style={[styles.avatar, styles.avatarPlaceholder]} />
               )}
-            </View>
+            </TouchableOpacity>
             <View style={{ flex: 1, marginLeft: 14 }}>
               <View style={styles.nameRow}>
                 <Text style={styles.name}>{name}{age ? `, ${age}` : ''}</Text>
@@ -257,6 +263,14 @@ export default function ProfileScreen({ navigation }: any) {
           </View>
         </View>
       </ScrollView>
+
+      {photo ? (
+        <GalleryLightboxModal
+          visible={showPhotoLightbox}
+          photos={[{ url: resolveImageUrl(photo) }]}
+          onClose={() => setShowPhotoLightbox(false)}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
