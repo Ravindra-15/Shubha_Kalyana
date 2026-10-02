@@ -301,6 +301,15 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   const applyFilters = (filters: Filters | null) => {
+    if (filters) {
+      // Home only ever shows a handful of matches (limit: 5 above), so any
+      // filter applied here now opens the full search screen with the same
+      // filters instead of re-running the short Home list.
+      navigation.navigate('AllMatches', { pushed: true, initialFilters: filters });
+      return;
+    }
+
+    // Clearing filters (onApply(null)) keeps the existing Home behaviour.
     setActiveFilters(filters);
     loadMatches(filters);
   };

@@ -23,8 +23,6 @@ import {
   Lock,
   X,
 } from 'lucide-react-native';
-import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
-import { requestCameraPermission, showCameraPermissionAlert } from '../../utils/cameraPermission';
 import KeyboardWrapper from '../../components/KeyboardWrapper';
 import SearchableDropdown from '../../components/SearchableDropdown';
 import GalleryPhotoRow from '../../components/GalleryPhotoRow';
@@ -33,9 +31,6 @@ import {
   isProfilePictureVerified,
   updateMyProfile,
   updateMyPartnerPreference,
-  uploadMyProfilePhoto,
-  uploadMyGalleryPhoto,
-  deleteMyGalleryPhoto,
 } from '../../api/profile';
 import {
   Caste,
@@ -45,7 +40,6 @@ import {
 import { INDIAN_STATE_OPTIONS } from '../../constants/indianStates';
 import { getDistrictOptionsForStates } from '../../constants/districtsByState';
 import { resolveImageUrl } from '../../utils/imageUrl';
-import { validateProfilePhotoAsset } from '../../utils/profilePhotoValidation';
 
 type ResidenceType = 'INDIA' | 'NRI';
 type Option = { label: string; value: string };
@@ -321,7 +315,6 @@ const buildAddressPart = (address: AddressFields) => {
 export default function EditProfileScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const [readonly, setReadonly] = useState({
@@ -334,7 +327,6 @@ export default function EditProfileScreen({ navigation }: any) {
     photoUrl: '',
   });
   const [galleryPhotos, setGalleryPhotos] = useState<any[]>([]);
-  const [galleryUploadingIndex, setGalleryUploadingIndex] = useState<number | null>(null);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -416,7 +408,7 @@ export default function EditProfileScreen({ navigation }: any) {
   const canVerifyProfilePhoto = true;
 
   // --- Tier 1 lock/change-request state (from backend) ---
-  const [editLocks, setEditLocks] = useState<Record<string, { locked: boolean; lockedAt: string }>>({});
+  const [editLocks, setEditLocks] = useState<Record<string, { locked: boolean; lockedAt: string; editsUsed?: number }>>({});
   const [changeRequests, setChangeRequests] = useState<
     Array<{ field: string; requestedValue: any; status: string; requestedAt: string }>
   >([]);
@@ -425,15 +417,16 @@ export default function EditProfileScreen({ navigation }: any) {
   // Values typed into a "Request Change" reveal-input for a locked field.
   // Local-only until Save is pressed — not sent anywhere until then.
   const [pendingChangeValues, setPendingChangeValues] = useState<Record<string, string>>({});
-  // DOB's request-change input needs 3 separate fields, not one string.
-  const [pendingDobDay, setPendingDobDay] = useState('');
-  const [pendingDobMonth, setPendingDobMonth] = useState('');
-  const [pendingDobYear, setPendingDobYear] = useState('');
   // Height's request-change input needs 2 separate fields (feet/inches), not one string.
   const [pendingHeightFeet, setPendingHeightFeet] = useState('');
   const [pendingHeightInches, setPendingHeightInches] = useState('');
   // Tracks which locked fields currently have their "Request Change" input open.
   const [openRequestFields, setOpenRequestFields] = useState<Record<string, boolean>>({});
+  // Group-level fields (address / employment / lifestyle / hobbiesAndInterests)
+  // don't need a shadow value like single-field Tier 1 ones -- once revealed via
+  // "Request Change" the user edits the real bound state variables directly, and
+  // handleSave already sends those unconditionally.
+  const [unlockedGroups, setUnlockedGroups] = useState<Set<string>>(new Set());
 
   type TierFieldState = 'UNLOCKED' | 'LOCKED_NO_REQUEST' | 'LOCKED_PENDING';
 
@@ -457,6 +450,42 @@ export default function EditProfileScreen({ navigation }: any) {
 
   const setPendingChangeValue = (fieldKey: string, value: string) => {
     setPendingChangeValues((prev) => ({ ...prev, [fieldKey]: value }));
+    markChanged();
+  };
+
+  // --- Group-level lock state (address / employment / lifestyle / hobbiesAndInterests) ---
+  // These share one edit-limit counter across every field in the group (server
+  // key given by `groupKey`), unlike the single-field Tier 1 fields above.
+  const isGroupPending = useCallback(
+    (groupKey: string) => changeRequests.some((request) => request.field === groupKey && request.status === 'PENDING'),
+    [changeRequests],
+  );
+
+  const getGroupEditsUsed = useCallback(
+    (groupKey: string, limit: number): number => {
+      const state = editLocks[groupKey];
+      if (!state) return 0;
+      if (typeof state.editsUsed === 'number') return state.editsUsed;
+      return state.locked ? limit : 0;
+    },
+    [editLocks],
+  );
+
+  const isGroupLocked = useCallback(
+    (groupKey: string, limit: number): boolean => {
+      if (unlockedGroups.has(groupKey)) return false;
+      if (isGroupPending(groupKey)) return true;
+      return limit - getGroupEditsUsed(groupKey, limit) <= 0;
+    },
+    [unlockedGroups, isGroupPending, getGroupEditsUsed],
+  );
+
+  const openGroupRequestChange = (groupKey: string) => {
+    setUnlockedGroups((prev) => {
+      const next = new Set(prev);
+      next.add(groupKey);
+      return next;
+    });
     markChanged();
   };
 
@@ -759,173 +788,23 @@ export default function EditProfileScreen({ navigation }: any) {
     navigation.navigate('FaceTecTest');
   };
 
-  const pickPhoto = () => {
-    Alert.alert('Change Photo', 'Choose an option', [
-      { text: 'Camera', onPress: openCamera },
-      { text: 'Gallery', onPress: openGallery },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
-  };
-
-  const openCamera = async () => {
-    try {
-      const status = await requestCameraPermission();
-      if (status !== 'granted') {
-        showCameraPermissionAlert(status);
-        return;
-      }
-
-      const result = await launchCamera({ mediaType: 'photo', quality: 0.8 });
-      handlePhotoResult(result);
-    } catch {
-      Alert.alert('Error', 'Could not open camera');
-    }
-  };
-
-  const openGallery = async () => {
-    try {
-      const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8 });
-      handlePhotoResult(result);
-    } catch {
-      Alert.alert('Error', 'Could not open gallery');
-    }
-  };
-
-  const handlePhotoResult = async (result: any) => {
-    if (result.didCancel) return;
-    if (result.errorCode) {
-      return Alert.alert('Error', result.errorMessage || 'Could not pick image');
-    }
-    const asset = result.assets?.[0];
-    if (!asset) return;
-
-    const validationError = validateProfilePhotoAsset(asset);
-    if (validationError) return Alert.alert('Invalid photo', validationError);
-
-    try {
-      setUploadingPhoto(true);
-      const updated = await uploadMyProfilePhoto({
-        uri: asset.uri,
-        type: asset.type || 'image/jpeg',
-        name: asset.fileName || `photo_${Date.now()}.jpg`,
-      });
-      const nextPhoto = updated?.profile?.photos?.find((p: any) => p.isProfilePhoto)?.url;
-      if (nextPhoto) {
-        setReadonly((prev) => ({ ...prev, photoUrl: nextPhoto }));
-      }
-      setProfilePictureVerified(isProfilePictureVerified(updated?.profile));
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not upload photo');
-    } finally {
-      setUploadingPhoto(false);
-    }
-  };
-
-  const addGalleryPhoto = async (asset: any) => {
-    try {
-      setGalleryUploadingIndex(galleryPhotos.length);
-      const updated = await uploadMyGalleryPhoto({
-        uri: asset.uri,
-        type: asset.type || 'image/jpeg',
-        name: asset.fileName || `gallery_${Date.now()}.jpg`,
-      });
-      setGalleryPhotos((updated?.profile?.photos || []).filter((p: any) => !p.isProfilePhoto));
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not upload photo');
-    } finally {
-      setGalleryUploadingIndex(null);
-    }
-  };
-
-  const removeGalleryPhotoItem = async (publicId: string) => {
-    try {
-      const updated = await deleteMyGalleryPhoto(publicId);
-      setGalleryPhotos((updated?.profile?.photos || []).filter((p: any) => !p.isProfilePhoto));
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not remove photo');
-    }
-  };
-
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (getTierFieldState('firstName') === 'UNLOCKED') {
-      if (!firstName.trim()) {
-        errors.firstName = 'First name is required';
-      } else if (!/^[a-zA-Z\s'-]+$/.test(firstName.trim())) {
-        errors.firstName = 'Only letters allowed';
-      }
-    }
-
-    if (getTierFieldState('lastName') === 'UNLOCKED') {
-      if (!lastName.trim()) {
-        errors.lastName = 'Last name is required';
-      } else if (!/^[a-zA-Z\s'-]+$/.test(lastName.trim())) {
-        errors.lastName = 'Only letters allowed';
-      }
-    }
-
-    if (getTierFieldState('gender') === 'UNLOCKED' && !gender) errors.gender = 'Gender is required';
-
-    const validateDobParts = (day: string, month: string, year: string): string | null => {
-      if (!day.trim() || !month.trim() || !year.trim()) {
-        return 'Date of birth is required';
-      }
-      const dd = parseInt(day, 10);
-      const mm = parseInt(month, 10);
-      const yy = parseInt(year, 10);
-
-      if (mm < 1 || mm > 12) return 'Month must be between 1 and 12';
-
-      const daysInMonth = new Date(yy, mm, 0).getDate();
-      if (dd < 1 || dd > daysInMonth) return `Day must be between 1 and ${daysInMonth}`;
-
-      const currentYear = new Date().getFullYear();
-      if (yy < 1900 || yy > currentYear) return 'Enter a valid year';
-
-      const dobDate = new Date(yy, mm - 1, dd);
-      const today = new Date();
-      if (dobDate > today) return 'Date of birth cannot be in the future';
-
-      let age = today.getFullYear() - dobDate.getFullYear();
-      const monthDiff = today.getMonth() - dobDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) age--;
-      if (age < 18) return 'Must be at least 18 years old';
-
-      return null;
-    };
-
-    if (getTierFieldState('dob') === 'UNLOCKED') {
-      const dobError = validateDobParts(dobDay, dobMonth, dobYear);
-      if (dobError) errors.dob = dobError;
-    }
-
-    if (getTierFieldState('dob') === 'LOCKED_NO_REQUEST' && openRequestFields.dob) {
-      const dobError = validateDobParts(pendingDobDay, pendingDobMonth, pendingDobYear);
-      if (dobError) errors.dobRequest = dobError;
-    }
-
-    // The fields the client marked mandatory. Checked only when the field is
-    // part of this form, so a locked field can never block saving.
+    // firstName, lastName, gender, dob, maritalStatus, religion, caste, the
+    // education fields, and the family fields are fully locked on this screen
+    // (no self-edit path at all), so they can never be fixed by the user here
+    // and are not validated.
     const requireValue = (key: string, value: string, message: string) => {
       if (!String(value ?? '').trim()) errors[key] = message;
     };
 
-    requireValue('maritalStatus', maritalStatus, 'Marital status is required');
     requireValue('heightFeet', heightFeet, 'Height is required');
     requireValue('heightInches', heightInches, 'Height is required');
     requireValue('weight', weight, 'Weight is required');
     requireValue('smoking', smoking, 'Smoking is required');
     requireValue('drinking', drinking, 'Drinking is required');
     requireValue('healthCondition', healthCondition, 'Please select yes or no');
-    requireValue('qualification', qualification, 'Highest qualification is required');
-    requireValue('college', college, 'College / University is required');
-    requireValue('fatherName', fatherName, "Father's name is required");
-    requireValue('fatherOccupation', fatherOccupation, "Father's occupation is required");
-    requireValue('motherName', motherName, "Mother's name is required");
-    requireValue('motherOccupation', motherOccupation, "Mother's occupation is required");
-    requireValue('brothers', brothers, 'Number of brothers is required');
-    requireValue('sisters', sisters, 'Number of sisters is required');
     requireValue('rashi', rashi, 'Rashi is required');
     requireValue('nakshatra', nakshatra, 'Nakshatra is required');
     requireValue('aboutMe', aboutMe, 'Please tell us about yourself');
@@ -996,9 +875,6 @@ export default function EditProfileScreen({ navigation }: any) {
         }
       }
     }
-    numberInRange('brothers', brothers, 0, 20, 'Enter a valid number');
-    numberInRange('sisters', sisters, 0, 20, 'Enter a valid number');
-
     if (annualIncome.trim() && Number(annualIncome) < 0) {
       errors.annualIncome = 'Enter a valid amount';
     }
@@ -1052,16 +928,10 @@ export default function EditProfileScreen({ navigation }: any) {
     // opened one and typed something — otherwise fall back to the field's
     // normal current value (which is a no-op for the backend if unchanged,
     // since it only reroutes to changeRequests when the value actually differs).
-    const resolvedFirstName = openRequestFields.firstName ? pendingChangeValues.firstName : firstName;
-    const resolvedLastName = openRequestFields.lastName ? pendingChangeValues.lastName : lastName;
-    const resolvedGender = openRequestFields.gender ? pendingChangeValues.gender : gender;
-    const resolvedDobString = openRequestFields.dob && pendingChangeValues.dob
-      ? pendingChangeValues.dob
-      : dobString;
-    const resolvedMaritalStatus = openRequestFields.maritalStatus ? pendingChangeValues.maritalStatus : maritalStatus;
-    const resolvedReligion = openRequestFields.religion ? pendingChangeValues.religion : religionValue;
-    const resolvedCasteId = openRequestFields.caste ? pendingChangeValues.caste : casteId;
     const resolvedSubCaste = openRequestFields.subCaste ? pendingChangeValues.subCaste : subCasteValue;
+    const resolvedWeight = openRequestFields.weight ? pendingChangeValues.weight : weight;
+    const resolvedRashi = openRequestFields.rashi ? pendingChangeValues.rashi : rashi;
+    const resolvedNakshatra = openRequestFields.nakshatra ? pendingChangeValues.nakshatra : nakshatra;
 
     let resolvedHeight: { feet: number; inches: number } | undefined;
     if (openRequestFields.height && pendingChangeValues.height) {
@@ -1075,24 +945,28 @@ export default function EditProfileScreen({ navigation }: any) {
     }
 
     const profilePayload: any = {
-      firstName: resolvedFirstName?.trim() || undefined,
-      lastName: resolvedLastName?.trim() || undefined,
-      gender: resolvedGender || undefined,
-      dob: resolvedDobString ? new Date(resolvedDobString).toISOString() : undefined,
-      maritalStatus: resolvedMaritalStatus || undefined,
-      religion: resolvedReligion || undefined,
-      caste: resolvedCasteId || undefined,
+      // firstName/lastName/gender/dob/maritalStatus/religion/caste are fully
+      // locked on this screen -- there is no request-change path for them, so
+      // their already-loaded, unchanged values are sent as-is (a no-op server
+      // side since nothing differs).
+      firstName: firstName?.trim() || undefined,
+      lastName: lastName?.trim() || undefined,
+      gender: gender || undefined,
+      dob: dobString ? new Date(dobString).toISOString() : undefined,
+      maritalStatus: maritalStatus || undefined,
+      religion: religionValue || undefined,
+      caste: casteId || undefined,
       subCaste: resolvedSubCaste || undefined,
       height: resolvedHeight,
-      weight: weight
+      weight: resolvedWeight
         ? {
-            value: Number(weight),
+            value: Number(resolvedWeight),
             units: 'KG',
           }
         : undefined,
       horoscopeDetail: {
-        rashi: rashi || undefined,
-        nakshatra: nakshatra || undefined,
+        rashi: resolvedRashi || undefined,
+        nakshatra: resolvedNakshatra || undefined,
       },
       hobbiesAndInterests: selectedHobbies,
       education: {
@@ -1196,6 +1070,14 @@ export default function EditProfileScreen({ navigation }: any) {
         { label: 'Sikh', value: 'Sikh' },
         { label: 'Buddhist', value: 'Buddhist' },
       ];
+
+  // Group-level edit limits (must match LIMITED_FIELD_LIMITS in
+  // matrimony-server/src/modules/user/user.service.js).
+  const addressLocked = isGroupLocked('address', 1);
+  const employmentLocked = isGroupLocked('employment', 3);
+  const lifestyleLocked = isGroupLocked('lifestyle', 5);
+  const hobbiesLocked = isGroupLocked('hobbiesAndInterests', 5);
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
@@ -1215,33 +1097,27 @@ export default function EditProfileScreen({ navigation }: any) {
       <KeyboardWrapper>
         <View style={styles.content}>
           <View style={styles.photoSection}>
-            <TouchableOpacity style={styles.photoWrap} onPress={pickPhoto} disabled={uploadingPhoto}>
-              {uploadingPhoto ? (
-                <View style={[styles.photo, styles.photoCenter]}>
-                  <ActivityIndicator color="#D20236" />
-                </View>
-              ) : readonly.photoUrl ? (
+            <View style={styles.photoWrap}>
+              {readonly.photoUrl ? (
                 <Image source={{ uri: resolveImageUrl(readonly.photoUrl) }} style={styles.photo} />
               ) : (
                 <View style={[styles.photo, styles.photoCenter]}>
                   <Camera color="#999" size={28} />
                 </View>
               )}
-              <View style={styles.cameraBadge}>
-                <Camera color="#fff" size={13} />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={pickPhoto} disabled={uploadingPhoto}>
-              <Text style={styles.changePhotoText}>Change Photo</Text>
-            </TouchableOpacity>
+            </View>
+            <View style={styles.lockedLabelRow}>
+              <Text style={styles.hint}>Profile and gallery photos cannot be changed from here.</Text>
+              <Lock color="#9aa1ad" size={13} />
+            </View>
             {/* {canVerifyProfilePhoto && (
               <TouchableOpacity
                 style={[
                   styles.verifyProfileBtn,
-                  (!readonly.photoUrl || uploadingPhoto) && styles.verifyProfileBtnDisabled,
+                  !readonly.photoUrl && styles.verifyProfileBtnDisabled,
                 ]}
                 onPress={openProfileVerification}
-                disabled={!readonly.photoUrl || uploadingPhoto}
+                disabled={!readonly.photoUrl}
               >
                 <Text style={styles.verifyProfileText}>Verify Profile Photo</Text>
               </TouchableOpacity>
@@ -1255,194 +1131,20 @@ export default function EditProfileScreen({ navigation }: any) {
 
             <GalleryPhotoRow
               photos={galleryPhotos.map((p: any) => ({ publicId: p.publicId, url: resolveImageUrl(p.url) }))}
-              onAdd={addGalleryPhoto}
-              onRemove={removeGalleryPhotoItem}
-              uploadingSlotIndex={galleryUploadingIndex}
+              title="Gallery Photos"
+              readOnly
             />
           </View>
 
           {!!errorMsg && <Text style={styles.errorBanner}>{errorMsg}</Text>}
 
           <Text style={styles.sectionTitle}>BASIC DETAILS</Text>
-          <TieredField
-            label="First Name"
-            fieldState={getTierFieldState('firstName')}
-            displayValue={firstName}
-            requestedValue={changeRequests.find((r) => r.field === 'firstName' && r.status === 'PENDING')?.requestedValue}
-            isRequestOpen={!!openRequestFields.firstName}
-            requestValue={pendingChangeValues.firstName || ''}
-            onOpenRequest={() => openRequestChange('firstName', firstName)}
-            onChangeRequestValue={(value) => setPendingChangeValue('firstName', value)}
-          >
-            <EditableTextField
-              label="First Name"
-              value={firstName}
-              placeholder="First Name"
-              error={fieldErrors.firstName}
-              onChangeText={(text) => {
-                setFirstName(text);
-                markChanged();
-                clearError('firstName');
-              }}
-            />
-          </TieredField>
-
-          <TieredField
-            label="Last Name"
-            fieldState={getTierFieldState('lastName')}
-            displayValue={lastName}
-            requestedValue={changeRequests.find((r) => r.field === 'lastName' && r.status === 'PENDING')?.requestedValue}
-            isRequestOpen={!!openRequestFields.lastName}
-            requestValue={pendingChangeValues.lastName || ''}
-            onOpenRequest={() => openRequestChange('lastName', lastName)}
-            onChangeRequestValue={(value) => setPendingChangeValue('lastName', value)}
-          >
-            <EditableTextField
-              label="Last Name"
-              value={lastName}
-              placeholder="Last Name"
-              error={fieldErrors.lastName}
-              onChangeText={(text) => {
-                setLastName(text);
-                markChanged();
-                clearError('lastName');
-              }}
-            />
-          </TieredField>
-
-          <TieredField
-            label="Gender"
-            fieldState={getTierFieldState('gender')}
-            displayValue={optionLabel(GENDER_OPTIONS, gender)}
-            requestedValue={
-              changeRequests.find((r) => r.field === 'gender' && r.status === 'PENDING')
-                ? optionLabel(GENDER_OPTIONS, changeRequests.find((r) => r.field === 'gender' && r.status === 'PENDING')?.requestedValue)
-                : undefined
-            }
-            isRequestOpen={!!openRequestFields.gender}
-            requestValue={pendingChangeValues.gender || ''}
-            onOpenRequest={() => openRequestChange('gender', gender)}
-            onChangeRequestValue={(value) => setPendingChangeValue('gender', value)}
-            requestOptions={GENDER_OPTIONS}
-          >
-            <Text style={styles.label}>Gender</Text>
-            <SegmentedOptions
-              options={GENDER_OPTIONS}
-              value={gender}
-              onChange={(value) => {
-                setGender(value);
-                markChanged();
-                clearError('gender');
-              }}
-              error={fieldErrors.gender}
-            />
-          </TieredField>
-
+          <LockedField label="First Name" value={firstName} />
+          <LockedField label="Last Name" value={lastName} />
+          <LockedField label="Gender" value={optionLabel(GENDER_OPTIONS, gender)} />
           <LockedField label="Profile Type" value={profileType} />
 
-          <TieredField
-            label="Date of Birth"
-            fieldState={getTierFieldState('dob')}
-            displayValue={dobDisplay}
-            requestedValue={changeRequests.find((r) => r.field === 'dob' && r.status === 'PENDING')?.requestedValue}
-            isRequestOpen={!!openRequestFields.dob}
-            requestValue={pendingChangeValues.dob || ''}
-            onOpenRequest={() => {
-              openRequestChange('dob', dobDisplay);
-              setPendingDobDay(dobDay);
-              setPendingDobMonth(dobMonth);
-              setPendingDobYear(dobYear);
-            }}
-            onChangeRequestValue={(value) => setPendingChangeValue('dob', value)}
-            requestInput={
-              <View style={styles.row}>
-                <TextInput
-                  style={[styles.input, styles.dobInput]}
-                  placeholder="Day"
-                  placeholderTextColor="#999"
-                  value={pendingDobDay}
-                  onChangeText={(text) => {
-                    setPendingDobDay(text);
-                    const combined = `${pendingDobYear}-${String(pendingDobMonth).padStart(2, '0')}-${String(text).padStart(2, '0')}`;
-                    setPendingChangeValue('dob', combined);
-                  }}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                />
-                <TextInput
-                  style={[styles.input, styles.dobInput]}
-                  placeholder="Month"
-                  placeholderTextColor="#999"
-                  value={pendingDobMonth}
-                  onChangeText={(text) => {
-                    setPendingDobMonth(text);
-                    const combined = `${pendingDobYear}-${String(text).padStart(2, '0')}-${String(pendingDobDay).padStart(2, '0')}`;
-                    setPendingChangeValue('dob', combined);
-                  }}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                />
-                <TextInput
-                  style={[styles.input, styles.dobInput]}
-                  placeholder="Year"
-                  placeholderTextColor="#999"
-                  value={pendingDobYear}
-                  onChangeText={(text) => {
-                    setPendingDobYear(text);
-                    const combined = `${text}-${String(pendingDobMonth).padStart(2, '0')}-${String(pendingDobDay).padStart(2, '0')}`;
-                    setPendingChangeValue('dob', combined);
-                  }}
-                  keyboardType="number-pad"
-                  maxLength={4}
-                />
-              </View>
-            }
-            requestError={fieldErrors.dobRequest}
-          >
-            <Text style={styles.label}>Date of Birth</Text>
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.dobInput, fieldErrors.dob && styles.inputError]}
-                placeholder="Day"
-                placeholderTextColor="#999"
-                value={dobDay}
-                onChangeText={(text) => {
-                  setDobDay(text);
-                  markChanged();
-                  clearError('dob');
-                }}
-                keyboardType="number-pad"
-                maxLength={2}
-              />
-              <TextInput
-                style={[styles.input, styles.dobInput, fieldErrors.dob && styles.inputError]}
-                placeholder="Month"
-                placeholderTextColor="#999"
-                value={dobMonth}
-                onChangeText={(text) => {
-                  setDobMonth(text);
-                  markChanged();
-                  clearError('dob');
-                }}
-                keyboardType="number-pad"
-                maxLength={2}
-              />
-              <TextInput
-                style={[styles.input, styles.dobInput, fieldErrors.dob && styles.inputError]}
-                placeholder="Year"
-                placeholderTextColor="#999"
-                value={dobYear}
-                onChangeText={(text) => {
-                  setDobYear(text);
-                  markChanged();
-                  clearError('dob');
-                }}
-                keyboardType="number-pad"
-                maxLength={4}
-              />
-            </View>
-            {!!fieldErrors.dob && <Text style={styles.fieldErrorText}>{fieldErrors.dob}</Text>}
-          </TieredField>
+          <LockedField label="Date of Birth" value={dobDisplay} />
 
           <TieredField
             label="Height"
@@ -1539,131 +1241,117 @@ export default function EditProfileScreen({ navigation }: any) {
             </View>
           </TieredField>
 
-          <EditableTextField
-            label="Weight"
-            required
-            value={weight}
-            placeholder="Enter weight"
-            error={fieldErrors.weight}
-            keyboardType="number-pad"
-            unit="Kg"
-            onChangeText={(text) => {
-              setWeight(text);
-              markChanged();
-              clearError('weight');
-            }}
-          />
-
           <TieredField
-            label="Marital Status"
-            fieldState={getTierFieldState('maritalStatus')}
-            displayValue={optionLabel(MARITAL_STATUS, maritalStatus)}
-            requestedValue={
-              changeRequests.find((r) => r.field === 'maritalStatus' && r.status === 'PENDING')
-                ? optionLabel(MARITAL_STATUS, changeRequests.find((r) => r.field === 'maritalStatus' && r.status === 'PENDING')?.requestedValue)
-                : undefined
-            }
-            isRequestOpen={!!openRequestFields.maritalStatus}
-            requestValue={pendingChangeValues.maritalStatus || ''}
-            onOpenRequest={() => openRequestChange('maritalStatus', maritalStatus)}
-            onChangeRequestValue={(value) => setPendingChangeValue('maritalStatus', value)}
+            label="Weight"
+            fieldState={getTierFieldState('weight')}
+            displayValue={weight ? `${weight} Kg` : ''}
+            requestedValue={changeRequests.find((r) => r.field === 'weight' && r.status === 'PENDING')?.requestedValue}
+            isRequestOpen={!!openRequestFields.weight}
+            requestValue={pendingChangeValues.weight || ''}
+            onOpenRequest={() => openRequestChange('weight', weight)}
+            onChangeRequestValue={(value) => setPendingChangeValue('weight', value)}
             requestInput={
-              <SearchableDropdown
-                placeholder="Select marital status"
-                value={pendingChangeValues.maritalStatus || ''}
-                options={MARITAL_STATUS}
-                onSelect={(value) => setPendingChangeValue('maritalStatus', value)}
+              <TextInput
+                style={styles.input}
+                placeholder="Enter weight"
+                placeholderTextColor="#999"
+                value={pendingChangeValues.weight || ''}
+                onChangeText={(value) => setPendingChangeValue('weight', value)}
+                keyboardType="number-pad"
               />
             }
           >
-            <Text style={styles.label}>Marital Status</Text>
+            <EditableTextField
+              label="Weight"
+              required
+              value={weight}
+              placeholder="Enter weight"
+              error={fieldErrors.weight}
+              keyboardType="number-pad"
+              unit="Kg"
+              onChangeText={(text) => {
+                setWeight(text);
+                markChanged();
+                clearError('weight');
+              }}
+            />
+          </TieredField>
+
+          <LockedField label="Marital Status" value={optionLabel(MARITAL_STATUS, maritalStatus)} />
+
+          <TieredField
+            label="Rashi"
+            fieldState={getTierFieldState('rashi')}
+            displayValue={optionLabel(RASHIS, rashi)}
+            requestedValue={
+              changeRequests.find((r) => r.field === 'rashi' && r.status === 'PENDING')
+                ? optionLabel(RASHIS, changeRequests.find((r) => r.field === 'rashi' && r.status === 'PENDING')?.requestedValue)
+                : undefined
+            }
+            isRequestOpen={!!openRequestFields.rashi}
+            requestValue={pendingChangeValues.rashi || ''}
+            onOpenRequest={() => openRequestChange('rashi', rashi)}
+            onChangeRequestValue={(value) => setPendingChangeValue('rashi', value)}
+            requestInput={
+              <SearchableDropdown
+                placeholder="Select Rashi"
+                value={pendingChangeValues.rashi || ''}
+                options={RASHIS}
+                onSelect={(value) => setPendingChangeValue('rashi', value)}
+              />
+            }
+          >
+            <FieldLabel label="Rashi" required />
             <SearchableDropdown
-              placeholder="Select marital status"
-              value={maritalStatus}
-              options={MARITAL_STATUS}
+              placeholder="Select Rashi"
+              value={rashi}
+              options={RASHIS}
               onSelect={(value) => {
-                setMaritalStatus(value);
+                setRashi(value);
                 markChanged();
               }}
             />
           </TieredField>
 
-          <FieldLabel label="Rashi" required />
-          <SearchableDropdown
-            placeholder="Select Rashi"
-            value={rashi}
-            options={RASHIS}
-            onSelect={(value) => {
-              setRashi(value);
-              markChanged();
-            }}
-          />
-
-          <FieldLabel label="Nakshatra" required />
-          <SearchableDropdown
-            placeholder="Select Nakshatra"
-            value={nakshatra}
-            options={NAKSHATRAS}
-            onSelect={(value) => {
-              setNakshatra(value);
-              markChanged();
-            }}
-          />
+          <TieredField
+            label="Nakshatra"
+            fieldState={getTierFieldState('nakshatra')}
+            displayValue={optionLabel(NAKSHATRAS, nakshatra)}
+            requestedValue={
+              changeRequests.find((r) => r.field === 'nakshatra' && r.status === 'PENDING')
+                ? optionLabel(NAKSHATRAS, changeRequests.find((r) => r.field === 'nakshatra' && r.status === 'PENDING')?.requestedValue)
+                : undefined
+            }
+            isRequestOpen={!!openRequestFields.nakshatra}
+            requestValue={pendingChangeValues.nakshatra || ''}
+            onOpenRequest={() => openRequestChange('nakshatra', nakshatra)}
+            onChangeRequestValue={(value) => setPendingChangeValue('nakshatra', value)}
+            requestInput={
+              <SearchableDropdown
+                placeholder="Select Nakshatra"
+                value={pendingChangeValues.nakshatra || ''}
+                options={NAKSHATRAS}
+                onSelect={(value) => setPendingChangeValue('nakshatra', value)}
+              />
+            }
+          >
+            <FieldLabel label="Nakshatra" required />
+            <SearchableDropdown
+              placeholder="Select Nakshatra"
+              value={nakshatra}
+              options={NAKSHATRAS}
+              onSelect={(value) => {
+                setNakshatra(value);
+                markChanged();
+              }}
+            />
+          </TieredField>
 
           <Text style={styles.sectionTitle}>COMMUNITY DETAILS</Text>
 
-          <TieredField
-            label="Religion"
-            fieldState={getTierFieldState('religion')}
-            displayValue={religionValue}
-            requestedValue={changeRequests.find((r) => r.field === 'religion' && r.status === 'PENDING')?.requestedValue}
-            isRequestOpen={!!openRequestFields.religion}
-            requestValue={pendingChangeValues.religion || ''}
-            onOpenRequest={() => openRequestChange('religion', religionValue)}
-            onChangeRequestValue={(value) => setPendingChangeValue('religion', value)}
-          >
-            <Text style={styles.label}>Religion</Text>
-            <SearchableDropdown
-              placeholder="Select religion"
-              value={religionValue}
-              options={religionOptions}
-              onSelect={(value) => {
-                setReligionValue(value);
-                markChanged();
-              }}
-            />
-          </TieredField>
+          <LockedField label="Religion" value={religionValue} />
 
-          <TieredField
-            label="Caste"
-            fieldState={getTierFieldState('caste')}
-            displayValue={readonly.casteName}
-            requestedValue={changeRequests.find((r) => r.field === 'caste' && r.status === 'PENDING')?.requestedValue}
-            isRequestOpen={!!openRequestFields.caste}
-            requestValue={pendingChangeValues.caste || ''}
-            onOpenRequest={() => openRequestChange('caste', casteId)}
-            onChangeRequestValue={(value) => setPendingChangeValue('caste', value)}
-            requestInput={
-              <SearchableDropdown
-                placeholder="Select caste"
-                value={pendingChangeValues.caste || ''}
-                options={castes.map((c) => ({ label: c.casteName, value: c._id }))}
-                onSelect={(value) => setPendingChangeValue('caste', value)}
-              />
-            }
-          >
-            <Text style={styles.label}>Caste</Text>
-            <SearchableDropdown
-              placeholder="Select caste"
-              value={casteId}
-              options={castes.map((c) => ({ label: c.casteName, value: c._id }))}
-              onSelect={(value) => {
-                setCasteId(value);
-                setSubCasteValue('');
-                markChanged();
-              }}
-            />
-          </TieredField>
+          <LockedField label="Caste" value={readonly.casteName} />
 
           <TieredField
             label="Sub Caste"
@@ -1707,12 +1395,21 @@ export default function EditProfileScreen({ navigation }: any) {
           <Text style={styles.hint}>To change your mobile or email, use Account Settings.</Text>
 
           <Text style={styles.sectionTitle}>ADDRESS</Text>
+          <GroupLockBanner
+            label="address"
+            limit={1}
+            editsUsed={getGroupEditsUsed('address', 1)}
+            pending={isGroupPending('address')}
+            locked={addressLocked}
+            onRequestChange={() => openGroupRequestChange('address')}
+          />
           <AddressEditor
             title="Present Address"
             address={currentAddress}
             errorPrefix="current"
             errors={fieldErrors}
             onChange={setCurrentAddressField}
+            disabled={addressLocked}
           />
 
           <View style={styles.subSectionHeader}>
@@ -1720,11 +1417,13 @@ export default function EditProfileScreen({ navigation }: any) {
             <TouchableOpacity
               style={styles.checkRow}
               onPress={() => {
+                if (addressLocked) return;
                 setSameAsCurrent((prev) => !prev);
                 markChanged();
               }}
+              disabled={addressLocked}
             >
-              <View style={[styles.checkbox, sameAsCurrent && styles.checkboxActive]}>
+              <View style={[styles.checkbox, sameAsCurrent && styles.checkboxActive, addressLocked && styles.toggleDisabled]}>
                 {sameAsCurrent && <Check color="#fff" size={14} strokeWidth={3} />}
               </View>
               <Text style={styles.checkLabel}>Same as present</Text>
@@ -1737,16 +1436,26 @@ export default function EditProfileScreen({ navigation }: any) {
               errorPrefix="permanent"
               errors={fieldErrors}
               onChange={setPermanentAddressField}
+              disabled={addressLocked}
             />
           ) : null}
 
           <Text style={styles.sectionTitle}>PROFESSIONAL DETAILS</Text>
+          <GroupLockBanner
+            label="employment details"
+            limit={3}
+            editsUsed={getGroupEditsUsed('employment', 3)}
+            pending={isGroupPending('employment')}
+            locked={employmentLocked}
+            onRequestChange={() => openGroupRequestChange('employment')}
+          />
 
           <FieldLabel label="Employment Type" required />
           <SearchableDropdown
             placeholder="Select employment type"
             value={employedType}
             options={EMPLOYED_TYPES}
+            disabled={employmentLocked}
             onSelect={(value) => {
               setEmployedType(value);
               markChanged();
@@ -1762,6 +1471,7 @@ export default function EditProfileScreen({ navigation }: any) {
                   value={designation}
                   placeholder="Enter your designation"
                   autoCapitalize="words"
+                  disabled={employmentLocked}
                   onChangeText={(value) => {
                     setDesignation(value);
                     markChanged();
@@ -1774,6 +1484,7 @@ export default function EditProfileScreen({ navigation }: any) {
                     placeholder="Select your designation"
                     value={designation}
                     options={DESIGNATIONS}
+                    disabled={employmentLocked}
                     onSelect={(value) => {
                       setDesignation(value);
                       markChanged();
@@ -1791,6 +1502,7 @@ export default function EditProfileScreen({ navigation }: any) {
                 required
                 value={companyName}
                 placeholder="Firm name"
+                disabled={employmentLocked}
                 onChangeText={(text) => {
                   setCompanyName(text);
                   markChanged();
@@ -1801,6 +1513,7 @@ export default function EditProfileScreen({ navigation }: any) {
                 placeholder="Select type of business"
                 value={typeOfBusiness}
                 options={BUSINESS_TYPES}
+                disabled={employmentLocked}
                 onSelect={(value) => {
                   setTypeOfBusiness(value);
                   markChanged();
@@ -1811,6 +1524,7 @@ export default function EditProfileScreen({ navigation }: any) {
                 required
                 value={companyLocation}
                 placeholder="Firm location"
+                disabled={employmentLocked}
                 onChangeText={(text) => {
                   setCompanyLocation(text);
                   markChanged();
@@ -1823,6 +1537,7 @@ export default function EditProfileScreen({ navigation }: any) {
                 label="You work with"
                 value={companyName}
                 placeholder="Company name"
+                disabled={employmentLocked}
                 onChangeText={(text) => {
                   setCompanyName(text);
                   markChanged();
@@ -1833,6 +1548,7 @@ export default function EditProfileScreen({ navigation }: any) {
                 required
                 value={companyLocation}
                 placeholder="Enter your company location"
+                disabled={employmentLocked}
                 onChangeText={(text) => {
                   setCompanyLocation(text);
                   markChanged();
@@ -1845,7 +1561,7 @@ export default function EditProfileScreen({ navigation }: any) {
           {isCustomIncome ? (
             <>
               <TextInput
-                style={[styles.input, fieldErrors.annualIncome && styles.inputError]}
+                style={[styles.input, fieldErrors.annualIncome && styles.inputError, employmentLocked && styles.inputDisabled]}
                 placeholder="Enter annual income"
                 placeholderTextColor="#999"
                 value={annualIncome}
@@ -1855,9 +1571,13 @@ export default function EditProfileScreen({ navigation }: any) {
                   clearError('annualIncome');
                 }}
                 keyboardType="number-pad"
+                editable={!employmentLocked}
               />
               {!!fieldErrors.annualIncome && <Text style={styles.fieldErrorText}>{fieldErrors.annualIncome}</Text>}
-              <TouchableOpacity onPress={() => { setIsCustomIncome(false); setAnnualIncome(''); markChanged(); }}>
+              <TouchableOpacity
+                onPress={() => { setIsCustomIncome(false); setAnnualIncome(''); markChanged(); }}
+                disabled={employmentLocked}
+              >
                 <Text style={styles.linkText}>Choose from list instead</Text>
               </TouchableOpacity>
             </>
@@ -1866,6 +1586,7 @@ export default function EditProfileScreen({ navigation }: any) {
               placeholder="Select Income Slab"
               value={annualIncome}
               options={INCOME_SLABS}
+              disabled={employmentLocked}
               onSelect={(value) => {
                 if (value === '__other__') {
                   setIsCustomIncome(true);
@@ -1887,7 +1608,7 @@ export default function EditProfileScreen({ navigation }: any) {
                   <View style={styles.row}>
                     <View style={styles.half}>
                       <TextInput
-                        style={[styles.input, fieldErrors.totalExperience && styles.inputError]}
+                        style={[styles.input, fieldErrors.totalExperience && styles.inputError, employmentLocked && styles.inputDisabled]}
                         placeholder="Years"
                         placeholderTextColor="#999"
                         value={expYears}
@@ -1899,11 +1620,12 @@ export default function EditProfileScreen({ navigation }: any) {
                         }}
                         keyboardType="number-pad"
                         maxLength={2}
+                        editable={!employmentLocked}
                       />
                     </View>
                     <View style={styles.half}>
                       <TextInput
-                        style={[styles.input, fieldErrors.totalExperience && styles.inputError]}
+                        style={[styles.input, fieldErrors.totalExperience && styles.inputError, employmentLocked && styles.inputDisabled]}
                         placeholder="Months"
                         placeholderTextColor="#999"
                         value={expMonths}
@@ -1915,6 +1637,7 @@ export default function EditProfileScreen({ navigation }: any) {
                         }}
                         keyboardType="number-pad"
                         maxLength={2}
+                        editable={!employmentLocked}
                       />
                     </View>
                   </View>
@@ -1927,6 +1650,7 @@ export default function EditProfileScreen({ navigation }: any) {
                       setExpMonths('');
                       markChanged();
                     }}
+                    disabled={employmentLocked}
                   >
                     <Text style={styles.linkText}>Choose from list instead</Text>
                   </TouchableOpacity>
@@ -1936,6 +1660,7 @@ export default function EditProfileScreen({ navigation }: any) {
                   placeholder="Select experience"
                   value={expPreset}
                   options={EXPERIENCE_PRESETS}
+                  disabled={employmentLocked}
                   onSelect={(value) => {
                     if (value === '__other__') {
                       setIsCustomExperience(true);
@@ -1965,6 +1690,7 @@ export default function EditProfileScreen({ navigation }: any) {
               placeholder="https://linkedin.com/in/your-name"
               error={fieldErrors.linkedIn}
               autoCapitalize="none"
+              disabled={employmentLocked}
               onChangeText={(text) => {
                 setLinkedIn(text);
                 markChanged();
@@ -1974,34 +1700,24 @@ export default function EditProfileScreen({ navigation }: any) {
           )}
 
           <Text style={styles.sectionTitle}>EDUCATION DETAILS</Text>
-          <FieldLabel label="Highest Qualification" required />
-          <SearchableDropdown
-            placeholder="Select or type qualification"
-            value={qualification}
-            options={EDUCATION_OPTIONS}
-            allowCustom
-            onSelect={(value) => {
-              setQualification(value);
-              markChanged();
-            }}
-          />
-          <EditableTextField
-            label="University / College"
-            required
-            value={college}
-            placeholder="College name"
-            onChangeText={(text) => {
-              setCollege(text);
-              markChanged();
-            }}
-          />
+          <LockedField label="Highest Qualification" value={qualification} />
+          <LockedField label="University / College" value={college} />
 
           <Text style={styles.sectionTitle}>LIFESTYLE & HEALTH</Text>
+          <GroupLockBanner
+            label="lifestyle & health"
+            limit={5}
+            editsUsed={getGroupEditsUsed('lifestyle', 5)}
+            pending={isGroupPending('lifestyle')}
+            locked={lifestyleLocked}
+            onRequestChange={() => openGroupRequestChange('lifestyle')}
+          />
           <Text style={styles.label}>Diet</Text>
           <SearchableDropdown
             placeholder="Select diet"
             value={diet}
             options={DIET_OPTIONS}
+            disabled={lifestyleLocked}
             onSelect={(value) => {
               setDiet(value);
               markChanged();
@@ -2012,6 +1728,7 @@ export default function EditProfileScreen({ navigation }: any) {
             placeholder="Select smoking"
             value={smoking}
             options={YES_NO_OCCASIONAL}
+            disabled={lifestyleLocked}
             onSelect={(value) => {
               setSmoking(value);
               markChanged();
@@ -2022,6 +1739,7 @@ export default function EditProfileScreen({ navigation }: any) {
             placeholder="Select drinking"
             value={drinking}
             options={YES_NO_OCCASIONAL}
+            disabled={lifestyleLocked}
             onSelect={(value) => {
               setDrinking(value);
               markChanged();
@@ -2031,6 +1749,7 @@ export default function EditProfileScreen({ navigation }: any) {
           <SegmentedOptions
             options={HEALTH_CONDITION_OPTIONS}
             value={healthCondition}
+            disabled={lifestyleLocked}
             onChange={(value) => {
               setHealthCondition(value);
               if (value === 'NO') {
@@ -2044,7 +1763,7 @@ export default function EditProfileScreen({ navigation }: any) {
             <>
               <Text style={styles.label}>Brief health note</Text>
               <TextInput
-                style={[styles.textArea, fieldErrors.healthConditionDetails && styles.inputError]}
+                style={[styles.textArea, fieldErrors.healthConditionDetails && styles.inputError, lifestyleLocked && styles.inputDisabled]}
                 placeholder="Briefly describe the condition or any relevant support needs"
                 placeholderTextColor="#999"
                 value={healthConditionDetails}
@@ -2056,6 +1775,7 @@ export default function EditProfileScreen({ navigation }: any) {
                 multiline
                 textAlignVertical="top"
                 maxLength={500}
+                editable={!lifestyleLocked}
               />
               {!!fieldErrors.healthConditionDetails && (
                 <Text style={styles.fieldErrorText}>{fieldErrors.healthConditionDetails}</Text>
@@ -2065,82 +1785,28 @@ export default function EditProfileScreen({ navigation }: any) {
           ) : null}
 
           <Text style={styles.sectionTitle}>FAMILY DETAILS</Text>
-          <EditableTextField
-            label="Father Name"
-            required
-            value={fatherName}
-            placeholder="Father's name"
-            onChangeText={(text) => {
-              setFatherName(text);
-              markChanged();
-            }}
-          />
-          <EditableTextField
-            label="Father Occupation"
-            required
-            value={fatherOccupation}
-            placeholder="Occupation"
-            onChangeText={(text) => {
-              setFatherOccupation(text);
-              markChanged();
-            }}
-          />
-          <EditableTextField
-            label="Mother Name"
-            required
-            value={motherName}
-            placeholder="Mother's name"
-            onChangeText={(text) => {
-              setMotherName(text);
-              markChanged();
-            }}
-          />
-          <EditableTextField
-            label="Mother Occupation"
-            required
-            value={motherOccupation}
-            placeholder="Occupation"
-            onChangeText={(text) => {
-              setMotherOccupation(text);
-              markChanged();
-            }}
-          />
+          <LockedField label="Father Name" value={fatherName} />
+          <LockedField label="Father Occupation" value={fatherOccupation} />
+          <LockedField label="Mother Name" value={motherName} />
+          <LockedField label="Mother Occupation" value={motherOccupation} />
           <View style={styles.row}>
             <View style={styles.half}>
-              <EditableTextField
-                label="Brother"
-                required
-                value={brothers}
-                placeholder="0"
-                error={fieldErrors.brothers}
-                keyboardType="number-pad"
-                maxLength={2}
-                onChangeText={(text) => {
-                  setBrothers(text);
-                  markChanged();
-                  clearError('brothers');
-                }}
-              />
+              <LockedField label="Brother" value={brothers} />
             </View>
             <View style={styles.half}>
-              <EditableTextField
-                label="Sister"
-                required
-                value={sisters}
-                placeholder="0"
-                error={fieldErrors.sisters}
-                keyboardType="number-pad"
-                maxLength={2}
-                onChangeText={(text) => {
-                  setSisters(text);
-                  markChanged();
-                  clearError('sisters');
-                }}
-              />
+              <LockedField label="Sister" value={sisters} />
             </View>
           </View>
 
           <Text style={styles.sectionTitle}>HOBBIES & INTERESTS</Text>
+          <GroupLockBanner
+            label="hobbies & interests"
+            limit={5}
+            editsUsed={getGroupEditsUsed('hobbiesAndInterests', 5)}
+            pending={isGroupPending('hobbiesAndInterests')}
+            locked={hobbiesLocked}
+            onRequestChange={() => openGroupRequestChange('hobbiesAndInterests')}
+          />
           {HOBBY_GROUPS.map((group) => {
             const groupSelected = othersActiveGroups.has(group.title)
               ? selectedHobbies
@@ -2151,6 +1817,7 @@ export default function EditProfileScreen({ navigation }: any) {
                 <ChipWrap
                   options={group.options.map((option) => ({ label: option, value: option }))}
                   selected={groupSelected}
+                  disabled={hobbiesLocked}
                   onToggle={(value) =>
                     value === 'Others' ? toggleOthersHobby(group.title) : toggleHobby(value)
                   }
@@ -2304,6 +1971,7 @@ function EditableTextField({
   autoCapitalize,
   unit,
   required,
+  disabled = false,
 }: {
   label: string;
   required?: boolean;
@@ -2315,13 +1983,14 @@ function EditableTextField({
   maxLength?: number;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   unit?: string;
+  disabled?: boolean;
 }) {
   return (
     <>
       <FieldLabel label={label} required={required} />
       <View style={styles.unitInputWrap}>
         <TextInput
-          style={[styles.input, styles.unitInput, error && styles.inputError]}
+          style={[styles.input, styles.unitInput, error && styles.inputError, disabled && styles.inputDisabled]}
           placeholder={placeholder}
           placeholderTextColor="#999"
           value={value}
@@ -2329,6 +1998,7 @@ function EditableTextField({
           keyboardType={keyboardType}
           maxLength={maxLength}
           autoCapitalize={autoCapitalize}
+          editable={!disabled}
         />
         {!!unit && <Text style={styles.unitLabel}>{unit}</Text>}
       </View>
@@ -2436,16 +2106,75 @@ function TieredField({
   );
 }
 
+// Banner shown above a multi-field group (address / employment / lifestyle /
+// hobbiesAndInterests) that shares one edit-limit counter across all of its
+// fields. While edits remain it just shows a small reminder (only when the
+// limit is above 1 -- a 1-edit group like address goes straight from
+// "nothing to say" to "locked"); once exhausted it shows the same
+// "Request Change" action used by single-field Tier 1 fields, and the
+// group's own inputs are rendered non-editable by the caller.
+function GroupLockBanner({
+  label,
+  limit,
+  editsUsed,
+  pending,
+  locked,
+  onRequestChange,
+}: {
+  label: string;
+  limit: number;
+  editsUsed: number;
+  pending: boolean;
+  locked: boolean;
+  onRequestChange: () => void;
+}) {
+  const remaining = limit - editsUsed;
+
+  if (pending) {
+    return (
+      <View style={styles.pendingBadge}>
+        <Text style={styles.pendingBadgeText}>Pending Approval</Text>
+      </View>
+    );
+  }
+
+  if (locked) {
+    return (
+      <View style={styles.groupLockedBanner}>
+        <View style={styles.groupLockedRow}>
+          <Lock color="#8a5a00" size={14} />
+          <Text style={styles.groupLockedText}>You've used all your free edits for {label}.</Text>
+        </View>
+        <TouchableOpacity onPress={onRequestChange}>
+          <Text style={styles.requestChangeText}>Request Change</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (remaining < limit) {
+    return (
+      <Text style={styles.groupRemainingText}>
+        You can edit {label} {remaining} more time{remaining === 1 ? '' : 's'} before admin approval is required.
+      </Text>
+    );
+  }
+
+  return null;
+}
+
 function SegmentedOptions({
   options,
   value,
   onChange,
   error,
+  disabled = false,
 }: {
   options: Option[];
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  disabled?: boolean;
 }) {
   return (
     <>
@@ -2453,8 +2182,9 @@ function SegmentedOptions({
         {options.map((option) => (
           <TouchableOpacity
             key={option.value}
-            style={[styles.toggle, value === option.value && styles.toggleActive]}
+            style={[styles.toggle, value === option.value && styles.toggleActive, disabled && styles.toggleDisabled]}
             onPress={() => onChange(option.value)}
+            disabled={disabled}
           >
             <Text style={[styles.toggleText, value === option.value && styles.toggleTextActive]}>
               {option.label}
@@ -2473,12 +2203,14 @@ function AddressEditor({
   errorPrefix,
   errors,
   onChange,
+  disabled = false,
 }: {
   title?: string;
   address: AddressFields;
   errorPrefix: 'current' | 'permanent';
   errors: Record<string, string>;
   onChange: (key: keyof AddressFields, value: string) => void;
+  disabled?: boolean;
 }) {
   const isIndia = address.residenceType === 'INDIA';
   const errorKey = (key: keyof AddressFields) => `${errorPrefix}${String(key)}`;
@@ -2491,8 +2223,9 @@ function AddressEditor({
         {RESIDENCE_TYPES.map((option) => (
           <TouchableOpacity
             key={option.value}
-            style={[styles.toggle, address.residenceType === option.value && styles.toggleActive]}
+            style={[styles.toggle, address.residenceType === option.value && styles.toggleActive, disabled && styles.toggleDisabled]}
             onPress={() => onChange('residenceType', option.value)}
+            disabled={disabled}
           >
             <Text style={[styles.toggleText, address.residenceType === option.value && styles.toggleTextActive]}>
               {option.label}
@@ -2507,12 +2240,14 @@ function AddressEditor({
         value={address.addressLine1}
         placeholder="House no, street, area"
         error={errors[errorKey('addressLine1')]}
+        disabled={disabled}
         onChangeText={(value) => onChange('addressLine1', value)}
       />
       <EditableTextField
         label="Address Line 2"
         value={address.addressLine2}
         placeholder="Landmark, locality (optional)"
+        disabled={disabled}
         onChangeText={(value) => onChange('addressLine2', value)}
       />
 
@@ -2523,6 +2258,7 @@ function AddressEditor({
             placeholder="Select state"
             value={address.state}
             options={INDIAN_STATE_OPTIONS}
+            disabled={disabled}
             onSelect={(value) => {
               onChange('state', value);
               // District options depend on the selected state -- clear it
@@ -2536,7 +2272,7 @@ function AddressEditor({
             value={address.district}
             options={getDistrictOptionsForStates(address.state ? [address.state] : [])}
             onSelect={(value) => onChange('district', value)}
-            disabled={!address.state}
+            disabled={disabled || !address.state}
           />
         </>
       ) : (
@@ -2545,12 +2281,14 @@ function AddressEditor({
             label="Country"
             value={address.country}
             placeholder="Country"
+            disabled={disabled}
             onChangeText={(value) => onChange('country', value)}
           />
           <EditableTextField
             label="State / Province"
             value={address.stateOrProvince}
             placeholder="State or Province"
+            disabled={disabled}
             onChangeText={(value) => onChange('stateOrProvince', value)}
           />
           <EditableTextField
@@ -2559,6 +2297,7 @@ function AddressEditor({
             placeholder="Postal code"
             keyboardType="number-pad"
             maxLength={12}
+            disabled={disabled}
             onChangeText={(value) => onChange('postalCode', value)}
           />
         </>
@@ -2571,10 +2310,12 @@ function ChipWrap({
   options,
   selected,
   onToggle,
+  disabled = false,
 }: {
   options: Option[];
   selected: string[];
   onToggle: (value: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <View style={styles.chipRow}>
@@ -2583,8 +2324,9 @@ function ChipWrap({
         return (
           <TouchableOpacity
             key={option.value}
-            style={[styles.chip, active && styles.chipActive]}
+            style={[styles.chip, active && styles.chipActive, disabled && styles.chipDisabled]}
             onPress={() => onToggle(option.value)}
+            disabled={disabled}
           >
             <Text style={[styles.chipText, active && styles.chipTextActive]}>{option.label}</Text>
           </TouchableOpacity>
@@ -2845,11 +2587,30 @@ const styles = StyleSheet.create({
   toggleText: { fontSize: 14, color: '#333' },
   toggleTextActive: { color: '#D20236', fontFamily: 'Outfit-Bold' },
   toggleRowError: { borderWidth: 1.5, borderColor: '#D20236', borderRadius: 10, padding: 4 },
+  toggleDisabled: { opacity: 0.5 },
   dobInput: { flex: 1 },
    errorBanner: { fontSize: 13, color: '#D20236', fontFamily: 'Outfit-Medium', marginVertical: 10 },
   linkText: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-SemiBold', marginTop: -8, marginBottom: 14 },
   inputError: { borderColor: '#D20236', borderWidth: 1.5 },
+  inputDisabled: { backgroundColor: '#f5f5f5', color: '#8b919c' },
   fieldErrorText: { fontSize: 11, color: '#D20236', marginTop: -8, marginBottom: 10, fontFamily: 'Outfit-Medium' },
+  groupLockedBanner: {
+    marginBottom: 14,
+    backgroundColor: '#fff4e5',
+    borderWidth: 1,
+    borderColor: '#f0c896',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  groupLockedRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
+  groupLockedText: { fontSize: 12, fontFamily: 'Outfit-SemiBold', color: '#8a5a00', flexShrink: 1 },
+  groupRemainingText: { fontSize: 11, fontFamily: 'Outfit-Medium', color: '#b9770e', marginBottom: 10 },
   addressBlock: { marginBottom: 6 },
   checkRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginBottom: 12 },
   checkbox: {
@@ -2877,6 +2638,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   chipActive: { borderColor: '#D20236', backgroundColor: '#fdf2f5' },
+  chipDisabled: { opacity: 0.5 },
   chipText: { fontSize: 14, color: '#333' },
   chipTextActive: { color: '#D20236', fontFamily: 'Outfit-SemiBold' },
   multiField: {

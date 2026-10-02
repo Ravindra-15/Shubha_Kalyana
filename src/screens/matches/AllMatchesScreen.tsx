@@ -26,7 +26,9 @@ export default function AllMatchesScreen({ navigation, route }: any) {
   const pushed = route?.params?.pushed === true;
 
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState<Filters | null>(null);
+  // Home redirects here with filters already chosen there; seed them so
+  // the list loads filtered immediately and the filter icon/modal reflect it.
+  const [filters, setFilters] = useState<Filters | null>(route?.params?.initialFilters ?? null);
   const [showFilter, setShowFilter] = useState(false);
   const [gender, setGender] = useState('');
 

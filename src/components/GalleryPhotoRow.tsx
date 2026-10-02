@@ -7,11 +7,17 @@ type GalleryPhoto = { publicId?: string; url: string };
 
 type Props = {
   photos: GalleryPhoto[];
-  onAdd: (asset: any) => void;
-  onRemove: (publicId: string) => void;
+  onAdd?: (asset: any) => void;
+  onRemove?: (publicId: string) => void;
   maxCount?: number;
   uploadingSlotIndex?: number | null;
   title?: string;
+  // When true, renders the gallery as a plain read-only strip: no "+" add
+  // slot and no per-photo "×" remove badge. Used by the Edit Profile screen
+  // now that profile/gallery photos are fully locked server-side; the
+  // onboarding photo screens keep using this component in its normal,
+  // interactive mode and are unaffected (readOnly defaults to false).
+  readOnly?: boolean;
 };
 
 export default function GalleryPhotoRow({
@@ -21,12 +27,13 @@ export default function GalleryPhotoRow({
   maxCount = 3,
   uploadingSlotIndex = null,
   title = 'Add up to 3 more photos (optional)',
+  readOnly = false,
 }: Props) {
-  const emptySlots = Math.max(0, maxCount - photos.length);
+  const emptySlots = readOnly ? 0 : Math.max(0, maxCount - photos.length);
   const isUploading = uploadingSlotIndex !== null;
 
   const pickPhoto = async () => {
-    if (isUploading) return;
+    if (readOnly || isUploading || !onAdd) return;
 
     const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8 });
     if (result.didCancel || result.errorCode) return;
@@ -43,6 +50,8 @@ export default function GalleryPhotoRow({
     onAdd(asset);
   };
 
+  if (readOnly && photos.length === 0) return null;
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
@@ -50,34 +59,37 @@ export default function GalleryPhotoRow({
         {photos.map((photo, index) => (
           <View key={photo.publicId || photo.url || index} style={styles.tile}>
             <Image source={{ uri: photo.url }} style={styles.image} />
-            <TouchableOpacity
-              style={styles.removeBadge}
-              onPress={() => onRemove(photo.publicId || '')}
-            >
-              <Text style={styles.removeText}>×</Text>
-            </TouchableOpacity>
+            {!readOnly && (
+              <TouchableOpacity
+                style={styles.removeBadge}
+                onPress={() => onRemove?.(photo.publicId || '')}
+              >
+                <Text style={styles.removeText}>×</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ))}
 
-        {Array.from({ length: emptySlots }).map((_, i) => {
-          const slotIndex = photos.length + i;
-          const isThisSlotUploading = uploadingSlotIndex === slotIndex;
+        {!readOnly &&
+          Array.from({ length: emptySlots }).map((_, i) => {
+            const slotIndex = photos.length + i;
+            const isThisSlotUploading = uploadingSlotIndex === slotIndex;
 
-          return (
-            <TouchableOpacity
-              key={`empty-${i}`}
-              style={styles.emptyTile}
-              onPress={pickPhoto}
-              disabled={isUploading}
-            >
-              {isThisSlotUploading ? (
-                <ActivityIndicator size="small" color="#D20236" />
-              ) : (
-                <Text style={styles.plus}>+</Text>
-              )}
-            </TouchableOpacity>
-          );
-        })}
+            return (
+              <TouchableOpacity
+                key={`empty-${i}`}
+                style={styles.emptyTile}
+                onPress={pickPhoto}
+                disabled={isUploading}
+              >
+                {isThisSlotUploading ? (
+                  <ActivityIndicator size="small" color="#D20236" />
+                ) : (
+                  <Text style={styles.plus}>+</Text>
+                )}
+              </TouchableOpacity>
+            );
+          })}
       </View>
     </View>
   );
