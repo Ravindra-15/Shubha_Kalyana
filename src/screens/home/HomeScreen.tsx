@@ -145,7 +145,7 @@ export default function HomeScreen({ navigation }: any) {
         [req.user?.firstName, req.user?.lastName].filter(Boolean).join(' ') ||
         'Profile',
       age: getAgeFromDob(basic.dob),
-      caste: basic.caste?.casteName || '',
+      caste: basic.customCasteName || basic.caste?.casteName || '',
       profession: req.profile?.employment?.designation || '',
       image: photo,
     };

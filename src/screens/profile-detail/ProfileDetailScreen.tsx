@@ -455,7 +455,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   // no such field of its own, and isProfileFullyVerified() alone doesn't
   // account for the active-plan requirement.
   const verified = Boolean(data.verified);
-  const caste = basic.caste?.casteName || basic.caste?.name || '';
+  const caste = basic.customCasteName || basic.caste?.casteName || basic.caste?.name || '';
   const location = [addr.current?.district, addr.current?.state]
     .filter(x => x && !isBlur(x))
     .join(', ');

@@ -112,7 +112,7 @@ export default function ProfileScreen({ navigation }: any) {
   const location = [profile?.address?.current?.district, profile?.address?.current?.state]
     .filter(Boolean).join(', ');
   const completion = profile?.completionPercentage || 0;
-  const caste = basic.caste?.casteName || basic.caste?.name || '';
+  const caste = basic.customCasteName || basic.caste?.casteName || basic.caste?.name || '';
   const summaryItems = [
     { label: 'Date of Birth', value: formatDate(basic.dob) },
     { label: 'Religion', value: basic.religion },

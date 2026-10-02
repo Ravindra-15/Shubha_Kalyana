@@ -508,11 +508,6 @@ export default function EditProfileScreen({ navigation }: any) {
     return values.map((value) => ({ label: value, value }));
   }, [castes, prefCasteIds]);
 
-    const ownSubCasteOptions = useMemo(() => {
-    const selectedCaste = castes.find((caste) => caste._id === casteId);
-    return (selectedCaste?.subCastes || []).map((value) => ({ label: value, value }));
-  }, [castes, casteId]);
-
   const load = useCallback(async () => {
     try {
       setLoading(true);
@@ -529,7 +524,7 @@ export default function EditProfileScreen({ navigation }: any) {
       const current = profile.address?.current || {};
       const permanent = profile.address?.permanent || {};
       const photo = profile.photos?.find((p: any) => p.isProfilePhoto)?.url || '';
-      const casteName = basic.caste?.casteName || '';
+      const casteName = basic.customCasteName || basic.caste?.casteName || '';
 
       setCastes(casteList);
       setReligions(religionList);
@@ -928,7 +923,6 @@ export default function EditProfileScreen({ navigation }: any) {
     // opened one and typed something — otherwise fall back to the field's
     // normal current value (which is a no-op for the backend if unchanged,
     // since it only reroutes to changeRequests when the value actually differs).
-    const resolvedSubCaste = openRequestFields.subCaste ? pendingChangeValues.subCaste : subCasteValue;
     const resolvedWeight = openRequestFields.weight ? pendingChangeValues.weight : weight;
     const resolvedRashi = openRequestFields.rashi ? pendingChangeValues.rashi : rashi;
     const resolvedNakshatra = openRequestFields.nakshatra ? pendingChangeValues.nakshatra : nakshatra;
@@ -956,7 +950,7 @@ export default function EditProfileScreen({ navigation }: any) {
       maritalStatus: maritalStatus || undefined,
       religion: religionValue || undefined,
       caste: casteId || undefined,
-      subCaste: resolvedSubCaste || undefined,
+      subCaste: subCasteValue || undefined,
       height: resolvedHeight,
       weight: resolvedWeight
         ? {
@@ -1352,39 +1346,7 @@ export default function EditProfileScreen({ navigation }: any) {
 
           <LockedField label="Caste" value={readonly.casteName} />
 
-          <TieredField
-            label="Sub Caste"
-            fieldState={getTierFieldState('subCaste')}
-            displayValue={subCasteValue}
-            requestedValue={changeRequests.find((r) => r.field === 'subCaste' && r.status === 'PENDING')?.requestedValue}
-            isRequestOpen={!!openRequestFields.subCaste}
-            requestValue={pendingChangeValues.subCaste || ''}
-            onOpenRequest={() => openRequestChange('subCaste', subCasteValue)}
-            onChangeRequestValue={(value) => setPendingChangeValue('subCaste', value)}
-            requestInput={
-              <SearchableDropdown
-                placeholder="Select sub caste"
-                value={pendingChangeValues.subCaste || ''}
-                options={ownSubCasteOptions}
-                onSelect={(value) => setPendingChangeValue('subCaste', value)}
-                allowCustom
-                disabled={!ownSubCasteOptions.length}
-              />
-            }
-          >
-            <Text style={styles.label}>Sub Caste</Text>
-            <SearchableDropdown
-              placeholder="Select sub caste"
-              value={subCasteValue}
-              options={ownSubCasteOptions}
-              onSelect={(value) => {
-                setSubCasteValue(value);
-                markChanged();
-              }}
-              allowCustom
-              disabled={!ownSubCasteOptions.length}
-            />
-          </TieredField>
+          <LockedField label="Sub Caste" value={subCasteValue} />
 
           <LockedField label="Mother Tongue" value={readonly.motherTongue} />
 

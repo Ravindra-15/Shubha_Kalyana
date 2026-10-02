@@ -72,7 +72,7 @@ const mapCard = (item: any, fallbackDirection?: RequestDirection) => {
       item.user?.profileCode ||
       'Profile',
     age: getAge(basic.dob),
-    caste: basic.caste?.casteName || '',
+    caste: basic.customCasteName || basic.caste?.casteName || '',
     profession: p.employment?.designation || '',
     image: photo,
   };
