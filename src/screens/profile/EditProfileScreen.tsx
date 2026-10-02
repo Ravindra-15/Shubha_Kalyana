@@ -133,6 +133,11 @@ const EMPLOYED_TYPES: Option[] = [
   { label: 'Agriculture', value: 'AGRICULTURE' },
 ];
 
+const JOB_TYPES: Option[] = [
+  { label: 'Permanent', value: 'PERMANENT' },
+  { label: 'Contractor', value: 'CONTRACTOR' },
+];
+
 const INCOME_SLABS: Option[] = [
   { label: 'Below ₹3 Lakh', value: 'BELOW_3L' },
   { label: '₹3 - 5 Lakh', value: '3L_5L' },
@@ -141,14 +146,6 @@ const INCOME_SLABS: Option[] = [
   { label: '₹20 - 50 Lakh', value: '20L_50L' },
   { label: 'Above ₹50 Lakh', value: 'ABOVE_50L' },
   { label: 'Write your own', value: '__other__' },
-];
-
-const BUSINESS_TYPES: Option[] = [
-  { label: 'Manufacturing', value: 'Manufacturing' },
-  { label: 'Trading', value: 'Trading' },
-  { label: 'Services', value: 'Services' },
-  { label: 'Retail', value: 'Retail' },
-  { label: 'Other', value: 'Other' },
 ];
 
 // Mirrors the web app's professionOptions (onboarding/onboardingOptions.js)
@@ -356,6 +353,7 @@ export default function EditProfileScreen({ navigation }: any) {
   const [employedType, setEmployedType] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [designation, setDesignation] = useState('');
+  const [jobType, setJobType] = useState('');
   const [typeOfBusiness, setTypeOfBusiness] = useState('');
   const [annualIncome, setAnnualIncome] = useState('');
   const [isCustomIncome, setIsCustomIncome] = useState(false);
@@ -493,10 +491,11 @@ export default function EditProfileScreen({ navigation }: any) {
   const isJobType = employedType === 'PRIVATE' || employedType === 'GOVERNMENT' || employedType === 'SEMI_GOVERNMENT';
   const isBusiness = employedType === 'BUSINESS';
   const isAgriculture = employedType === 'AGRICULTURE';
-  const isManualDesignation = employedType === 'GOVERNMENT' || employedType === 'SEMI_GOVERNMENT' || isBusiness;
+  const isGovernmentEmployment = employedType === 'GOVERNMENT' || employedType === 'SEMI_GOVERNMENT';
+  const isManualDesignation = isGovernmentEmployment || isBusiness;
   const showDesignation = isJobType || isBusiness;
-  const showExperience = isJobType || isBusiness;
-  const showLinkedIn = !isAgriculture;
+  const showExperience = isJobType;
+  const showLinkedIn = !isAgriculture && !isBusiness;
 
   const preferredCasteOptions = useMemo(() => {
     const options = castes.map((caste) => ({ label: caste.casteName, value: caste._id }));
@@ -589,6 +588,7 @@ export default function EditProfileScreen({ navigation }: any) {
       setEmployedType(profile.employment?.employedType || '');
       setCompanyName(profile.employment?.companyName || '');
       setDesignation(profile.employment?.designation || '');
+      setJobType(profile.employment?.jobType || '');
       setTypeOfBusiness(profile.employment?.typeOfBusiness || '');
       setCompanyLocation(profile.employment?.companyLocation || '');
       setLinkedIn(profile.employment?.linkedInProfile || '');
@@ -820,8 +820,12 @@ export default function EditProfileScreen({ navigation }: any) {
       requireValue(
         'companyLocation',
         companyLocation,
-        isBusiness ? 'Firm location is required' : 'Company location is required',
+        isBusiness ? 'Firm location is required' : isGovernmentEmployment ? 'Work location is required' : 'Company location is required',
       );
+    }
+
+    if (isGovernmentEmployment) {
+      requireValue('jobType', jobType, 'Job type is required');
     }
 
     if (showExperience && !expPreset.trim() && !expYears.trim() && !expMonths.trim()) {
@@ -972,6 +976,7 @@ export default function EditProfileScreen({ navigation }: any) {
       employment: {
         employedType: employedType || undefined,
         designation: showDesignation ? designation.trim() : undefined,
+        jobType: isGovernmentEmployment ? jobType || undefined : undefined,
         companyName: companyName.trim() || undefined,
         typeOfBusiness: isBusiness ? typeOfBusiness || undefined : undefined,
         companyLocation: companyLocation.trim() || undefined,
@@ -1460,10 +1465,10 @@ export default function EditProfileScreen({ navigation }: any) {
             <>
               {isManualDesignation ? (
                 <EditableTextField
-                  label="You work as"
+                  label={isGovernmentEmployment ? 'Name of the department' : 'You work as'}
                   required
                   value={designation}
-                  placeholder="Enter your designation"
+                  placeholder={isGovernmentEmployment ? 'Enter your department.' : 'Enter your designation'}
                   autoCapitalize="words"
                   disabled={employmentLocked}
                   onChangeText={(value) => {
@@ -1502,14 +1507,13 @@ export default function EditProfileScreen({ navigation }: any) {
                   markChanged();
                 }}
               />
-              <Text style={styles.label}>Type of Business</Text>
-              <SearchableDropdown
-                placeholder="Select type of business"
+              <EditableTextField
+                label="Type of Business"
                 value={typeOfBusiness}
-                options={BUSINESS_TYPES}
+                placeholder="Enter type of business"
                 disabled={employmentLocked}
-                onSelect={(value) => {
-                  setTypeOfBusiness(value);
+                onChangeText={(text) => {
+                  setTypeOfBusiness(text);
                   markChanged();
                 }}
               />
@@ -1538,10 +1542,10 @@ export default function EditProfileScreen({ navigation }: any) {
                 }}
               />
               <EditableTextField
-                label="Company Location"
+                label={isGovernmentEmployment ? 'Work location' : 'Company Location'}
                 required
                 value={companyLocation}
-                placeholder="Enter your company location"
+                placeholder={isGovernmentEmployment ? 'Enter your work location' : 'Enter your company location'}
                 disabled={employmentLocked}
                 onChangeText={(text) => {
                   setCompanyLocation(text);
@@ -1674,6 +1678,22 @@ export default function EditProfileScreen({ navigation }: any) {
                   }}
                 />
               )}
+            </>
+          )}
+
+          {isGovernmentEmployment && (
+            <>
+              <FieldLabel label="Job Type" required />
+              <SearchableDropdown
+                placeholder="Select job type"
+                value={jobType}
+                options={JOB_TYPES}
+                disabled={employmentLocked}
+                onSelect={(value) => {
+                  setJobType(value);
+                  markChanged();
+                }}
+              />
             </>
           )}
 
