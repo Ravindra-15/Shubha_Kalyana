@@ -392,11 +392,9 @@ export default function EditProfileScreen({ navigation }: any) {
 
   const [prefAgeMin, setPrefAgeMin] = useState('');
   const [prefAgeMax, setPrefAgeMax] = useState('');
-  const [prefReligionValues, setPrefReligionValues] = useState<string[]>([]);
   const [prefCasteIds, setPrefCasteIds] = useState<string[]>([]);
   const [prefSubCasteValues, setPrefSubCasteValues] = useState<string[]>([]);
   const [prefEducationValues, setPrefEducationValues] = useState<string[]>([]);
-  const [prefProfessionValues, setPrefProfessionValues] = useState<string[]>([]);
   const [prefMaritalStatusValues, setPrefMaritalStatusValues] = useState<string[]>([]);
   const [prefResidentValues, setPrefResidentValues] = useState<string[]>([]);
 
@@ -645,11 +643,9 @@ export default function EditProfileScreen({ navigation }: any) {
 
       setPrefAgeMin(pref.ageRange?.min ? String(pref.ageRange.min) : '');
       setPrefAgeMax(pref.ageRange?.max ? String(pref.ageRange.max) : '');
-      setPrefReligionValues(toArray(pref.religion));
       setPrefCasteIds(toArray(pref.caste).map((item: any) => item?._id || item).filter(Boolean));
       setPrefSubCasteValues(toArray(pref.subCaste));
       setPrefEducationValues(toArray(pref.education));
-      setPrefProfessionValues(toArray(pref.profession));
       setPrefMaritalStatusValues(toArray(pref.maritalStatus));
       setPrefResidentValues(toArray(pref.ressident || pref.resident));
 
@@ -1018,11 +1014,9 @@ export default function EditProfileScreen({ navigation }: any) {
               max: prefAgeMax ? Number(prefAgeMax) : undefined,
             }
           : undefined,
-      religion: prefReligionValues || undefined,
       caste: prefCasteIds.filter((id) => id !== ANY_CASTE_VALUE) || undefined,
       subCaste: prefSubCasteValues || undefined,
       education: prefEducationValues || undefined,
-      profession: prefProfessionValues || undefined,
       maritalStatus: prefMaritalStatusValues || undefined,
       ressident: prefResidentValues || undefined,
     };

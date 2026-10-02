@@ -75,11 +75,9 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
   const [ageMin, setAgeMin] = useState(pp.ageMin || '');
   const [ageMax, setAgeMax] = useState(pp.ageMax || '');
   const [maritalStatus, setMaritalStatus] = useState<string[]>(pp.maritalStatus || []);
-  const [religion] = useState<string[]>(pp.religion || []);
   const [casteIds, setCasteIds] = useState<string[]>(pp.casteIds || []);
   const [subCaste, setSubCaste] = useState<string[]>(pp.subCaste || []);
   const [education, setEducation] = useState<string[]>(pp.education || []);
-  const [profession] = useState<string[]>(pp.profession || []);
   const [resident, setResident] = useState<string[]>(pp.resident || []);
 
   const [castes, setCastes] = useState<Caste[]>([]);
@@ -150,17 +148,15 @@ export default function PartnerPreferenceScreen({ navigation }: any) {
     const payload: any = {};
     if (ageMin.trim() && ageMax.trim()) payload.ageRange = { min: Number(ageMin), max: Number(ageMax) };
     if (maritalStatus.length) payload.maritalStatus = maritalStatus;
-    if (religion.length) payload.religion = religion;
     const realCasteIds = casteIds.filter((id) => id !== ANY_CASTE_VALUE);
     if (realCasteIds.length) payload.caste = realCasteIds;
     if (realCasteIds.length && subCaste.length) payload.subCaste = subCaste;
     if (education.length) payload.education = education;
-    if (profession.length) payload.profession = profession;
     if (resident.length) payload.ressident = resident;
 
     try {
       setLoading(true);
-      const ppNow = { ageMin, ageMax, maritalStatus, religion, casteIds, subCaste, education, profession, resident };
+      const ppNow = { ageMin, ageMax, maritalStatus, casteIds, subCaste, education, resident };
       // skip API if unchanged (prevents backend step rewind)
       if (JSON.stringify(data.partnerPreference || {}) === JSON.stringify(ppNow)) {
         return await goToNextStep();

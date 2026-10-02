@@ -843,10 +843,6 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             value={pref.education?.join?.(', ')}
           />
           <Row
-            label="Preferred Profession"
-            value={pref.profession?.join?.(', ')}
-          />
-          <Row
             label="Preferred Resident"
             value={pref.ressident?.join?.(', ')}
           />
