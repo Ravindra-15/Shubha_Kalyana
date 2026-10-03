@@ -1099,9 +1099,10 @@ export default function EditProfileScreen({ navigation }: any) {
                 </View>
               )}
             </View>
-            <View style={styles.lockedLabelRow}>
-              <Text style={styles.hint}>Profile and gallery photos cannot be changed from here.</Text>
-              <Lock color="#9aa1ad" size={13} />
+            <View style={styles.photoNotice}>
+              <Text style={styles.photoNoticeText}>
+                <Text style={styles.photoNoticeRequiredStar}>*</Text> Profile and gallery photos cannot be changed from here. Please contact support if you need to update them.
+              </Text>
             </View>
             {/* {canVerifyProfilePhoto && (
               <TouchableOpacity
@@ -2478,6 +2479,9 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#333', marginBottom: 8, marginTop: 4 },
   star: { color: '#D20236' },
   hint: { fontSize: 11, color: '#999', marginTop: -8, marginBottom: 10 },
+  photoNotice: { width: 220, marginTop: 12, alignSelf: 'center', position: 'relative' },
+  photoNoticeText: { fontSize: 11, lineHeight: 16, color: '#111827', fontStyle: 'italic', textAlign: 'justify' },
+  photoNoticeRequiredStar: { color: '#D20236', fontWeight: '700' },
   input: {
     borderWidth: 1,
     borderColor: '#e0e0e0',
