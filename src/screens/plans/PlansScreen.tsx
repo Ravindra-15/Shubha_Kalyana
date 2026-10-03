@@ -25,17 +25,29 @@ import AadhaarVerificationModal from '../../components/AadhaarVerificationModal'
 import { getVerificationPromptStatus } from '../../utils/verificationPrompt';
 import type { VerificationPromptStatus } from '../../utils/verificationPrompt';
 
-// human-readable benefit lines from the toggles
+// "Valid for N Month" -- always singular unit, matching the client's
+// plan-features wording exactly (e.g. "Valid for 3 Month", not "Months").
+const validForLabel = (duration?: Plan['duration']): string | null => {
+  if (!duration?.value) return null;
+  const unit = String(duration.unit || 'MONTHS').toLowerCase();
+  const singular = unit.endsWith('s') ? unit.slice(0, -1) : unit;
+  return `Valid for ${duration.value} ${singular.charAt(0).toUpperCase()}${singular.slice(1)}`;
+};
+
+// Human-readable benefit lines, in the exact order and wording the client
+// specified -- shared with the web app's plan card (matrimony-user's
+// MembershipPage.jsx) and the admin benefit catalog (membership.constants.js).
 const benefitLines = (plan: Plan): string[] => {
   const b = plan.benefits || {};
   const lines: string[] = [];
-  if (plan.accessLimit) lines.push(`${plan.accessLimit} profile views`);
-  if (plan.duration) lines.push(`${plan.duration.value} ${plan.duration.unit.toLowerCase()} access`);
-  if (b.chatOptions) lines.push('Chat with your matches');
-  if (b.sendUnlimitedMessages) lines.push('Unlimited messages');
-  if (b.matchesCanConnectDirectly) lines.push('Direct connect with matches');
-  if (b.customerSupport) lines.push('Priority customer support');
-  if (b.verifiedBadge) lines.push('Verified badge');
+  const validFor = validForLabel(plan.duration);
+  if (validFor) lines.push(validFor);
+  if (plan.accessLimit) lines.push(`View ${plan.accessLimit} Contact Details`);
+  if (b.verifiedBadge) lines.push('Verified Badge');
+  if (b.sendUnlimitedMessages) lines.push('Send Unlimited Requests');
+  if (b.customerSupport) lines.push('Customer Support');
+  if (b.chatOptions) lines.push('Chats Included');
+  if (b.preferredMatches) lines.push('Stand out from other profiles');
   if (lines.length === 0) lines.push('Premium features'); // fallback
   return lines;
 };

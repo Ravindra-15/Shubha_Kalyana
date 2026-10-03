@@ -6,6 +6,7 @@ export type PlanBenefits = {
   customerSupport?: boolean;
   matchesCanConnectDirectly?: boolean;
   verifiedBadge?: boolean;
+  preferredMatches?: boolean;
 };
 
 export type UpgradePricing = {
