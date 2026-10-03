@@ -406,6 +406,10 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const profile = data.profile || {};
   const basic = profile.basicInfo || {};
   const emp = profile.employment || {};
+  const isAgriculture = emp.employedType === 'AGRICULTURE';
+  const isJob = ['PRIVATE', 'GOVERNMENT', 'SEMI_GOVERNMENT'].includes(emp.employedType);
+  const isGovernment = ['GOVERNMENT', 'SEMI_GOVERNMENT'].includes(emp.employedType);
+  const isBusiness = emp.employedType === 'BUSINESS';
   const edu = profile.education || {};
   const fam = profile.family || {};
   const horo = profile.horoscopeDetail || {};
@@ -776,13 +780,21 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
         {/* Employment */}
         <Section title="Employment Details">
-          <Row label="Profession" value={emp.designation} />
-          <Row label="Company Name" value={emp.companyName} onLockedPress={handleViewContact} />
-          <Row label="Company Type" value={emp.employedType?.replace(/_/g, ' ')} />
+          <Row label="Employment Type" value={emp.employedType?.replace(/_/g, ' ')} />
+          {!isAgriculture && <>
+          {(isJob || isBusiness) && <Row label={isGovernment ? 'Name of the department' : isBusiness ? 'Designation' : 'Profession'} value={emp.designation} />}
+          {isJob && <Row label="Company Name" value={emp.companyName} onLockedPress={handleViewContact} />}
+          {isBusiness && <>
+            <Row label="Firm Name" value={emp.companyName} onLockedPress={handleViewContact} />
+            <Row label="Type of Business" value={emp.typeOfBusiness} />
+          </>}
+          {(isJob || isBusiness) && <Row label={isBusiness ? 'Firm Location' : 'Work Location'} value={emp.companyLocation} onLockedPress={handleViewContact} />}
+          {isGovernment && <Row label="Job Type" value={emp.jobType?.replace(/_/g, ' ')} />}
           <Row label="Annual Income" value={emp.annualIncome ? `₹${emp.annualIncome.toLocaleString('en-IN')}` : ''} />
-          <Row label="Experience" value={emp.totalExperience ? `${emp.totalExperience} Years` : ''} />
-          <Row label="Work Location" value={emp.companyLocation} onLockedPress={handleViewContact} />
-          <Row label="LinkedIn Link" value={emp.linkedInProfile} onLockedPress={handleViewContact} />
+          {isJob && <Row label="Experience" value={emp.totalExperience ? `${emp.totalExperience} Years` : emp.totalExperienceYears || emp.totalExperienceMonths ? `${emp.totalExperienceYears || 0} Years ${emp.totalExperienceMonths || 0} Months` : ''} />}
+          {isJob && <Row label="LinkedIn Link" value={emp.linkedInProfile} onLockedPress={handleViewContact} />}
+          </>}
+          {isAgriculture && <Row label="Annual Income" value={emp.annualIncome ? `₹${emp.annualIncome.toLocaleString('en-IN')}` : ''} />}
         </Section>
 
         {/* Education */}
