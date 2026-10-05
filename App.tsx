@@ -12,6 +12,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { SignupProvider } from './src/context/SignupContext';
 import RootNavigator from './src/navigation/RootNavigator';
 import { ChatProvider } from './src/context/ChatContext';
+import { InterestBadgeProvider } from './src/context/InterestBadgeContext';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -20,10 +21,12 @@ function App() {
     <AuthProvider>
       <SignupProvider>
         <ChatProvider>
-          <SafeAreaProvider>
-            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-            <RootNavigator />
-          </SafeAreaProvider>
+          <InterestBadgeProvider>
+            <SafeAreaProvider>
+              <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+              <RootNavigator />
+            </SafeAreaProvider>
+          </InterestBadgeProvider>
         </ChatProvider>
       </SignupProvider>
     </AuthProvider>

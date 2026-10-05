@@ -21,8 +21,10 @@ import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { startChat } from '../../api/chat';
+import { useInterestBadge } from '../../context/InterestBadgeContext';
 
 export default function AllMatchesScreen({ navigation, route }: any) {
+  const { bumpInterestCount } = useInterestBadge();
   const pushed = route?.params?.pushed === true;
 
   const [search, setSearch] = useState('');
@@ -230,11 +232,13 @@ export default function AllMatchesScreen({ navigation, route }: any) {
         setProfiles((prev) =>
           prev.map((p) => (p.profileId === profileId ? { ...p, isInterested: false } : p))
         );
+        bumpInterestCount(-1);
       } else {
         await apiClient.post(`/relationship/interests/${profileId}`, {});
         setProfiles((prev) =>
           prev.map((p) => (p.profileId === profileId ? { ...p, isInterested: true } : p))
         );
+        bumpInterestCount(1);
       }
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not update interest');

@@ -25,6 +25,7 @@ import { FlatList, Image, Dimensions } from 'react-native';
 import { getPublicVendors } from '../../api/vendor';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { useFocusEffect } from '@react-navigation/native';
+import { useInterestBadge } from '../../context/InterestBadgeContext';
 import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import {
@@ -39,6 +40,7 @@ import { startChat } from '../../api/chat';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
 export default function HomeScreen({ navigation }: any) {
+  const { bumpInterestCount } = useInterestBadge();
   const [firstName, setFirstName] = useState('');
   const [gender, setGender] = useState('');
   const [showWelcome, setShowWelcome] = useState(false);
@@ -272,6 +274,7 @@ export default function HomeScreen({ navigation }: any) {
       setInterestedProfiles(prev =>
         prev.filter(p => p.profileId !== profileId),
       );
+      bumpInterestCount(-1);
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not remove');
     }
@@ -435,6 +438,7 @@ export default function HomeScreen({ navigation }: any) {
           ),
         );
         loadInterested();
+        bumpInterestCount(-1);
       } else {
         await apiClient.post(`/relationship/interests/${profileId}`, {});
         setMatches(prev =>
@@ -445,6 +449,7 @@ export default function HomeScreen({ navigation }: any) {
           ),
         );
         loadInterested();
+        bumpInterestCount(1);
         Alert.alert('Added', 'Profile added to your interests');
       }
     } catch (err: any) {

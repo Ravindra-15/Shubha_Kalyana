@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useCallback, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, Search, Heart, MessageCircle, User } from 'lucide-react-native';
 import HomeScreen from '../screens/home/HomeScreen';
@@ -7,8 +6,9 @@ import AllMatchesScreen from '../screens/matches/AllMatchesScreen';
 import AllInterestedScreen from '../screens/interested/AllInterestedScreen';
 import ChatListScreen from '../screens/chat/ChatListScreen';
 import { useChat } from '../context/ChatContext';
+import { useInterestBadge } from '../context/InterestBadgeContext';
 import ProfileScreen from '../screens/profile/ProfileScreen';
-import { getMyFullProfile, getNavbarCounts } from '../api/profile';
+import { getMyFullProfile } from '../api/profile';
 import { getActiveMembership } from '../api/membership';
 import VerificationPromptModal from '../components/VerificationPromptModal';
 import AadhaarVerificationModal from '../components/AadhaarVerificationModal';
@@ -30,36 +30,12 @@ const ProfileTabIcon = ({ color, size }: TabIconProps) => <User color={color} si
 
 export default function MainTabs({ navigation }: any) {
   const { unreadCount } = useChat();
+  const { newInterestCount, markInterestsSeen } = useInterestBadge();
   const [verificationPrompt, setVerificationPrompt] =
     useState<VerificationPromptStatus | null>(null);
   const [aadhaarPromptVisible, setAadhaarPromptVisible] = useState(false);
   const [aadhaarPhotoVerified, setAadhaarPhotoVerified] = useState(false);
   const [userName, setUserName] = useState('');
-  const [newInterestCount, setNewInterestCount] = useState(0);
-
-  const INTEREST_SEEN_COUNT_KEY = 'lastSeenInterestCount';
-
-  useEffect(() => {
-    Promise.all([
-      getNavbarCounts(),
-      AsyncStorage.getItem(INTEREST_SEEN_COUNT_KEY),
-    ])
-      .then(([counts, storedSeenCount]) => {
-        const seenCount = Number(storedSeenCount || 0);
-        setNewInterestCount(Math.max(0, counts.interestCount - seenCount));
-      })
-      .catch(() => {});
-  }, []);
-
-  const markInterestsSeen = useCallback(async () => {
-    try {
-      const { interestCount } = await getNavbarCounts();
-      await AsyncStorage.setItem(INTEREST_SEEN_COUNT_KEY, String(interestCount));
-      setNewInterestCount(0);
-    } catch {
-      // If this fails, the badge simply stays as-is until the next successful check.
-    }
-  }, []);
 
   const showVerificationPrompt = useCallback(async () => {
     try {
