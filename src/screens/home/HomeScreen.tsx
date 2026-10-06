@@ -94,7 +94,10 @@ export default function HomeScreen({ navigation }: any) {
   const loadMatches = async (filters?: Filters | null) => {
     try {
       setLoadingMatches(true);
-      const params: any = { limit: 5 };
+      // Home's "recommended for you" grid only ever shows profiles that
+      // match the viewer's own age window and caste -- not a ranking
+      // preference, an actual filter. Search/View All don't send this.
+      const params: any = { limit: 5, strictMatch: true };
       if (filters) {
         params.minAge = filters.minAge;
         params.maxAge = filters.maxAge;
@@ -645,40 +648,43 @@ export default function HomeScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Recommended Matches */}
-        <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>Recommended Matches</Text>
-            <Text style={styles.sectionSub}>
-              Profiles matching your preferences
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('AllMatches', { pushed: true })}
-          >
-            <Text style={styles.viewAll}>View All</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Recommended Matches -- hidden entirely when nothing matches the
+            viewer's own age window + caste (strict match, no fallback). */}
+        {loadingMatches || matches.length > 0 ? (
+          <>
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>Recommended Matches</Text>
+                <Text style={styles.sectionSub}>
+                  Profiles matching your preferences
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('AllMatches', { pushed: true })}
+              >
+                <Text style={styles.viewAll}>View All</Text>
+              </TouchableOpacity>
+            </View>
 
-        {loadingMatches ? (
-          <ActivityIndicator color="#D20236" style={{ marginVertical: 20 }} />
-        ) : matches.length === 0 ? (
-          <Text style={styles.empty}>No matches found yet</Text>
-        ) : (
-          matches.map(p => (
-            <ProfileCard
-              key={p.id}
-              profile={p}
-              {...getCardActionProps(p, sendRequest)}
-              onView={() =>
-                navigation.navigate('ProfileDetail', { profileId: p.profileId })
-              }
-              onInterested={() =>
-                toggleInterest(p.profileId, p._interested || p.isInterested)
-              }
-            />
-          ))
-        )}
+            {loadingMatches ? (
+              <ActivityIndicator color="#D20236" style={{ marginVertical: 20 }} />
+            ) : (
+              matches.map(p => (
+                <ProfileCard
+                  key={p.id}
+                  profile={p}
+                  {...getCardActionProps(p, sendRequest)}
+                  onView={() =>
+                    navigation.navigate('ProfileDetail', { profileId: p.profileId })
+                  }
+                  onInterested={() =>
+                    toggleInterest(p.profileId, p._interested || p.isInterested)
+                  }
+                />
+              ))
+            )}
+          </>
+        ) : null}
 
         {/* Received Requests */}
         {receivedRequests.length > 0 && (
