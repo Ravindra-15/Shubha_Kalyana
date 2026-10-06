@@ -297,11 +297,11 @@ export default function EmploymentScreen({ navigation }: any) {
             </>
           ) : isJobType ? (
             <>
-              <Text style={styles.label}>{t('signup.employment.youWorkWith')} <Text style={styles.star}>*</Text></Text>
+              <Text style={styles.label}>{isGovernmentEmployment ? 'Work as' : t('signup.employment.youWorkWith')} <Text style={styles.star}>*</Text></Text>
               <TextInput
                 ref={registerField('companyName') as any}
                 style={[styles.input, errors.companyName && styles.inputError]}
-                placeholder={t('signup.employment.companyPlaceholder')}
+                placeholder={isGovernmentEmployment ? 'Designation' : t('signup.employment.companyPlaceholder')}
                 placeholderTextColor="#999"
                 value={companyName}
                 onChangeText={(value) => {

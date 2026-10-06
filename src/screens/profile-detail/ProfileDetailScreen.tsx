@@ -783,7 +783,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           <Row label="Employment Type" value={emp.employedType?.replace(/_/g, ' ')} />
           {!isAgriculture && <>
           {(isJob || isBusiness) && <Row label={isGovernment ? 'Name of the department' : isBusiness ? 'Designation' : 'Profession'} value={emp.designation} />}
-          {isJob && <Row label="Company Name" value={emp.companyName} onLockedPress={handleViewContact} />}
+          {isJob && <Row label={isGovernment ? 'Work as' : 'Company Name'} value={emp.companyName} onLockedPress={handleViewContact} />}
           {isBusiness && <>
             <Row label="Firm Name" value={emp.companyName} onLockedPress={handleViewContact} />
             <Row label="Type of Business" value={emp.typeOfBusiness} />

@@ -1495,9 +1495,9 @@ export default function EditProfileScreen({ navigation }: any) {
           ) : isJobType ? (
             <>
               <EditableTextField
-                label="You work with"
+                label={isGovernmentEmployment ? 'Work as' : 'You work with'}
                 value={companyName}
-                placeholder="Company name"
+                placeholder={isGovernmentEmployment ? 'Designation' : 'Company name'}
                 disabled={employmentLocked}
                 onChangeText={(text) => {
                   setCompanyName(text);
