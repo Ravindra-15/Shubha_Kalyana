@@ -177,6 +177,11 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const [showSentModal, setShowSentModal] = useState(false);
   const [requestStatus, setRequestStatus] = useState<string | null>(null);
   const [showUnlock, setShowUnlock] = useState(false);
+  // 'accept' = the same "Oops !" upgrade prompt used everywhere else in the
+  // app for send/accept request (Home, AllMatches, Requests, etc.); 'profile'
+  // = the "Unlock Full Profile Access" benefits list, kept only for the
+  // view-contact flow below where listing what you'll unlock still makes sense.
+  const [unlockVariant, setUnlockVariant] = useState<'profile' | 'accept'>('profile');
   const [access, setAccess] = useState<any>(null);
   const [contact, setContact] = useState<any>(null);
   const [canChat, setCanChat] = useState(false);
@@ -268,6 +273,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       setRequestStatus('PENDING');
     } catch (err: any) {
       if (err?.response?.status === 402) {
+        setUnlockVariant('accept');
         setShowUnlock(true);
         return;
       }
@@ -291,6 +297,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       setCanChat(Boolean(acc?.canChatNow));
     } catch (err: any) {
       if (err?.response?.status === 402) {
+        setUnlockVariant('accept');
         setShowUnlock(true);
         return;
       }
@@ -317,6 +324,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       setCanChat(Boolean(acc?.canChatNow));
     } catch (err: any) {
       if (err?.response?.status === 402) {
+        setUnlockVariant('profile');
         setShowUnlock(true);
         return;
       }
@@ -514,6 +522,8 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       />
       <UnlockAccessModal
         visible={showUnlock}
+        variant={unlockVariant}
+        action={unlockVariant === 'accept' ? 'send' : undefined}
         name={name}
         access={access}
         onClose={() => setShowUnlock(false)}
@@ -808,34 +818,40 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           <Row
             label="Father"
             value={
-              fam.fatherName
-                ? `${fam.fatherName}${
-                    fam.fatherOccupation ? ` - ${fam.fatherOccupation}` : ''
-                  }`
-                : ''
+              fam.fatherName === 'blur' || fam.fatherOccupation === 'blur'
+                ? 'blur'
+                : fam.fatherName
+                  ? `${fam.fatherName}${
+                      fam.fatherOccupation ? ` - ${fam.fatherOccupation}` : ''
+                    }`
+                  : ''
             }
           />
           <Row
             label="Mother"
             value={
-              fam.motherName
-                ? `${fam.motherName}${
-                    fam.motherOccupation ? ` - ${fam.motherOccupation}` : ''
-                  }`
-                : ''
+              fam.motherName === 'blur' || fam.motherOccupation === 'blur'
+                ? 'blur'
+                : fam.motherName
+                  ? `${fam.motherName}${
+                      fam.motherOccupation ? ` - ${fam.motherOccupation}` : ''
+                    }`
+                  : ''
             }
           />
           <Row
             label="Siblings"
             value={
-              fam.brothers || fam.sisters
-                ? [
-                    fam.brothers ? `${fam.brothers} Brother(s)` : '',
-                    fam.sisters ? `${fam.sisters} Sister(s)` : '',
-                  ]
-                    .filter(Boolean)
-                    .join(', ')
-                : ''
+              fam.brothers === 'blur' || fam.sisters === 'blur'
+                ? 'blur'
+                : fam.brothers || fam.sisters
+                  ? [
+                      fam.brothers ? `${fam.brothers} Brother(s)` : '',
+                      fam.sisters ? `${fam.sisters} Sister(s)` : '',
+                    ]
+                      .filter(Boolean)
+                      .join(', ')
+                  : ''
             }
           />
         </Section>
