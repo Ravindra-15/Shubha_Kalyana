@@ -26,6 +26,14 @@ import { useInterestBadge } from '../../context/InterestBadgeContext';
 export default function AllMatchesScreen({ navigation, route }: any) {
   const { bumpInterestCount } = useInterestBadge();
   const pushed = route?.params?.pushed === true;
+  // Home's Premium/New Matches "View All" redirects here with these set --
+  // a fixed, pre-matched list (age/caste/never-married already locked by
+  // the viewer's own profile, plus whether the candidate has an active
+  // plan), so the manual Filter button is hidden in this mode (nothing
+  // meaningful left for the user to adjust).
+  const strictMode = route?.params?.strictMatch === true;
+  const premiumOnlyParam: boolean | undefined = route?.params?.premiumOnly;
+  const screenTitle = route?.params?.title || 'Find Matches';
 
   const [search, setSearch] = useState('');
   // Home redirects here with filters already chosen there; seed them so
@@ -53,6 +61,12 @@ export default function AllMatchesScreen({ navigation, route }: any) {
     (pageNum: number) => {
       const params: any = { page: pageNum, limit: 10 };
       if (search.trim()) params.search = search.trim();
+      if (strictMode) {
+        params.strictMatch = 'true';
+        if (premiumOnlyParam !== undefined) {
+          params.premiumOnly = String(premiumOnlyParam);
+        }
+      }
       if (filters) {
         params.minAge = filters.minAge;
         params.maxAge = filters.maxAge;
@@ -267,7 +281,7 @@ export default function AllMatchesScreen({ navigation, route }: any) {
         >
           <ArrowLeft color="#000" size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Find Matches</Text>
+        <Text style={styles.headerTitle}>{screenTitle}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -283,14 +297,16 @@ export default function AllMatchesScreen({ navigation, route }: any) {
             onChangeText={setSearch}
           />
         </View>
-        <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
-          <Filter color="#333" size={18} />
-          {activeFilterCount > 0 && (
-            <View style={styles.filterBadge}>
-              <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        {!strictMode && (
+          <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
+            <Filter color="#333" size={18} />
+            {activeFilterCount > 0 && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
 
       {!initialLoading && (

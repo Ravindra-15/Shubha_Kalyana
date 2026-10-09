@@ -28,14 +28,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useInterestBadge } from '../../context/InterestBadgeContext';
 import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
-import {
-  getProfileAccess,
-  unlockProfileWithMembership,
-} from '../../api/membershipPayment';
+import { getProfileAccess } from '../../api/membershipPayment';
 import { getUnreadCount } from '../../api/notification';
 import { isProfileFullyVerified } from '../../api/profile';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
-import { startChat } from '../../api/chat';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
@@ -51,7 +47,15 @@ export default function HomeScreen({ navigation }: any) {
   const [planName, setPlanName] = useState('Free Plan');
   const [hasActivePlan, setHasActivePlan] = useState(false);
   const [unlocksRemaining, setUnlocksRemaining] = useState(0);
-  const [matches, setMatches] = useState<any[]>([]);
+  // "Premium Matches" = strict age+caste+never-married match AND the
+  // candidate currently has an active plan; "New Matches" = the exact same
+  // age+caste+never-married criteria but WITHOUT an active plan -- the two
+  // are mutually exclusive (server enforces this via premiumOnly=true/false
+  // on the same strictMatch query), matching Shaadi.com's split sections.
+  const [premiumMatches, setPremiumMatches] = useState<any[]>([]);
+  const [premiumTotal, setPremiumTotal] = useState(0);
+  const [newMatches, setNewMatches] = useState<any[]>([]);
+  const [newTotal, setNewTotal] = useState(0);
   const [loadingMatches, setLoadingMatches] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Filters | null>(null);
@@ -95,37 +99,50 @@ export default function HomeScreen({ navigation }: any) {
     const count = await getUnreadCount();
     setUnreadCount(count);
   };
+  // Home's Premium/New Matches rows only ever show profiles that match the
+  // viewer's own age window + caste + never-married status -- not a ranking
+  // preference, an actual filter (see buildProfileFilter's strictMatch
+  // block server-side). Search/View All don't send strictMatch at all, so
+  // they're unaffected. premiumOnly further splits that same strict set by
+  // whether the candidate currently has an active plan.
+  const fetchHomeMatches = async (premiumOnly: boolean, filters?: Filters | null) => {
+    const params: any = { limit: 5, strictMatch: true, premiumOnly };
+    if (filters) {
+      params.minAge = filters.minAge;
+      params.maxAge = filters.maxAge;
+      if (filters.religion) params.religion = filters.religion;
+      if (filters.caste?.length) params.caste = filters.caste;
+      if (filters.subCaste?.length) params.subCaste = filters.subCaste;
+      if (filters.maritalStatus) params.maritalStatus = filters.maritalStatus;
+      if (filters.education?.length) params.education = filters.education;
+      if (filters.profession?.length) params.profession = filters.profession;
+      if (filters.preferredLocation?.length)
+        params.preferredLocation = filters.preferredLocation;
+      if (filters.district?.length) params.district = filters.district;
+    }
+    const res = await apiClient.get('/user/search', { params });
+    return {
+      profiles: res.data?.data?.profiles || [],
+      total: res.data?.data?.pagination?.total || 0,
+    };
+  };
+
   const loadMatches = async (filters?: Filters | null) => {
     try {
       setLoadingMatches(true);
-      // Home's "recommended for you" grid only ever shows profiles that
-      // match the viewer's own age window and caste -- not a ranking
-      // preference, an actual filter. Search/View All don't send this.
-      const params: any = { limit: 5, strictMatch: true };
-      if (filters) {
-        params.minAge = filters.minAge;
-        params.maxAge = filters.maxAge;
-        if (filters.religion) params.religion = filters.religion;
-        if (filters.caste?.length) params.caste = filters.caste;
-        if (filters.subCaste?.length) params.subCaste = filters.subCaste;
-        if (filters.maritalStatus) params.maritalStatus = filters.maritalStatus;
-        if (filters.education?.length) params.education = filters.education;
-        if (filters.profession?.length) params.profession = filters.profession;
-        if (filters.preferredLocation?.length)
-          params.preferredLocation = filters.preferredLocation;
-        if (filters.district?.length) params.district = filters.district;
-      }
-      console.log('Search Params:', params);
-
-      const res = await apiClient.get('/user/search', { params });
-
-      console.log('Search Response:', res.data);
-
-      // Server prioritizes the viewer's age and caste, then partner preferences.
-      // that order instead of re-sorting by match percentage alone here.
-      setMatches(res.data?.data?.profiles || []);
+      const [premium, fresh] = await Promise.all([
+        fetchHomeMatches(true, filters),
+        fetchHomeMatches(false, filters),
+      ]);
+      setPremiumMatches(premium.profiles);
+      setPremiumTotal(premium.total);
+      setNewMatches(fresh.profiles);
+      setNewTotal(fresh.total);
     } catch {
-      setMatches([]);
+      setPremiumMatches([]);
+      setPremiumTotal(0);
+      setNewMatches([]);
+      setNewTotal(0);
     } finally {
       setLoadingMatches(false);
     }
@@ -275,41 +292,6 @@ export default function HomeScreen({ navigation }: any) {
     setVendors(list);
   };
 
-  const removeInterest = async (profileId: string) => {
-    try {
-      await apiClient.delete(`/relationship/interests/${profileId}`);
-      setInterestedProfiles(prev =>
-        prev.filter(p => p.profileId !== profileId),
-      );
-      bumpInterestCount(-1);
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not remove');
-    }
-  };
-
-  const sendRequestFromInterest = async (profileId: string) => {
-    try {
-      await apiClient.post(`/relationship/requests/${profileId}`, {});
-      setInterestedProfiles(prev =>
-        prev.map(p =>
-          p.profileId === profileId ? { ...p, _requestSent: true } : p,
-        ),
-      );
-    } catch (err: any) {
-      if (err?.response?.status === 402) {
-        const name = interestedProfiles.find(
-          p => p.profileId === profileId,
-        )?.name;
-        await showAccessRequired(profileId, name, 'send');
-        return;
-      }
-      Alert.alert(
-        'Error',
-        err?.response?.data?.message || 'Could not send request',
-      );
-    }
-  };
-
   const applyFilters = (filters: Filters | null) => {
     if (filters) {
       // Home only ever shows a handful of matches (limit: 5 above), so any
@@ -322,149 +304,6 @@ export default function HomeScreen({ navigation }: any) {
     // Clearing filters (onApply(null)) keeps the existing Home behaviour.
     setActiveFilters(filters);
     loadMatches(filters);
-  };
-
-  const viewContact = async (profileId: string) => {
-    try {
-      await unlockProfileWithMembership(profileId);
-      navigation.navigate('ProfileDetail', { profileId });
-    } catch (err: any) {
-      if (err?.response?.status === 402) {
-        const name =
-          matches.find(p => p.profileId === profileId)?.name ||
-          interestedProfiles.find(p => p.profileId === profileId)?.name;
-        await showAccessRequired(profileId, name, 'send');
-        return;
-      }
-      Alert.alert(
-        'Error',
-        err?.response?.data?.message || 'Could not view contact',
-      );
-    }
-  };
-
-  const chatWithProfile = async (p: any) => {
-    try {
-      const { chat, profileId } = await startChat(p.userId);
-      navigation.navigate('Conversation', {
-        chatId: chat._id,
-        name: p.name,
-        photo: p.image,
-        receiverId: p.userId,
-        profileId,
-      });
-    } catch (err: any) {
-      Alert.alert(
-        'Error',
-        err?.response?.data?.message || 'Could not start chat',
-      );
-    }
-  };
-
-  const getCardActionProps = (p: any, sendFn: (id: string) => void) => {
-    if (p.requestStatus === 'ACCEPTED') {
-      // Being connected alone doesn't unlock chat -- BOTH sides must have
-      // viewed each other's contact at least once (single unlock or
-      // membership grant). One-sided unlocking must not open chat.
-      if (p.isChatUnlocked) {
-        return {
-          actionLabel: 'Chat Now',
-          actionDisabled: false,
-          onAction: () => chatWithProfile(p),
-        };
-      }
-      if (p.isContactUnlocked) {
-        return {
-          actionLabel: 'Chat Now',
-          actionDisabled: false,
-          onAction: () =>
-            Alert.alert(
-              'Chat not available yet',
-              'Once they also view your contact, you both can chat.',
-            ),
-        };
-      }
-      return {
-        actionLabel: 'View Contact',
-        actionDisabled: false,
-        onAction: () => viewContact(p.profileId),
-      };
-    }
-    if (p.bothHaveActivePlans && !p._requestSent && !p.requestStatus) {
-      return {
-        actionLabel: 'View Contact',
-        actionDisabled: false,
-        onAction: () => viewContact(p.profileId),
-      };
-    }
-    return {
-      actionLabel:
-        p._requestSent || p.requestStatus === 'PENDING'
-          ? 'Request Sent'
-          : 'Send Request',
-      actionDisabled: p._requestSent || !!p.requestStatus,
-      onAction: () => sendFn(p.profileId),
-    };
-  };
-
-  const sendRequest = async (profileId: string) => {
-    try {
-      await apiClient.post(`/relationship/requests/${profileId}`, {});
-      const prof = matches.find(p => p.profileId === profileId);
-      setMatches(prev =>
-        prev.map(p =>
-          p.profileId === profileId ? { ...p, _requestSent: true } : p,
-        ),
-      );
-      setSentModal({ show: true, name: prof?.name });
-    } catch (err: any) {
-      if (err?.response?.status === 402) {
-        const name = matches.find(p => p.profileId === profileId)?.name;
-        await showAccessRequired(profileId, name, 'send');
-        return;
-      }
-      Alert.alert(
-        'Error',
-        err?.response?.data?.message || 'Could not send request',
-      );
-    }
-  };
-
-  const toggleInterest = async (
-    profileId: string,
-    currentlyInterested: boolean,
-  ) => {
-    try {
-      if (currentlyInterested) {
-        await apiClient.delete(`/relationship/interests/${profileId}`);
-        setMatches(prev =>
-          prev.map(p =>
-            p.profileId === profileId
-              ? { ...p, _interested: false, isInterested: false }
-              : p,
-          ),
-        );
-        loadInterested();
-        bumpInterestCount(-1);
-      } else {
-        await apiClient.post(`/relationship/interests/${profileId}`, {});
-        setMatches(prev =>
-          prev.map(p =>
-            p.profileId === profileId
-              ? { ...p, _interested: true, isInterested: true }
-              : p,
-          ),
-        );
-        loadInterested();
-        bumpInterestCount(1);
-        Alert.alert('Added', 'Profile added to your interests');
-      }
-    } catch (err: any) {
-      Alert.alert(
-        'Error',
-        err?.response?.data?.message || 'Could not update interest',
-      );
-    }
   };
 
   const loadPlan = async () => {
@@ -695,19 +534,29 @@ export default function HomeScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Recommended Matches -- hidden entirely when nothing matches the
-            viewer's own age window + caste (strict match, no fallback). */}
-        {loadingMatches || matches.length > 0 ? (
+        {/* Premium Matches -- strict age+caste+never-married match AND the
+            candidate has an active plan. Hidden entirely when there's
+            nothing in this bucket (no fallback to unmatched profiles). */}
+        {loadingMatches || premiumMatches.length > 0 ? (
           <>
             <View style={styles.sectionHeader}>
               <View>
-                <Text style={styles.sectionTitle}>Recommended Matches</Text>
+                <Text style={styles.sectionTitle}>
+                  Premium Matches{premiumTotal > 0 ? ` (${premiumTotal})` : ''}
+                </Text>
                 <Text style={styles.sectionSub}>
                   Profiles matching your preferences
                 </Text>
               </View>
               <TouchableOpacity
-                onPress={() => navigation.navigate('AllMatches', { pushed: true })}
+                onPress={() =>
+                  navigation.navigate('AllMatches', {
+                    pushed: true,
+                    strictMatch: true,
+                    premiumOnly: true,
+                    title: 'Premium Matches',
+                  })
+                }
               >
                 <Text style={styles.viewAll}>View All</Text>
               </TouchableOpacity>
@@ -717,7 +566,61 @@ export default function HomeScreen({ navigation }: any) {
               <ActivityIndicator color="#D20236" style={{ marginVertical: 20 }} />
             ) : (
               <FlatList
-                data={matches}
+                data={premiumMatches}
+                keyExtractor={p => p.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                snapToInterval={PROFILE_CARD_WIDTH + 12}
+                decelerationRate="fast"
+                contentContainerStyle={{ paddingRight: 8, paddingTop: 4 }}
+                renderItem={({ item: p }) => (
+                  <ProfileCard
+                    profile={p}
+                    width={PROFILE_CARD_WIDTH}
+                    style={{ marginRight: 12 }}
+                    onView={() =>
+                      navigation.navigate('ProfileDetail', { profileId: p.profileId })
+                    }
+                  />
+                )}
+              />
+            )}
+          </>
+        ) : null}
+
+        {/* New Matches -- same strict age+caste+never-married criteria as
+            Premium Matches, but for candidates WITHOUT an active plan
+            (mutually exclusive with Premium Matches above). */}
+        {loadingMatches || newMatches.length > 0 ? (
+          <>
+            <View style={[styles.sectionHeader, styles.sectionHeaderSpaced]}>
+              <View>
+                <Text style={styles.sectionTitle}>
+                  New Matches{newTotal > 0 ? ` (${newTotal})` : ''}
+                </Text>
+                <Text style={styles.sectionSub}>
+                  Profiles matching your preferences
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('AllMatches', {
+                    pushed: true,
+                    strictMatch: true,
+                    premiumOnly: false,
+                    title: 'New Matches',
+                  })
+                }
+              >
+                <Text style={styles.viewAll}>View All</Text>
+              </TouchableOpacity>
+            </View>
+
+            {loadingMatches ? (
+              <ActivityIndicator color="#D20236" style={{ marginVertical: 20 }} />
+            ) : (
+              <FlatList
+                data={newMatches}
                 keyExtractor={p => p.id}
                 horizontal
                 showsHorizontalScrollIndicator={false}
