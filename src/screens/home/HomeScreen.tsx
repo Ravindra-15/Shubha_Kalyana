@@ -13,7 +13,7 @@ import { Bell } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../api/client';
 import WelcomePopup from './WelcomePopup';
-import { Crown, ArrowRight } from 'lucide-react-native';
+import { Crown, ArrowRight, Pencil, User as UserIcon } from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { getActiveMembership } from '../../api/membership';
 import { ActivityIndicator } from 'react-native';
@@ -45,6 +45,8 @@ export default function HomeScreen({ navigation }: any) {
   const { bumpInterestCount } = useInterestBadge();
   const [firstName, setFirstName] = useState('');
   const [gender, setGender] = useState('');
+  const [profilePhoto, setProfilePhoto] = useState('');
+  const [profileCode, setProfileCode] = useState('');
   const [showWelcome, setShowWelcome] = useState(false);
   const [planName, setPlanName] = useState('Free Plan');
   const [hasActivePlan, setHasActivePlan] = useState(false);
@@ -489,6 +491,9 @@ export default function HomeScreen({ navigation }: any) {
       const name = user?.firstName || '';
       setFirstName(name);
       setGender(profile?.basicInfo?.gender || '');
+      const photo = profile?.photos?.find((p: any) => p.isProfilePhoto)?.url || '';
+      setProfilePhoto(photo);
+      setProfileCode(user?.profileCode || '');
 
       // show welcome popup once per user
       const userId = user?._id;
@@ -594,6 +599,46 @@ export default function HomeScreen({ navigation }: any) {
                 </Text>
               </View>
             )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Profile summary */}
+        <View style={styles.profileSummary}>
+          <View style={styles.profileAvatarWrap}>
+            {profilePhoto ? (
+              <Image
+                source={{ uri: resolveImageUrl(profilePhoto) }}
+                style={styles.profileAvatar}
+              />
+            ) : (
+              <View style={[styles.profileAvatar, styles.profileAvatarPlaceholder]}>
+                <UserIcon color="#D20236" size={34} />
+              </View>
+            )}
+          </View>
+
+          <View style={styles.profileSummaryInfo}>
+            <Text style={styles.profileSummaryName} numberOfLines={1}>
+              {firstName || 'there'}
+            </Text>
+            {!!profileCode && (
+              <Text style={styles.profileSummaryCode} numberOfLines={1}>
+                {profileCode}
+              </Text>
+            )}
+            <View style={styles.profileSummaryPlanRow}>
+              <Crown color="#D20236" size={13} />
+              <Text style={styles.profileSummaryPlanText}>{planName}</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.editProfileBtn}
+            onPress={() => navigation.navigate('EditProfile')}
+            activeOpacity={0.85}
+          >
+            <Pencil color="#D20236" size={14} />
+            <Text style={styles.editProfileText}>Edit Profile</Text>
           </TouchableOpacity>
         </View>
 
@@ -857,6 +902,56 @@ const styles = StyleSheet.create({
   name: { color: '#D20236' },
   subtitle: { fontSize: 13, color: '#666', marginTop: 4 },
   bellWrap: { padding: 4 },
+  profileSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    marginBottom: 18,
+    backgroundColor: '#fff',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  profileAvatarWrap: { marginRight: 14 },
+  profileAvatar: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    borderWidth: 2.5,
+    borderColor: '#D20236',
+  },
+  profileAvatarPlaceholder: {
+    backgroundColor: '#fce4ec',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileSummaryInfo: { flex: 1, minWidth: 0 },
+  profileSummaryName: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
+  profileSummaryCode: { fontSize: 12, color: '#888', marginTop: 3, fontFamily: 'Outfit-Medium' },
+  profileSummaryPlanRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 6,
+  },
+  profileSummaryPlanText: { fontSize: 12, color: '#666', fontFamily: 'Outfit-Medium' },
+  editProfileBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#D20236',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  editProfileText: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-Bold' },
   badge: {
     position: 'absolute',
     top: 0,
