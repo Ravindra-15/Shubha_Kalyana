@@ -39,6 +39,8 @@ import { startChat } from '../../api/chat';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
+const PROFILE_CARD_WIDTH = SCREEN_WIDTH * 0.62;
+const REQUEST_CARD_WIDTH = SCREEN_WIDTH * 0.72;
 export default function HomeScreen({ navigation }: any) {
   const { bumpInterestCount } = useInterestBadge();
   const [firstName, setFirstName] = useState('');
@@ -669,19 +671,25 @@ export default function HomeScreen({ navigation }: any) {
             {loadingMatches ? (
               <ActivityIndicator color="#D20236" style={{ marginVertical: 20 }} />
             ) : (
-              matches.map(p => (
-                <ProfileCard
-                  key={p.id}
-                  profile={p}
-                  {...getCardActionProps(p, sendRequest)}
-                  onView={() =>
-                    navigation.navigate('ProfileDetail', { profileId: p.profileId })
-                  }
-                  onInterested={() =>
-                    toggleInterest(p.profileId, p._interested || p.isInterested)
-                  }
-                />
-              ))
+              <FlatList
+                data={matches}
+                keyExtractor={p => p.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                snapToInterval={PROFILE_CARD_WIDTH + 12}
+                decelerationRate="fast"
+                contentContainerStyle={{ paddingRight: 8, paddingTop: 4 }}
+                renderItem={({ item: p }) => (
+                  <ProfileCard
+                    profile={p}
+                    width={PROFILE_CARD_WIDTH}
+                    style={{ marginRight: 12 }}
+                    onView={() =>
+                      navigation.navigate('ProfileDetail', { profileId: p.profileId })
+                    }
+                  />
+                )}
+              />
             )}
           </>
         ) : null}
@@ -689,7 +697,7 @@ export default function HomeScreen({ navigation }: any) {
         {/* Received Requests */}
         {receivedRequests.length > 0 && (
           <>
-            <View style={styles.sectionHeader}>
+            <View style={[styles.sectionHeader, styles.sectionHeaderSpaced]}>
               <View>
                 <Text style={styles.sectionTitle}>Received Requests</Text>
                 <Text style={styles.sectionSub}>
@@ -705,26 +713,36 @@ export default function HomeScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
 
-            {receivedRequests.map(r => (
-              <RequestCard
-                key={r.requestId}
-                profile={r}
-                onAccept={() => acceptRequest(r.requestId)}
-                onReject={() => rejectRequest(r.requestId)}
-                onView={() =>
-                  navigation.navigate('ProfileDetail', {
-                    profileId: r.profileId,
-                  })
-                }
-              />
-            ))}
+            <FlatList
+              data={receivedRequests}
+              keyExtractor={r => r.requestId}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={REQUEST_CARD_WIDTH + 12}
+              decelerationRate="fast"
+              contentContainerStyle={{ paddingRight: 8, paddingTop: 4 }}
+              renderItem={({ item: r }) => (
+                <RequestCard
+                  profile={r}
+                  width={REQUEST_CARD_WIDTH}
+                  style={{ marginRight: 12 }}
+                  onAccept={() => acceptRequest(r.requestId)}
+                  onReject={() => rejectRequest(r.requestId)}
+                  onView={() =>
+                    navigation.navigate('ProfileDetail', {
+                      profileId: r.profileId,
+                    })
+                  }
+                />
+              )}
+            />
           </>
         )}
 
         {/* Interested Profiles */}
         {interestedProfiles.length > 0 && (
           <>
-            <View style={styles.sectionHeader}>
+            <View style={[styles.sectionHeader, styles.sectionHeaderSpaced]}>
               <View>
                 <Text style={styles.sectionTitle}>Interested Profiles</Text>
                 <Text style={styles.sectionSub}>
@@ -740,21 +758,27 @@ export default function HomeScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
 
-            {interestedProfiles.map(p => (
-              <ProfileCard
-                key={p.profileId}
-                profile={p}
-                {...getCardActionProps(p, sendRequestFromInterest)}
-                onView={() =>
-                  navigation.navigate('ProfileDetail', {
-                    profileId: p.profileId,
-                  })
-                }
-                showInterested={false}
-                onRemove={() => removeInterest(p.profileId)}
-                removeLabel="Remove from Interested"
-              />
-            ))}
+            <FlatList
+              data={interestedProfiles}
+              keyExtractor={p => p.profileId}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={PROFILE_CARD_WIDTH + 12}
+              decelerationRate="fast"
+              contentContainerStyle={{ paddingRight: 8, paddingTop: 4 }}
+              renderItem={({ item: p }) => (
+                <ProfileCard
+                  profile={p}
+                  width={PROFILE_CARD_WIDTH}
+                  style={{ marginRight: 12 }}
+                  onView={() =>
+                    navigation.navigate('ProfileDetail', {
+                      profileId: p.profileId,
+                    })
+                  }
+                />
+              )}
+            />
           </>
         )}
 
@@ -882,6 +906,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 14,
   },
+  // Extra breathing room above a section that follows another card row
+  // directly (no banner/spacer between them) -- without this, "Received
+  // Requests" and "Interested Profiles" sat flush against the row above.
+  sectionHeaderSpaced: { marginTop: 24 },
   sectionTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   sectionSub: { fontSize: 13, color: '#666', marginTop: 2 },
   viewAll: { fontSize: 14, color: '#D20236', fontFamily: 'Outfit-SemiBold' },

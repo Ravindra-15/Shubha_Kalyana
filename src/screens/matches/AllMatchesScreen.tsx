@@ -312,12 +312,12 @@ export default function AllMatchesScreen({ navigation, route }: any) {
           refreshing={refreshing}
           onRefresh={onRefresh}
           renderItem={({ item }) => (
-            <ProfileCard
-              profile={item}
-              {...getCardActionProps(item)}
-              onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}
-              onInterested={() => toggleInterest(item.profileId, item.isInterested)}
-            />
+            <View style={{ marginBottom: 14 }}>
+              <ProfileCard
+                profile={item}
+                onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}
+              />
+            </View>
           )}
           ListEmptyComponent={
             <View style={styles.emptyWrap}>

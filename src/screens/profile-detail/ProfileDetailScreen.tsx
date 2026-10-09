@@ -45,6 +45,7 @@ import {
 import { startChat, blockChatUser } from '../../api/chat';
 import { useFocusEffect } from '@react-navigation/native';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import { useInterestBadge } from '../../context/InterestBadgeContext';
 
 if (
   Platform.OS === 'android' &&
@@ -193,6 +194,9 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const [blocking, setBlocking] = useState(false);
   const [reportChatId, setReportChatId] = useState('');
   const [acceptingRequest, setAcceptingRequest] = useState(false);
+  const [interested, setInterested] = useState(false);
+  const [togglingInterest, setTogglingInterest] = useState(false);
+  const { bumpInterestCount } = useInterestBadge();
 
   const loadProfile = useCallback(
     async (silent = false) => {
@@ -200,6 +204,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       try {
         const res = await getPartnerProfile(profileId);
         setData(res);
+        setInterested(Boolean(res?.isInterested));
 
         // load access status
         try {
@@ -265,6 +270,31 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   }, [loadProfile]);
 
   const { refreshing, onRefresh } = usePullToRefresh(() => loadProfile(true));
+
+  const toggleInterestLocal = async () => {
+    if (togglingInterest) return;
+    setTogglingInterest(true);
+    try {
+      if (interested) {
+        await apiClient.delete(`/relationship/interests/${profileId}`);
+        setInterested(false);
+        bumpInterestCount(-1);
+      } else {
+        await apiClient.post(`/relationship/interests/${profileId}`, {});
+        setInterested(true);
+        bumpInterestCount(1);
+      }
+    } catch (err: any) {
+      if (err?.response?.status === 402) {
+        setUnlockVariant('accept');
+        setShowUnlock(true);
+        return;
+      }
+      Alert.alert('Error', err?.response?.data?.message || 'Could not update interest');
+    } finally {
+      setTogglingInterest(false);
+    }
+  };
 
   const sendRequest = async () => {
     try {
@@ -713,6 +743,21 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               </Text>
             </TouchableOpacity>
           )}
+
+          <TouchableOpacity
+            style={[styles.interestBtn, togglingInterest && styles.interestBtnDisabled]}
+            onPress={toggleInterestLocal}
+            disabled={togglingInterest}
+          >
+            <Heart
+              color="#D20236"
+              fill={interested ? '#D20236' : 'transparent'}
+              size={17}
+            />
+            <Text style={styles.interestText}>
+              {interested ? 'Interested' : 'Interest'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Contact Details */}
@@ -961,6 +1006,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sendText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
+  interestBtn: {
+    marginTop: 10,
+    borderWidth: 1.5,
+    borderColor: '#D20236',
+    borderRadius: 8,
+    paddingVertical: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#fff',
+  },
+  interestBtnDisabled: { opacity: 0.6 },
+  interestText: { color: '#D20236', fontSize: 15, fontFamily: 'Outfit-Bold' },
   section: { backgroundColor: '#fff', marginTop: 10, paddingHorizontal: 16 },
   sectionHead: {
     flexDirection: 'row',

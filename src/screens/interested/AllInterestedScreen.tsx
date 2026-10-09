@@ -236,14 +236,12 @@ export default function AllInterestedScreen({ navigation, route }: any) {
             refreshing={refreshing}
             onRefresh={onRefresh}
             renderItem={({ item }) => (
-              <ProfileCard
-                profile={item}
-                {...getCardActionProps(item)}
-                onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}
-                showInterested={false}
-                onRemove={() => removeInterest(item.profileId)}
-                removeLabel="Remove from Interested"
-              />
+              <View style={{ marginBottom: 14 }}>
+                <ProfileCard
+                  profile={item}
+                  onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}
+                />
+              </View>
             )}
             ListEmptyComponent={<Text style={styles.empty}>No interested profiles yet</Text>}
             ListFooterComponent={

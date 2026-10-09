@@ -280,12 +280,10 @@ export default function ProfileViewersScreen({ navigation }: any) {
               </Text>
             }
             renderItem={({ item }) => (
-              <View>
+              <View style={{ marginBottom: 14 }}>
                 <ProfileCard
                   profile={item}
-                  {...getCardActionProps(item)}
                   onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}
-                  showInterested={false}
                 />
                 <Text style={styles.viewerMeta}>
                   {formatViewedAt(item.viewedAt)}
