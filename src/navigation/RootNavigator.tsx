@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
+import AppSplash from '../components/AppSplash';
 import SplashScreen from '../screens/onboarding/SplashScreen';
 import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -57,12 +57,23 @@ const Stack = createNativeStackNavigator();
 export default function RootNavigator() {
   const { token, loading, hasSeenOnboarding } = useAuth();
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#D20236" />
-      </View>
-    );
+  // Branded red splash on every app open (not just for brand-new users) --
+  // held for at least this long even if the saved-session check resolves
+  // instantly, so it's actually perceptible rather than a single-frame
+  // flash. Brand-new users head to the dedicated 'Splash' stack screen
+  // right after this, which already shows this exact same screen for its
+  // own 2.5s, so the minimum hold is skipped in that case only -- otherwise
+  // it'd show twice back to back.
+  const [minSplashElapsed, setMinSplashElapsed] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setMinSplashElapsed(true), 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const headingToDedicatedSplash = !loading && !token && !hasSeenOnboarding;
+
+  if (loading || (!minSplashElapsed && !headingToDedicatedSplash)) {
+    return <AppSplash />;
   }
 
   const initialRouteName = token
