@@ -21,6 +21,7 @@ import ProfileCard from '../../components/ProfileCard';
 import { Filter } from 'lucide-react-native';
 import FilterModal, { Filters } from '../../components/FilterModal';
 import RequestCard from '../../components/RequestCard';
+import SocialLinks from '../../components/SocialLinks';
 import { FlatList, Image, Dimensions } from 'react-native';
 import { getPublicVendors } from '../../api/vendor';
 import { resolveImageUrl } from '../../utils/imageUrl';
@@ -786,7 +787,7 @@ export default function HomeScreen({ navigation }: any) {
           </View>
         )}
 
-        {/* Other sections will go here */}
+        <SocialLinks />
       </ScrollView>
     </SafeAreaView>
   );
