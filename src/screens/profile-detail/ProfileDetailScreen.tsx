@@ -40,6 +40,7 @@ import ReportSubmittedModal from '../../components/ReportSubmittedModal';
 import GalleryPreviewGrid from '../../components/GalleryPreviewGrid';
 import LockedGalleryPreview from '../../components/LockedGalleryPreview';
 import GalleryLightboxModal from '../../components/GalleryLightboxModal';
+import MatchBreakdownSection from '../../components/MatchBreakdownSection';
 import {
   unlockProfileWithMembership,
   getProfileAccess,
@@ -461,6 +462,8 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const addr = profile.address || {};
   const pref = data.partnerPreference || {};
   const hobbies = profile.hobbiesAndInterests || [];
+  const matchBreakdown = data.matchBreakdown || { fields: [], matchedCount: 0, totalCount: 0 };
+  const myPhoto = data.myPhoto || '';
 
   const name = [
     basic.firstName || user.firstName,
@@ -932,6 +935,23 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             }
           />
           <Row
+            label="Preferred Caste"
+            value={pref.caste
+              ?.map((c: any) => c?.casteName || c?.name)
+              .filter(Boolean)
+              .join(', ')}
+          />
+          <Row
+            label="Preferred Sub Caste"
+            value={pref.subCaste?.join?.(', ')}
+          />
+          <Row
+            label="Preferred Marital Status"
+            value={pref.maritalStatus
+              ?.map((status: string) => status?.replace(/_/g, ' '))
+              .join(', ')}
+          />
+          <Row
             label="Preferred Education"
             value={pref.education?.join?.(', ')}
           />
@@ -940,6 +960,15 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             value={pref.ressident?.join?.(', ')}
           />
         </Section>
+
+        <MatchBreakdownSection
+          myPhoto={myPhoto}
+          theirPhoto={photo}
+          theirName={name}
+          fields={matchBreakdown.fields}
+          matchedCount={matchBreakdown.matchedCount}
+          totalCount={matchBreakdown.totalCount}
+        />
       </ScrollView>
     </SafeAreaView>
   );
