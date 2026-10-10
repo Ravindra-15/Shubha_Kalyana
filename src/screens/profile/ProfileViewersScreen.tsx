@@ -44,7 +44,7 @@ const formatViewedAt = (date?: string) => {
   })}`;
 };
 
-const mapProfileViewer = (item: any) => {
+export const mapProfileViewer = (item: any) => {
   const p = item.profile || {};
   const user = item.user || {};
   const basic = p.basicInfo || {};
@@ -340,7 +340,10 @@ const styles = StyleSheet.create({
     color: '#777',
     fontSize: 12,
     fontFamily: 'Outfit-Medium',
-    marginTop: -8,
+    // Was -8 (pulling it up to sit tight under the old, much shorter
+    // card) -- the taller redesigned ProfileCard now overlaps that
+    // negative margin, so this needs to push down instead.
+    marginTop: 8,
     marginBottom: 14,
     paddingHorizontal: 4,
   },

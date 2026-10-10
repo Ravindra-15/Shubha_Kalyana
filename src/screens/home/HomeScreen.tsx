@@ -31,7 +31,8 @@ import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess } from '../../api/membershipPayment';
 import { getUnreadCount } from '../../api/notification';
-import { isProfileFullyVerified } from '../../api/profile';
+import { isProfileFullyVerified, getProfileViewers } from '../../api/profile';
+import { mapProfileViewer } from '../profile/ProfileViewersScreen';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -62,6 +63,8 @@ export default function HomeScreen({ navigation }: any) {
   const [activeFilters, setActiveFilters] = useState<Filters | null>(null);
   const [receivedRequests, setReceivedRequests] = useState<any[]>([]);
   const [interestedProfiles, setInterestedProfiles] = useState<any[]>([]);
+  const [profileViewers, setProfileViewers] = useState<any[]>([]);
+  const [profileViewersTotal, setProfileViewersTotal] = useState(0);
   const [vendors, setVendors] = useState<any[]>([]);
   const [sentModal, setSentModal] = useState<{ show: boolean; name?: string }>({
     show: false,
@@ -90,6 +93,7 @@ export default function HomeScreen({ navigation }: any) {
       loadMatches(activeFilters);
       loadReceivedRequests();
       loadInterested();
+      loadProfileViewers();
       loadVendors();
       loadUnread();
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -287,6 +291,19 @@ export default function HomeScreen({ navigation }: any) {
       setInterestedProfiles([]);
     }
   };
+  const loadProfileViewers = async () => {
+    try {
+      const res = await getProfileViewers({ limit: 5 });
+      const viewers = res?.viewers || [];
+      setProfileViewers(viewers.map(mapProfileViewer));
+      setProfileViewersTotal(
+        res?.profileViewersCount || res?.pagination?.total || 0,
+      );
+    } catch {
+      setProfileViewers([]);
+      setProfileViewersTotal(0);
+    }
+  };
   const loadVendors = async () => {
     const list = await getPublicVendors();
     // console.log('VENDORS:', JSON.stringify(list));
@@ -356,6 +373,7 @@ export default function HomeScreen({ navigation }: any) {
       loadMatches(activeFilters),
       loadReceivedRequests(),
       loadInterested(),
+      loadProfileViewers(),
       loadVendors(),
       loadUnread(),
     ]),
@@ -724,6 +742,48 @@ export default function HomeScreen({ navigation }: any) {
                     navigation.navigate('ProfileDetail', {
                       profileId: p.profileId,
                     })
+                  }
+                />
+              )}
+            />
+          </>
+        )}
+
+        {/* Profile Viewers */}
+        {profileViewers.length > 0 && (
+          <>
+            <View style={[styles.sectionHeader, styles.sectionHeaderSpaced]}>
+              <View>
+                <Text style={styles.sectionTitle}>
+                  Profile Viewers
+                  {profileViewersTotal > 0 ? ` (${profileViewersTotal})` : ''}
+                </Text>
+                <Text style={styles.sectionSub}>
+                  People who viewed your profile
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ProfileViewers')}
+              >
+                <Text style={styles.viewAll}>View All</Text>
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={profileViewers}
+              keyExtractor={p => p.profileId}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={PROFILE_CARD_WIDTH + 12}
+              decelerationRate="fast"
+              contentContainerStyle={{ paddingRight: 8, paddingTop: 4 }}
+              renderItem={({ item: p }) => (
+                <ProfileCard
+                  profile={p}
+                  width={PROFILE_CARD_WIDTH}
+                  style={{ marginRight: 12 }}
+                  onView={() =>
+                    navigation.navigate('ProfileDetail', { profileId: p.profileId })
                   }
                 />
               )}

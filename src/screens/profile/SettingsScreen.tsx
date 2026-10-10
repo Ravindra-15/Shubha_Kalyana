@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, User, Globe, CreditCard, HelpCircle, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, User, Globe, CreditCard, ChevronRight } from 'lucide-react-native';
 import BottomNav from '../../components/BottomNav';
 
 export default function SettingsScreen({ navigation }: any) {
@@ -18,10 +18,8 @@ export default function SettingsScreen({ navigation }: any) {
       title: 'MEMBERSHIP',
       items: [{ label: 'Membership & Billing', Icon: CreditCard, onPress: () => navigation.navigate('Plans') }],
     },
-    {
-      title: 'SUPPORT',
-      items: [{ label: 'Help & Support', Icon: HelpCircle, onPress: () => navigation.navigate('HelpSupport') }],
-    },
+    // Help & Support moved to the My Profile screen (below Interests) --
+    // client decision, this entry point used to live here.
   ];
 
   return (

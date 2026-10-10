@@ -5,7 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  ArrowLeft, Settings, BadgeCheck, Edit3, CreditCard, Download, Heart, ChevronRight, Crown, Eye, Users,
+  ArrowLeft, Settings, BadgeCheck, Edit3, CreditCard, Download, Heart, ChevronRight, Crown, Eye, Users, HelpCircle,
 } from 'lucide-react-native';
 import apiClient from '../../api/client';
 import { getActiveMembership } from '../../api/membership';
@@ -137,6 +137,7 @@ export default function ProfileScreen({ navigation }: any) {
     { label: 'Payment History', Icon: CreditCard, onPress: () => navigation.navigate('PaymentHistory') },
     { label: 'Download Receipts', Icon: Download, onPress: () => navigation.navigate('PaymentHistory') },
     { label: 'Interests', Icon: Heart, onPress: () => navigation.navigate('AllInterested', { pushed: true }) },
+    { label: 'Help & Support', Icon: HelpCircle, onPress: () => navigation.navigate('HelpSupport') },
   ];
 
   return (
