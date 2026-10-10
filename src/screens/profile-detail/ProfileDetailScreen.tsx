@@ -9,7 +9,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Dimensions,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
@@ -37,6 +39,7 @@ import ReportUserModal from '../../components/ReportUserModal';
 import ReportSubmittedModal from '../../components/ReportSubmittedModal';
 import GalleryPreviewGrid from '../../components/GalleryPreviewGrid';
 import LockedGalleryPreview from '../../components/LockedGalleryPreview';
+import GalleryLightboxModal from '../../components/GalleryLightboxModal';
 import {
   unlockProfileWithMembership,
   getProfileAccess,
@@ -53,6 +56,7 @@ if (
 ) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 const isBlur = (v: any) =>
   v === 'blur' || v === undefined || v === null || v === '';
 const isLocked = (v: any) => v === 'blur';
@@ -196,6 +200,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const [acceptingRequest, setAcceptingRequest] = useState(false);
   const [interested, setInterested] = useState(false);
   const [togglingInterest, setTogglingInterest] = useState(false);
+  const [showCoverLightbox, setShowCoverLightbox] = useState(false);
   const { bumpInterestCount } = useInterestBadge();
 
   const loadProfile = useCallback(
@@ -537,6 +542,11 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <GalleryLightboxModal
+        visible={showCoverLightbox}
+        photos={photo ? [{ url: resolveImageUrl(photo) }] : []}
+        onClose={() => setShowCoverLightbox(false)}
+      />
       <RequestSentModal
         visible={showSentModal}
         name={name}
@@ -623,10 +633,16 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         {/* Cover photo */}
         <View style={styles.coverWrap}>
           {photo ? (
-            <Image
-              source={{ uri: resolveImageUrl(photo) }}
+            <TouchableOpacity
               style={styles.cover}
-            />
+              activeOpacity={0.95}
+              onPress={() => setShowCoverLightbox(true)}
+            >
+              <Image
+                source={{ uri: resolveImageUrl(photo) }}
+                style={styles.cover}
+              />
+            </TouchableOpacity>
           ) : (
             <View style={[styles.cover, styles.coverPlaceholder]} />
           )}
@@ -636,7 +652,11 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               <Text style={styles.verifiedText}>Verified Profile</Text>
             </View>
           )}
-          <View style={styles.coverInfo}>
+          <LinearGradient
+            pointerEvents="none"
+            colors={['transparent', 'rgba(0,0,0,0.75)']}
+            style={styles.coverInfo}
+          >
             <Text style={styles.coverName}>
               {name}
               {age ? `, ${age}` : ''}
@@ -671,7 +691,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
                 <Text style={styles.coverIconText}>{location}</Text>
               </View>
             )}
-          </View>
+          </LinearGradient>
         </View>
 
         {Array.isArray(data?.galleryPhotos) && data.galleryPhotos.length > 0 && (
@@ -961,7 +981,7 @@ const styles = StyleSheet.create({
   },
   optionsMenuItem: { paddingHorizontal: 16, paddingVertical: 12 },
   optionsMenuText: { fontSize: 14, fontFamily: 'Outfit-Medium', color: '#D20236' },
-  coverWrap: { height: 320, position: 'relative' },
+  coverWrap: { height: SCREEN_HEIGHT * 0.6, position: 'relative' },
   cover: { width: '100%', height: '100%' },
   coverPlaceholder: { backgroundColor: '#ccc' },
   verifiedBadge: {
@@ -982,8 +1002,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 18,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    paddingHorizontal: 18,
+    paddingBottom: 18,
+    paddingTop: 70,
   },
   coverName: { color: '#fff', fontSize: 24, fontFamily: 'Outfit-Bold' },
   coverMeta: { color: '#fff', fontSize: 13, marginTop: 4 },
