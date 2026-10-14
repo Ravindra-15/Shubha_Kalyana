@@ -1,4 +1,4 @@
-const S3_BASE = 'https://shubhkalyan-bucket.s3.ap-south-1.amazonaws.com';
+const S3_BASE = 'https://subhkalayana.s3.ap-south-1.amazonaws.com';
 
 
 export function resolveImageUrl(url?: string): string {

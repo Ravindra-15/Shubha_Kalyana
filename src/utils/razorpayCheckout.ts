@@ -7,7 +7,7 @@ import { createMembershipOrder } from '../api/membershipPlans';
 import type { PaymentOrderResult } from './paymentBreakup';
 
 const RAZORPAY_LOGO_URL =
-  'https://shubhkalyan-bucket.s3.ap-south-1.amazonaws.com/ui/app_icon_round.png';
+  'https://subhkalayana.s3.ap-south-1.amazonaws.com/ui/app_icon_round.png';
 
 type PaymentResult = { success: boolean; message?: string; paymentMayHaveSucceeded?: boolean };
 type UserInfo = { name?: string; email?: string; contact?: string };
