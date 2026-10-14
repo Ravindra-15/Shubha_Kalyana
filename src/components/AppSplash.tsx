@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Image, Text, ActivityIndicator, StyleSheet, Platform, StatusBar } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
 type Props = {
@@ -17,6 +17,15 @@ export default function AppSplash({ showSpinner = true }: Props) {
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
+      {/* Without an explicit backgroundColor, Android falls back to the
+          theme's default status bar color, which some OEMs/versions render
+          white -- leaving a visible gap above this full-bleed screen on
+          those devices even though the gradient itself fills the rest.
+          Setting it here (and nowhere else) scopes the fix to just the
+          splash; it reverts automatically once this unmounts. */}
+      {Platform.OS === 'android' && (
+        <StatusBar backgroundColor="#6C011C" barStyle="light-content" />
+      )}
       <View style={styles.logoWrap}>
         <View style={styles.logoBox}>
           <Image

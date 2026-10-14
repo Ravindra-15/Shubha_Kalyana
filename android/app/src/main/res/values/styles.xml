@@ -4,6 +4,11 @@
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <!-- Some OEM/Android-version defaults render the bottom system nav
+             bar white instead of black when no color is set, leaving a
+             visible gap under full-bleed screens like the splash. Pinning
+             it explicitly keeps it consistent across devices. -->
+        <item name="android:navigationBarColor">#000000</item>
     </style>
 
 </resources>
