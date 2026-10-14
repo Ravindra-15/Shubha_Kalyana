@@ -502,7 +502,7 @@ export default function HomeScreen({ navigation }: any) {
               />
             ) : (
               <View style={[styles.profileAvatar, styles.profileAvatarPlaceholder]}>
-                <UserIcon color="#D20236" size={32} />
+                <UserIcon color="#D20236" size={40} />
               </View>
             )}
           </View>
@@ -577,7 +577,11 @@ export default function HomeScreen({ navigation }: any) {
                 ]}
               >
                 <LinearGradient
-                  colors={['transparent', 'rgba(255,255,255,0.75)', 'transparent']}
+                  // Same single transparent-via-transparent sweep as the
+                  // web navbar's shine, just tinted silver/light-gray
+                  // instead of white -- a literal white fill would be
+                  // invisible against this button's own white background.
+                  colors={['transparent', 'rgba(192,192,192,0.65)', 'transparent']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={StyleSheet.absoluteFill}
@@ -937,9 +941,9 @@ const styles = StyleSheet.create({
   },
   profileAvatarWrap: { marginRight: 14 },
   profileAvatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 14,
+    width: 84,
+    height: 84,
+    borderRadius: 18,
     borderWidth: 1.5,
     borderColor: '#f0d6dc',
   },
@@ -970,24 +974,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: { color: '#fff', fontSize: 10, fontFamily: 'Outfit-Bold' },
-  planCard: { borderRadius: 16, padding: 18, marginBottom: 24 },
-  planRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  planCard: { borderRadius: 16, padding: 14, marginBottom: 24 },
+  planRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   planTitle: {
     color: '#fff',
-    fontSize: 17,
+    fontSize: 16,
     fontFamily: 'Outfit-Bold',
     marginLeft: 8,
   },
   planSubtitle: {
     color: '#ffe0e6',
-    fontSize: 14,
-    marginBottom: 16,
-    lineHeight: 18,
+    fontSize: 13,
+    marginBottom: 12,
+    lineHeight: 17,
   },
   upgradeBtn: {
     backgroundColor: '#fff',
     borderRadius: 8,
-    paddingVertical: 12,
+    paddingVertical: 9,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
