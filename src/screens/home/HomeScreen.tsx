@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,15 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../api/client';
 import WelcomePopup from './WelcomePopup';
-import { Crown, ArrowRight, Pencil, User as UserIcon } from 'lucide-react-native';
+import { Crown, ArrowRight, User as UserIcon, ChevronRight } from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { getActiveMembership } from '../../api/membership';
 import { ActivityIndicator } from 'react-native';
@@ -76,6 +78,32 @@ export default function HomeScreen({ navigation }: any) {
     access: any;
     action: 'send' | 'accept';
   } | null>(null);
+
+  // Same white-line sweep used on the web navbar's membership pill --
+  // measured width needed since the shine's travel distance is relative
+  // to the button's own size (mirrors the web version's % left offsets).
+  const [upgradeBtnWidth, setUpgradeBtnWidth] = useState(0);
+  const shineAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shineAnim, {
+          toValue: 1,
+          duration: 2280,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.delay(1520),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [shineAnim]);
+  const shineWidth = upgradeBtnWidth * 0.33;
+  const shineTranslate = shineAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-upgradeBtnWidth * 0.45 - shineWidth, upgradeBtnWidth * 1.15],
+  });
 
   const showAccessRequired = async (
     profileId: string,
@@ -461,7 +489,11 @@ export default function HomeScreen({ navigation }: any) {
         </View>
 
         {/* Profile summary */}
-        <View style={styles.profileSummary}>
+        <TouchableOpacity
+          style={styles.profileSummary}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('ProfileTab')}
+        >
           <View style={styles.profileAvatarWrap}>
             {profilePhoto ? (
               <Image
@@ -470,7 +502,7 @@ export default function HomeScreen({ navigation }: any) {
               />
             ) : (
               <View style={[styles.profileAvatar, styles.profileAvatarPlaceholder]}>
-                <UserIcon color="#D20236" size={34} />
+                <UserIcon color="#D20236" size={32} />
               </View>
             )}
           </View>
@@ -479,26 +511,20 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={styles.profileSummaryName} numberOfLines={1}>
               {firstName || 'there'}
             </Text>
-            {!!profileCode && (
-              <Text style={styles.profileSummaryCode} numberOfLines={1}>
-                {profileCode}
-              </Text>
-            )}
-            <View style={styles.profileSummaryPlanRow}>
-              <Crown color="#D20236" size={13} />
-              <Text style={styles.profileSummaryPlanText}>{planName}</Text>
-            </View>
+            <Text style={styles.profileSummaryMeta} numberOfLines={1}>
+              {planName}
+              {profileCode ? ` · ${profileCode}` : ''}
+            </Text>
+            <TouchableOpacity
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              onPress={() => navigation.navigate('EditProfile')}
+            >
+              <Text style={styles.editProfileText}>Edit profile</Text>
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={styles.editProfileBtn}
-            onPress={() => navigation.navigate('EditProfile')}
-            activeOpacity={0.85}
-          >
-            <Pencil color="#D20236" size={14} />
-            <Text style={styles.editProfileText}>Edit Profile</Text>
-          </TouchableOpacity>
-        </View>
+          <ChevronRight color="#bbb" size={22} />
+        </TouchableOpacity>
 
         {/* Plan card */}
         <LinearGradient
@@ -521,6 +547,7 @@ export default function HomeScreen({ navigation }: any) {
           <TouchableOpacity
             style={styles.upgradeBtn}
             activeOpacity={0.85}
+            onLayout={e => setUpgradeBtnWidth(e.nativeEvent.layout.width)}
             onPress={() =>
               hasActivePlan
                 ? navigation.navigate('AllMatches', { pushed: true })
@@ -531,6 +558,32 @@ export default function HomeScreen({ navigation }: any) {
               {hasActivePlan ? 'Explore Now' : 'Upgrade Now'}
             </Text>
             <ArrowRight color="#E60076" size={18} />
+
+            {/* White line sweep, same effect as the web navbar's
+                membership pill -- purely decorative, pointerEvents none so
+                it never blocks the button's tap. */}
+            {upgradeBtnWidth > 0 && (
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.upgradeShine,
+                  {
+                    width: shineWidth,
+                    transform: [
+                      { translateX: shineTranslate },
+                      { skewX: '-12deg' },
+                    ],
+                  },
+                ]}
+              >
+                <LinearGradient
+                  colors={['transparent', 'rgba(255,255,255,0.75)', 'transparent']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              </Animated.View>
+            )}
           </TouchableOpacity>
         </LinearGradient>
         {/* Filter bar - hidden on Home screen */}
@@ -884,38 +937,26 @@ const styles = StyleSheet.create({
   },
   profileAvatarWrap: { marginRight: 14 },
   profileAvatar: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    borderWidth: 2.5,
-    borderColor: '#D20236',
+    width: 64,
+    height: 64,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#f0d6dc',
   },
   profileAvatarPlaceholder: {
     backgroundColor: '#fce4ec',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  profileSummaryInfo: { flex: 1, minWidth: 0 },
-  profileSummaryName: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
-  profileSummaryCode: { fontSize: 12, color: '#888', marginTop: 3, fontFamily: 'Outfit-Medium' },
-  profileSummaryPlanRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
+  profileSummaryInfo: { flex: 1, minWidth: 0, marginRight: 8 },
+  profileSummaryName: { fontSize: 17, fontFamily: 'Outfit-Bold', color: '#000' },
+  profileSummaryMeta: { fontSize: 13, color: '#888', marginTop: 3, fontFamily: 'Outfit-Medium' },
+  editProfileText: {
+    fontSize: 13,
+    color: '#D20236',
+    fontFamily: 'Outfit-Bold',
     marginTop: 6,
   },
-  profileSummaryPlanText: { fontSize: 12, color: '#666', fontFamily: 'Outfit-Medium' },
-  editProfileBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1.5,
-    borderColor: '#D20236',
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-  },
-  editProfileText: { color: '#D20236', fontSize: 13, fontFamily: 'Outfit-Bold' },
   badge: {
     position: 'absolute',
     top: 0,
@@ -952,12 +993,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'flex-start',
+    position: 'relative',
+    overflow: 'hidden',
   },
   upgradeText: {
     color: '#E60076',
     fontSize: 15,
     fontFamily: 'Outfit-Bold',
     marginRight: 6,
+  },
+  upgradeShine: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
   },
   sectionHeader: {
     flexDirection: 'row',
