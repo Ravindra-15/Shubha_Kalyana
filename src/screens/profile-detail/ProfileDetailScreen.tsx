@@ -27,6 +27,8 @@ import {
   MessageCircle,
   MoreVertical,
   Heart,
+  Cigarette,
+  Wine,
 } from 'lucide-react-native';
 import { getPartnerProfile } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
@@ -72,6 +74,27 @@ const getAge = (dob?: string) => {
   const m = t.getMonth() - b.getMonth();
   if (m < 0 || (m === 0 && t.getDate() < b.getDate())) a--;
   return a;
+};
+
+// Client spec: show the exact annual income as a range bucket rather than
+// the raw figure, using these specific bucket boundaries (lakhs).
+const INCOME_BUCKETS = [
+  [5, 7], [7, 9], [9, 11], [12, 15], [15, 20], [20, 25],
+];
+const formatIncomeBucket = (amount?: number) => {
+  if (!amount) return '';
+  const lakhs = amount / 100000;
+  if (lakhs < INCOME_BUCKETS[0][0]) return 'Below 5 Lakh';
+  const last = INCOME_BUCKETS[INCOME_BUCKETS.length - 1];
+  if (lakhs > last[1]) return `${last[1]} Lakh and above`;
+  const bucket =
+    INCOME_BUCKETS.find(([min, max]) => lakhs >= min && lakhs <= max) ||
+    INCOME_BUCKETS.reduce((closest, b) => {
+      const dist = Math.min(Math.abs(lakhs - b[0]), Math.abs(lakhs - b[1]));
+      const closestDist = Math.min(Math.abs(lakhs - closest[0]), Math.abs(lakhs - closest[1]));
+      return dist < closestDist ? b : closest;
+    });
+  return `${bucket[0]} Lakh to ${bucket[1]} Lakh`;
 };
 
 // A row that shows value OR a lock if blurred
@@ -511,7 +534,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
     .join(', ');
 
   const heightStr = basic.height
-    ? `${basic.height.feet}'${basic.height.inches}"`
+    ? `${basic.height.feet} Ft ${basic.height.inches} Inch`
     : '';
   const weightStr = basic.weight
     ? `${basic.weight.value} ${basic.weight.units?.toLowerCase() || 'kg'}`
@@ -530,9 +553,18 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         : healthDisclosure.hasCondition === false
           ? 'No'
           : '';
+  const community = [caste, basic.subCaste].filter(Boolean).join(' - ');
 
+  // Locked addresses now arrive with `district` real and every other key
+  // blurred (client spec: show city plainly, mask the rest with stars) --
+  // this is a plain display string now, not the lock-icon/blur-bar UI.
   const fmtAddr = (a: any) => {
-    if (!a || isBlur(a)) return 'blur';
+    if (!a || a === 'blur') return '';
+    const keys = Object.keys(a);
+    const partiallyLocked = keys.some((k) => k !== 'district' && a[k] === 'blur');
+    if (partiallyLocked) {
+      return a.district ? `${a.district}, ★★★★★` : '★★★★★';
+    }
     const parts = [
       a.addressLine1,
       a.addressLine2,
@@ -540,7 +572,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       a.state || a.stateOrProvince,
       a.postalCode,
     ].filter(x => x && !isBlur(x));
-    return parts.length ? parts.join(', ') : 'blur';
+    return parts.length ? parts.join(', ') : '';
   };
 
   return (
@@ -783,6 +815,60 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           </TouchableOpacity>
         </View>
 
+        {/* Personal Details */}
+        <Section title="Personal Details">
+          <Row
+            label="Date of Birth"
+            value={
+              basic.dob ? new Date(basic.dob).toLocaleDateString('en-GB') : ''
+            }
+          />
+          <Row label="Marital Status" value={formatChoice(basic.maritalStatus?.replace(/_/g, ' '))} />
+          <Row label="Religion" value={basic.religion} />
+          <Row label="Community" value={community} />
+          <Row label="Height" value={heightStr} />
+          <Row label="Weight" value={weightStr} />
+          <Row label="Diet" value={life.diet || basic.diet} />
+          <Row label="Health Condition" value={healthCondition} />
+          <Row label="Rashi" value={horo.rashi} />
+          <Row label="Nakshatra" value={horo.nakshatra} />
+        </Section>
+
+        {/* Hobbies */}
+        {(hobbies.length > 0 || life.smoking || life.drinking) && (
+          <Section title="Hobbies & Interests">
+            {hobbies.length > 0 && (
+              <View style={styles.hobbyWrap}>
+                {hobbies.slice(0, 6).map((h: string, i: number) => (
+                  <View key={i} style={styles.hobbyChip}>
+                    <Text style={styles.hobbyText}>{h}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            {(life.smoking || life.drinking) && (
+              <View style={styles.lifestyleBadgeRow}>
+                {!!life.smoking && (
+                  <View style={styles.lifestyleBadge}>
+                    <View style={styles.lifestyleBadgeIcon}>
+                      <Cigarette color="#D20236" size={16} />
+                    </View>
+                    <Text style={styles.lifestyleBadgeText}>{formatChoice(life.smoking)}</Text>
+                  </View>
+                )}
+                {!!life.drinking && (
+                  <View style={styles.lifestyleBadge}>
+                    <View style={styles.lifestyleBadgeIcon}>
+                      <Wine color="#D20236" size={16} />
+                    </View>
+                    <Text style={styles.lifestyleBadgeText}>{formatChoice(life.drinking)}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </Section>
+        )}
+
         {/* Contact Details */}
         <Section title="Contact Details">
           <ContactRow
@@ -811,49 +897,10 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           />
         </Section>
 
-        {/* Personal Details */}
-        <Section title="Personal Details">
-          <Row
-            label="Date of Birth"
-            value={
-              basic.dob ? new Date(basic.dob).toLocaleDateString('en-GB') : ''
-            }
-          />
-          <Row label="Height" value={heightStr} />
-          <Row label="Weight" value={weightStr} />
-          <Row label="Diet" value={life.diet || basic.diet} />
-          <Row label="Smoking" value={formatChoice(life.smoking)} />
-          <Row label="Drinking" value={formatChoice(life.drinking)} />
-          <Row label="Health & Condition" value={healthCondition} />
-          <Row label="Rashi" value={horo.rashi} />
-          <Row label="Nakshatra" value={horo.nakshatra} />
-        </Section>
-
-        {/* Hobbies */}
-        {hobbies.length > 0 && (
-          <Section title="Hobbies & Interests">
-            <View style={styles.hobbyWrap}>
-              {hobbies.map((h: string, i: number) => (
-                <View key={i} style={styles.hobbyChip}>
-                  <Text style={styles.hobbyText}>{h}</Text>
-                </View>
-              ))}
-            </View>
-          </Section>
-        )}
-
-        {/* Location */}
-        <Section title="Location">
-          <Row
-            label="Present Address"
-            value={fmtAddr(addr.current)}
-            onLockedPress={handleViewContact}
-          />
-          <Row
-            label="Permanent Address"
-            value={fmtAddr(addr.permanent)}
-            onLockedPress={handleViewContact}
-          />
+        {/* Education */}
+        <Section title="Education Details">
+          <Row label="Highest Qualification" value={edu.highestQualification} />
+          <Row label="College / University" value={edu.college} />
         </Section>
 
         {/* Employment */}
@@ -868,17 +915,11 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           </>}
           {(isJob || isBusiness) && <Row label={isBusiness ? 'Firm Location' : 'Work Location'} value={emp.companyLocation} onLockedPress={handleViewContact} />}
           {isGovernment && <Row label="Job Type" value={emp.jobType?.replace(/_/g, ' ')} />}
-          <Row label="Annual Income" value={emp.annualIncome ? `₹${emp.annualIncome.toLocaleString('en-IN')}` : ''} />
-          {isJob && <Row label="Experience" value={emp.totalExperience ? `${emp.totalExperience} Years` : emp.totalExperienceYears || emp.totalExperienceMonths ? `${emp.totalExperienceYears || 0} Years ${emp.totalExperienceMonths || 0} Months` : ''} />}
+          <Row label="Annual Income" value={formatIncomeBucket(emp.annualIncome)} />
+          {isJob && <Row label="Work Experience" value={emp.totalExperience ? `${emp.totalExperience} Years` : emp.totalExperienceYears || emp.totalExperienceMonths ? `${emp.totalExperienceYears || 0} Years ${emp.totalExperienceMonths || 0} Months` : ''} />}
           {isJob && <Row label="LinkedIn Link" value={emp.linkedInProfile} onLockedPress={handleViewContact} />}
           </>}
-          {isAgriculture && <Row label="Annual Income" value={emp.annualIncome ? `₹${emp.annualIncome.toLocaleString('en-IN')}` : ''} />}
-        </Section>
-
-        {/* Education */}
-        <Section title="Education Details">
-          <Row label="Highest Qualification" value={edu.highestQualification} />
-          <Row label="College / University" value={edu.college} />
+          {isAgriculture && <Row label="Annual Income" value={formatIncomeBucket(emp.annualIncome)} />}
         </Section>
 
         {/* Family */}
@@ -924,13 +965,27 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           />
         </Section>
 
+        {/* Location */}
+        <Section title="Location">
+          <Row
+            label="Present Address"
+            value={fmtAddr(addr.current)}
+            onLockedPress={handleViewContact}
+          />
+          <Row
+            label="Permanent Address"
+            value={fmtAddr(addr.permanent)}
+            onLockedPress={handleViewContact}
+          />
+        </Section>
+
         {/* Partner Preferences */}
         <Section title="Partner Preferences">
           <Row
             label="Preferred Age Range"
             value={
               pref.ageRange
-                ? `${pref.ageRange.min}-${pref.ageRange.max} years`
+                ? `${pref.ageRange.min} yrs to ${pref.ageRange.max} yrs`
                 : ''
             }
           />
@@ -1128,6 +1183,23 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   hobbyText: { fontSize: 13, color: '#D20236', fontFamily: 'Outfit-Medium' },
+  lifestyleBadgeRow: {
+    flexDirection: 'row',
+    gap: 20,
+    paddingTop: 10,
+  },
+  lifestyleBadge: { alignItems: 'center', gap: 6 },
+  lifestyleBadgeIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#f0d0d8',
+    backgroundColor: '#fdf2f5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lifestyleBadgeText: { fontSize: 12, color: '#333', fontFamily: 'Outfit-Medium' },
   sendBtnDisabled: { backgroundColor: '#e69aab' },
   lockedInline: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   contactValue: { fontSize: 14, color: '#000', fontFamily: 'Outfit-Medium' },
