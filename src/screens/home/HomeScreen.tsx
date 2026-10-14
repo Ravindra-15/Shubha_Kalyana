@@ -957,7 +957,7 @@ const styles = StyleSheet.create({
   profileSummaryMeta: { fontSize: 13, color: '#888', marginTop: 3, fontFamily: 'Outfit-Medium' },
   editProfileText: {
     fontSize: 13,
-    color: '#D20236',
+    color: '#000',
     fontFamily: 'Outfit-Bold',
     marginTop: 6,
   },
