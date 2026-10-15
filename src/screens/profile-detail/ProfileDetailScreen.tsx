@@ -11,9 +11,10 @@ import {
   Alert,
   Dimensions,
   Animated,
+  Share,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
   BadgeCheck,
@@ -23,6 +24,7 @@ import {
   Briefcase,
   GraduationCap,
   MapPin,
+  MapPinned,
   Phone,
   Mail,
   MessageCircle,
@@ -30,6 +32,29 @@ import {
   Heart,
   Cigarette,
   Wine,
+  Share2,
+  Ban,
+  Flag,
+  Calendar,
+  Landmark,
+  Users,
+  UsersRound,
+  Ruler,
+  Weight,
+  Utensils,
+  HeartPulse,
+  Moon,
+  Star,
+  School,
+  IdCard,
+  Building2,
+  Store,
+  ClipboardList,
+  IndianRupee,
+  Link,
+  Clock,
+  User,
+  UserRound,
 } from 'lucide-react-native';
 import { getPartnerProfile } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
@@ -103,16 +128,25 @@ function Row({
   label,
   value,
   onLockedPress,
+  Icon,
 }: {
   label: string;
   value: any;
   onLockedPress?: () => void;
+  Icon?: any;
 }) {
   const locked = isLocked(value);
   const empty = isEmpty(value);
   return (
     <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
+      <View style={styles.rowLabelWrap}>
+        {Icon && (
+          <View style={styles.rowIconCircle}>
+            <Icon color="#D20236" size={14} />
+          </View>
+        )}
+        <Text style={styles.rowLabel}>{label}</Text>
+      </View>
       {locked ? (
         <View style={styles.lockedVal}>
           <Lock color="#D20236" size={12} />
@@ -146,7 +180,9 @@ function ContactRow({
   const empty = !locked && isEmpty(value);
   return (
     <View style={styles.contactRow}>
-      <Icon color={iconColor} size={16} />
+      <View style={styles.rowIconCircle}>
+        <Icon color={iconColor} size={16} />
+      </View>
       <Text style={styles.contactLabel}>{label}</Text>
       {locked ? (
         <View style={styles.lockedInline}>
@@ -204,6 +240,12 @@ function Section({
 
 export default function ProfileDetailScreen({ route, navigation }: any) {
   const { profileId } = route.params || {};
+  // The header is absolutely positioned (floats over the cover photo), so
+  // it no longer sits inside SafeAreaView's own top padding -- it needs
+  // its own explicit offset for the status bar / notch, or it overlaps it.
+  const insets = useSafeAreaInsets();
+  // paddingTop (insets.top + 10) + circle button height (38) + paddingBottom (10).
+  const headerHeight = insets.top + 58;
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showSentModal, setShowSentModal] = useState(false);
@@ -253,10 +295,21 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       useNativeDriver: true,
     }).start();
   };
+  // Replaces stickyHeaderIndices: that approach pins content to the
+  // ScrollView's own literal top edge, which is now *behind* the floating
+  // header (since the header overlays the ScrollView instead of taking
+  // its own space) -- so the quick-links bar stuck right under the
+  // header, overlapping it. A manually-docked duplicate bar, shown once
+  // scrolled past the real one's position, docks correctly below the
+  // header instead.
+  const [stickyQuickLinks, setStickyQuickLinks] = useState(false);
   const handleScroll = (e: any) => {
     const y = e.nativeEvent.contentOffset.y;
     const next = y > SCREEN_HEIGHT * 0.45;
     setShowHeaderIdentity((prev) => (prev === next ? prev : next));
+    const quickLinksY = sectionY.current.quickLinks;
+    const nextSticky = quickLinksY != null && y > quickLinksY;
+    setStickyQuickLinks((prev) => (prev === nextSticky ? prev : nextSticky));
   };
 
   const loadProfile = useCallback(
@@ -452,39 +505,56 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
   const openOptionsMenu = () => setOptionsMenuOpen((open) => !open);
 
-  const handleBlockAndReport = async () => {
+  // Share/Block/Report are now three independent menu actions (used to be
+  // a single combined "Block & Report" flow that forced a report right
+  // after blocking). Block and Report each close the profile and return
+  // to the previous screen once done -- previously neither did, which is
+  // the "have to press back manually" bug the client reported.
+  const handleShareProfile = async () => {
     setOptionsMenuOpen(false);
-    const otherUserId = data?.user?._id;
-    if (!otherUserId) {
+    try {
+      await Share.share({
+        message: `Check out ${name}'s profile${user.profileCode ? ` (Profile ID: ${user.profileCode})` : ''} on Shubha Kalyana!`,
+      });
+    } catch {}
+  };
+
+  const handleBlockUser = () => {
+    setOptionsMenuOpen(false);
+    if (!data?.user?._id) {
       Alert.alert('Error', 'Could not identify user');
       return;
     }
+    setShowBlockConfirm(true);
+  };
+
+  const confirmBlock = async () => {
+    const otherUserId = data?.user?._id;
     try {
+      setBlocking(true);
       let chatId = reportChatId;
       if (!chatId) {
         const { chat } = await startChat(otherUserId);
         chatId = chat._id;
         setReportChatId(chatId);
       }
-      setShowBlockConfirm(true);
-    } catch {
-      // Not connected / no chat-enabled membership -- still allow reporting
-      // this user directly, without the chat-block step.
-      setShowReportModal(true);
-    }
-  };
-
-  const confirmBlock = async () => {
-    try {
-      setBlocking(true);
-      await blockChatUser(reportChatId);
+      await blockChatUser(chatId);
       setShowBlockConfirm(false);
-      setShowReportModal(true);
+      Alert.alert(
+        'User Blocked',
+        'You will no longer receive messages or interactions from this profile.',
+        [{ text: 'OK', onPress: () => navigation.goBack() }],
+      );
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not block user');
     } finally {
       setBlocking(false);
     }
+  };
+
+  const handleReportUser = () => {
+    setOptionsMenuOpen(false);
+    setShowReportModal(true);
   };
 
   const handleReportSubmitted = () => {
@@ -517,6 +587,19 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const addr = profile.address || {};
   const pref = data.partnerPreference || {};
   const hobbies = profile.hobbiesAndInterests || [];
+  const quickLinkTabs = [
+    { key: 'personal', label: 'Personal Details' },
+    ...(hobbies.length > 0 || life.smoking || life.drinking
+      ? [{ key: 'hobbies', label: 'Hobbies & Interests' }]
+      : []),
+    { key: 'contact', label: 'Contact Details' },
+    { key: 'education', label: 'Education Details' },
+    { key: 'employment', label: 'Employment Details' },
+    { key: 'family', label: 'Family Details' },
+    { key: 'location', label: 'Location' },
+    { key: 'preferences', label: 'Partner Preferences' },
+    { key: 'match', label: 'Compatibility' },
+  ];
   const matchBreakdown = data.matchBreakdown || { fields: [], matchedCount: 0, totalCount: 0 };
   const myPhoto = data.myPhoto || '';
 
@@ -658,16 +741,31 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       <ReportSubmittedModal
         visible={showReportSubmitted}
         buttonLabel="Done"
-        onBackToChat={() => setShowReportSubmitted(false)}
+        onBackToChat={() => {
+          setShowReportSubmitted(false);
+          navigation.goBack();
+        }}
       />
-      {/* Header -- collapses into the profile's name/age/verified badge
-          once the cover photo scrolls out of view (Shaadi.com reference),
-          and shows "Profile Details" the rest of the time. */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+      {/* Header -- floats transparently over the cover photo (circular
+          back + options buttons only, no title, so the photo itself gets
+          the full space) until the user scrolls past it, at which point it
+          becomes a solid bar showing name/age/verified (Shaadi.com
+          reference for both states). */}
+      <View
+        style={[
+          styles.header,
+          { paddingTop: insets.top + 10 },
+          showHeaderIdentity && styles.headerSolid,
+        ]}
+      >
+        <TouchableOpacity
+          style={[styles.circleBtn, showHeaderIdentity && styles.circleBtnSolid]}
+          onPress={() => navigation.goBack()}
+        >
+          <ArrowLeft color={showHeaderIdentity ? '#000' : '#fff'} size={20} />
         </TouchableOpacity>
-        {showHeaderIdentity ? (
+
+        {showHeaderIdentity && (
           <View style={styles.headerIdentityRow}>
             <Text style={styles.headerTitle} numberOfLines={1}>
               {name}
@@ -675,13 +773,16 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             </Text>
             {verified && <BadgeCheck color="#1a7f37" size={16} fill="#1a7f37" />}
           </View>
-        ) : (
-          <Text style={styles.headerTitle}>Profile Details</Text>
         )}
+
         <View style={styles.headerActions}>
           <View>
-            <TouchableOpacity onPress={openOptionsMenu} accessibilityLabel="Profile options">
-              <MoreVertical color="#000" size={22} />
+            <TouchableOpacity
+              style={[styles.circleBtn, showHeaderIdentity && styles.circleBtnSolid]}
+              onPress={openOptionsMenu}
+              accessibilityLabel="Profile options"
+            >
+              <MoreVertical color={showHeaderIdentity ? '#000' : '#fff'} size={20} />
             </TouchableOpacity>
 
             {optionsMenuOpen ? (
@@ -692,8 +793,17 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
                   onPress={() => setOptionsMenuOpen(false)}
                 />
                 <View style={styles.optionsMenu}>
-                  <TouchableOpacity style={styles.optionsMenuItem} onPress={handleBlockAndReport}>
-                    <Text style={styles.optionsMenuText}>Block & Report User</Text>
+                  <TouchableOpacity style={styles.optionsMenuItem} onPress={handleShareProfile}>
+                    <Share2 color="#333" size={17} />
+                    <Text style={styles.optionsMenuText}>Share Profile</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.optionsMenuItem} onPress={handleBlockUser}>
+                    <Ban color="#D20236" size={17} />
+                    <Text style={[styles.optionsMenuText, styles.optionsMenuTextDanger]}>Block User</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.optionsMenuItem} onPress={handleReportUser}>
+                    <Flag color="#D20236" size={17} />
+                    <Text style={[styles.optionsMenuText, styles.optionsMenuTextDanger]}>Report User</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -702,14 +812,38 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         </View>
       </View>
 
+      {stickyQuickLinks && (
+        <View style={[styles.dockedQuickLinks, { top: headerHeight }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.quickLinksRow}
+            contentContainerStyle={styles.quickLinksContent}
+          >
+            {quickLinkTabs.map(({ key, label }) => (
+              <TouchableOpacity
+                key={key}
+                style={styles.navTab}
+                onPress={() => selectQuickLink(key)}
+              >
+                <Text style={[styles.navTabText, activeSection === key && styles.navTabTextActive]}>
+                  {label}
+                </Text>
+                {activeSection === key && (
+                  <Animated.View
+                    style={[styles.navUnderline, { transform: [{ scaleX: underlineAnim }] }]}
+                  />
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 30 }}
-        // Index 3 is the quick-links nav row (cover photo, gallery,
-        // action buttons, then quick links) -- pins it to the top, right
-        // below the fixed header, once the user scrolls past it.
-        stickyHeaderIndices={[3]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         refreshControl={
@@ -743,15 +877,12 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             colors={['transparent', 'rgba(0,0,0,0.75)']}
             style={styles.coverInfo}
           >
-            <Text style={styles.coverName}>
-              {name}
-              {age ? `, ${age}` : ''}
-            </Text>
+            <Text style={styles.coverName}>{name}</Text>
             {!!user.profileCode && (
               <Text style={styles.coverProfileCode}>Profile ID: {user.profileCode}</Text>
             )}
             <Text style={styles.coverMeta}>
-              {[basic.religion, caste, basic.maritalStatus?.replace(/_/g, ' ')]
+              {[age ? `${age} yrs` : '', caste, basic.maritalStatus?.replace(/_/g, ' ')]
                 .filter(Boolean)
                 .join('  •  ')}
             </Text>
@@ -766,9 +897,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
                 style={{ marginLeft: 12 }}
               />
               <Text style={styles.coverIconText}>
-                {[edu.highestQualification, edu.college]
-                  .filter(Boolean)
-                  .join(', ')}
+                {edu.highestQualification || 'Not specified'}
               </Text>
             </View>
             {!!location && (
@@ -795,7 +924,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           )
         )}
 
-        {/* Action button */}
+        {/* Action buttons -- side by side (client spec), Interest first */}
         <View style={styles.actionWrap}>
           <TouchableOpacity
             style={[styles.interestBtn, togglingInterest && styles.interestBtnDisabled]}
@@ -869,42 +998,33 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         {/* Quick links -- Shaadi.com reference: a plain scrollable tab
             navbar (not chips) that jumps to a section further down the
             page; the active tab turns red with an underline that animates
-            in on select. */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.quickLinksRow}
-          contentContainerStyle={styles.quickLinksContent}
-        >
-          {[
-            { key: 'personal', label: 'Personal Details' },
-            ...(hobbies.length > 0 || life.smoking || life.drinking
-              ? [{ key: 'hobbies', label: 'Hobbies & Interests' }]
-              : []),
-            { key: 'contact', label: 'Contact Details' },
-            { key: 'education', label: 'Education Details' },
-            { key: 'employment', label: 'Employment Details' },
-            { key: 'family', label: 'Family Details' },
-            { key: 'location', label: 'Location' },
-            { key: 'preferences', label: 'Partner Preferences' },
-            { key: 'match', label: 'Compatibility' },
-          ].map(({ key, label }) => (
-            <TouchableOpacity
-              key={key}
-              style={styles.navTab}
-              onPress={() => selectQuickLink(key)}
-            >
-              <Text style={[styles.navTabText, activeSection === key && styles.navTabTextActive]}>
-                {label}
-              </Text>
-              {activeSection === key && (
-                <Animated.View
-                  style={[styles.navUnderline, { transform: [{ scaleX: underlineAnim }] }]}
-                />
-              )}
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+            in on select. A duplicate docks below the header (see above)
+            once this one scrolls out of view. */}
+        <View onLayout={(e: any) => { sectionY.current.quickLinks = e.nativeEvent.layout.y; }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.quickLinksRow}
+            contentContainerStyle={styles.quickLinksContent}
+          >
+            {quickLinkTabs.map(({ key, label }) => (
+              <TouchableOpacity
+                key={key}
+                style={styles.navTab}
+                onPress={() => selectQuickLink(key)}
+              >
+                <Text style={[styles.navTabText, activeSection === key && styles.navTabTextActive]}>
+                  {label}
+                </Text>
+                {activeSection === key && (
+                  <Animated.View
+                    style={[styles.navUnderline, { transform: [{ scaleX: underlineAnim }] }]}
+                  />
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
         {/* Personal Details */}
         <Section
@@ -912,20 +1032,21 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           onLayout={(e: any) => { sectionY.current.personal = e.nativeEvent.layout.y; }}
         >
           <Row
+            Icon={Calendar}
             label="Date of Birth"
             value={
               basic.dob ? new Date(basic.dob).toLocaleDateString('en-GB') : ''
             }
           />
-          <Row label="Marital Status" value={formatChoice(basic.maritalStatus?.replace(/_/g, ' '))} />
-          <Row label="Religion" value={basic.religion} />
-          <Row label="Community" value={community} />
-          <Row label="Height" value={heightStr} />
-          <Row label="Weight" value={weightStr} />
-          <Row label="Diet" value={life.diet || basic.diet} />
-          <Row label="Health Condition" value={healthCondition} />
-          <Row label="Rashi" value={horo.rashi} />
-          <Row label="Nakshatra" value={horo.nakshatra} />
+          <Row Icon={Heart} label="Marital Status" value={formatChoice(basic.maritalStatus?.replace(/_/g, ' '))} />
+          <Row Icon={Landmark} label="Religion" value={basic.religion} />
+          <Row Icon={Users} label="Community" value={community} />
+          <Row Icon={Ruler} label="Height" value={heightStr} />
+          <Row Icon={Weight} label="Weight" value={weightStr} />
+          <Row Icon={Utensils} label="Diet" value={life.diet || basic.diet} />
+          <Row Icon={HeartPulse} label="Health Condition" value={healthCondition} />
+          <Row Icon={Moon} label="Rashi" value={horo.rashi} />
+          <Row Icon={Star} label="Nakshatra" value={horo.nakshatra} />
         </Section>
 
         {/* Hobbies */}
@@ -1002,8 +1123,8 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           title="Education Details"
           onLayout={(e: any) => { sectionY.current.education = e.nativeEvent.layout.y; }}
         >
-          <Row label="Highest Qualification" value={edu.highestQualification} />
-          <Row label="College / University" value={edu.college} />
+          <Row Icon={GraduationCap} label="Highest Qualification" value={edu.highestQualification} />
+          <Row Icon={School} label="College / University" value={edu.college} />
         </Section>
 
         {/* Employment */}
@@ -1011,21 +1132,21 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           title="Employment Details"
           onLayout={(e: any) => { sectionY.current.employment = e.nativeEvent.layout.y; }}
         >
-          <Row label="Employment Type" value={emp.employedType?.replace(/_/g, ' ')} />
+          <Row Icon={Briefcase} label="Employment Type" value={emp.employedType?.replace(/_/g, ' ')} />
           {!isAgriculture && <>
-          {(isJob || isBusiness) && <Row label={isGovernment ? 'Name of the department' : isBusiness ? 'Designation' : 'Profession'} value={emp.designation} />}
-          {isJob && <Row label={isGovernment ? 'Work as' : 'Company Name'} value={emp.companyName} onLockedPress={handleViewContact} />}
+          {(isJob || isBusiness) && <Row Icon={IdCard} label={isGovernment ? 'Name of the department' : isBusiness ? 'Designation' : 'Profession'} value={emp.designation} />}
+          {isJob && <Row Icon={Building2} label={isGovernment ? 'Work as' : 'Company Name'} value={emp.companyName} onLockedPress={handleViewContact} />}
           {isBusiness && <>
-            <Row label="Firm Name" value={emp.companyName} onLockedPress={handleViewContact} />
-            <Row label="Type of Business" value={emp.typeOfBusiness} />
+            <Row Icon={Building2} label="Firm Name" value={emp.companyName} onLockedPress={handleViewContact} />
+            <Row Icon={Store} label="Type of Business" value={emp.typeOfBusiness} />
           </>}
-          {(isJob || isBusiness) && <Row label={isBusiness ? 'Firm Location' : 'Work Location'} value={emp.companyLocation} onLockedPress={handleViewContact} />}
-          {isGovernment && <Row label="Job Type" value={emp.jobType?.replace(/_/g, ' ')} />}
-          <Row label="Annual Income" value={formatIncomeBucket(emp.annualIncome)} />
-          {isJob && <Row label="Work Experience" value={emp.totalExperience ? `${emp.totalExperience} Years` : emp.totalExperienceYears || emp.totalExperienceMonths ? `${emp.totalExperienceYears || 0} Years ${emp.totalExperienceMonths || 0} Months` : ''} />}
-          {isJob && <Row label="LinkedIn Link" value={emp.linkedInProfile} onLockedPress={handleViewContact} />}
+          {(isJob || isBusiness) && <Row Icon={MapPin} label={isBusiness ? 'Firm Location' : 'Work Location'} value={emp.companyLocation} onLockedPress={handleViewContact} />}
+          {isGovernment && <Row Icon={ClipboardList} label="Job Type" value={emp.jobType?.replace(/_/g, ' ')} />}
+          <Row Icon={IndianRupee} label="Annual Income" value={formatIncomeBucket(emp.annualIncome)} />
+          {isJob && <Row Icon={Clock} label="Work Experience" value={emp.totalExperience ? `${emp.totalExperience} Years` : emp.totalExperienceYears || emp.totalExperienceMonths ? `${emp.totalExperienceYears || 0} Years ${emp.totalExperienceMonths || 0} Months` : ''} />}
+          {isJob && <Row Icon={Link} label="LinkedIn Link" value={emp.linkedInProfile} onLockedPress={handleViewContact} />}
           </>}
-          {isAgriculture && <Row label="Annual Income" value={formatIncomeBucket(emp.annualIncome)} />}
+          {isAgriculture && <Row Icon={IndianRupee} label="Annual Income" value={formatIncomeBucket(emp.annualIncome)} />}
         </Section>
 
         {/* Family */}
@@ -1034,6 +1155,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           onLayout={(e: any) => { sectionY.current.family = e.nativeEvent.layout.y; }}
         >
           <Row
+            Icon={User}
             label="Father"
             value={
               fam.fatherName === 'blur' || fam.fatherOccupation === 'blur'
@@ -1046,6 +1168,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             }
           />
           <Row
+            Icon={UserRound}
             label="Mother"
             value={
               fam.motherName === 'blur' || fam.motherOccupation === 'blur'
@@ -1058,6 +1181,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             }
           />
           <Row
+            Icon={UsersRound}
             label="Siblings"
             value={
               fam.brothers === 'blur' || fam.sisters === 'blur'
@@ -1080,11 +1204,13 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           onLayout={(e: any) => { sectionY.current.location = e.nativeEvent.layout.y; }}
         >
           <Row
+            Icon={MapPin}
             label="Present Address"
             value={fmtAddr(addr.current)}
             onLockedPress={handleViewContact}
           />
           <Row
+            Icon={MapPinned}
             label="Permanent Address"
             value={fmtAddr(addr.permanent)}
             onLockedPress={handleViewContact}
@@ -1097,6 +1223,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           onLayout={(e: any) => { sectionY.current.preferences = e.nativeEvent.layout.y; }}
         >
           <Row
+            Icon={Calendar}
             label="Preferred Age Range"
             value={
               pref.ageRange
@@ -1105,6 +1232,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             }
           />
           <Row
+            Icon={Users}
             label="Preferred Caste"
             value={pref.caste
               ?.map((c: any) => c?.casteName || c?.name)
@@ -1112,20 +1240,24 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               .join(', ')}
           />
           <Row
+            Icon={UsersRound}
             label="Preferred Sub Caste"
             value={pref.subCaste?.join?.(', ')}
           />
           <Row
+            Icon={Heart}
             label="Preferred Marital Status"
             value={pref.maritalStatus
               ?.map((status: string) => status?.replace(/_/g, ' '))
               .join(', ')}
           />
           <Row
+            Icon={GraduationCap}
             label="Preferred Education"
             value={pref.education?.join?.(', ')}
           />
           <Row
+            Icon={MapPin}
             label="Preferred Resident"
             value={pref.ressident?.join?.(', ')}
           />
@@ -1149,13 +1281,31 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f7f7f7' },
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
+    paddingVertical: 10,
   },
+  headerSolid: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  circleBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  circleBtnSolid: { backgroundColor: '#f5f5f5' },
   headerTitle: { fontSize: 17, fontFamily: 'Outfit-Bold', color: '#000', flexShrink: 1 },
   headerIdentityRow: {
     flexDirection: 'row',
@@ -1174,7 +1324,7 @@ const styles = StyleSheet.create({
   },
   optionsMenu: {
     position: 'absolute',
-    top: 30,
+    top: 44,
     right: 0,
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -1187,8 +1337,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     zIndex: 20,
   },
-  optionsMenuItem: { paddingHorizontal: 16, paddingVertical: 12 },
-  optionsMenuText: { fontSize: 14, fontFamily: 'Outfit-Medium', color: '#D20236' },
+  optionsMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  optionsMenuText: { fontSize: 14, fontFamily: 'Outfit-Medium', color: '#333' },
+  optionsMenuTextDanger: { color: '#D20236' },
   coverWrap: { height: SCREEN_HEIGHT * 0.6, position: 'relative' },
   cover: { width: '100%', height: '100%' },
   coverPlaceholder: { backgroundColor: '#ccc' },
@@ -1229,6 +1386,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
+  dockedQuickLinks: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 9,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
   quickLinksContent: {
     paddingHorizontal: 16,
   },
@@ -1248,9 +1416,14 @@ const styles = StyleSheet.create({
     borderRadius: 1,
     backgroundColor: '#D20236',
   },
-  actionWrap: { backgroundColor: '#fff', padding: 16 },
+  actionWrap: {
+    backgroundColor: '#fff',
+    padding: 16,
+    flexDirection: 'row',
+    gap: 10,
+  },
   sendBtn: {
-    marginTop: 10,
+    flex: 1,
     backgroundColor: '#D20236',
     borderRadius: 8,
     paddingVertical: 15,
@@ -1259,8 +1432,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  sendText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
+  sendText: { color: '#fff', fontSize: 15, fontFamily: 'Outfit-Bold' },
   interestBtn: {
+    flex: 1,
     borderWidth: 1.5,
     borderColor: '#D20236',
     borderRadius: 8,
@@ -1295,6 +1469,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 9,
+  },
+  rowLabelWrap: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+  rowIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#fdf2f5',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   rowLabel: { fontSize: 14, color: '#888', flex: 1 },
   rowValue: {
