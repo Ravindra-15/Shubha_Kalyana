@@ -11,7 +11,8 @@ import {
   Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Bell } from 'lucide-react-native';
+import { Bell, Menu } from 'lucide-react-native';
+import HomeDrawerMenu from '../../components/HomeDrawerMenu';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../../api/client';
 import WelcomePopup from './WelcomePopup';
@@ -48,6 +49,7 @@ export default function HomeScreen({ navigation }: any) {
   const [profilePhoto, setProfilePhoto] = useState('');
   const [profileCode, setProfileCode] = useState('');
   const [showWelcome, setShowWelcome] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [planName, setPlanName] = useState('Free Plan');
   const [hasActivePlan, setHasActivePlan] = useState(false);
   const [unlocksRemaining, setUnlocksRemaining] = useState(0);
@@ -414,6 +416,15 @@ export default function HomeScreen({ navigation }: any) {
         onClose={() => setShowWelcome(false)}
         userName={firstName}
       />
+      <HomeDrawerMenu
+        visible={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        navigation={navigation}
+        firstName={firstName}
+        profileCode={profileCode}
+        profilePhoto={profilePhoto}
+        planName={planName}
+      />
       <RequestSentModal
         visible={sentModal.show}
         name={sentModal.name}
@@ -451,6 +462,33 @@ export default function HomeScreen({ navigation }: any) {
         }}
       />
 
+      {/* Fixed top bar -- sits outside the ScrollView so it never scrolls
+          away, matching the client's Shaadi.com reference (hamburger +
+          brand name + bell, always visible). */}
+      <View style={styles.topBar}>
+        <TouchableOpacity
+          style={styles.topBarIconWrap}
+          onPress={() => setDrawerOpen(true)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Menu color="#000" size={24} />
+        </TouchableOpacity>
+        <Text style={styles.topBarTitle}>Shubha Kalyana</Text>
+        <TouchableOpacity
+          style={styles.bellWrap}
+          onPress={() => navigation.navigate('Notifications')}
+        >
+          <Bell color="#333" size={24} />
+          {unreadCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
@@ -463,31 +501,6 @@ export default function HomeScreen({ navigation }: any) {
           />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.welcome}>
-              Welcome <Text style={styles.name}>{firstName || 'there'} !</Text>
-            </Text>
-            <Text style={styles.subtitle}>
-              New verified matches are waiting for you
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.bellWrap}
-            onPress={() => navigation.navigate('Notifications')}
-          >
-            <Bell color="#333" size={24} />
-            {unreadCount > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
-
         {/* Profile summary */}
         <TouchableOpacity
           style={styles.profileSummary}
@@ -912,16 +925,24 @@ export default function HomeScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  scroll: { paddingHorizontal: 20, paddingBottom: 30 },
-  header: {
+  scroll: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 30 },
+  topBar: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginTop: 12,
-    marginBottom: 20,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f5f5f5',
   },
-  welcome: { fontSize: 24, fontFamily: 'Outfit-Bold', color: '#000' },
-  name: { color: '#D20236' },
-  subtitle: { fontSize: 13, color: '#666', marginTop: 4 },
+  topBarIconWrap: { padding: 4 },
+  topBarTitle: {
+    flex: 1,
+    marginLeft: 14,
+    fontSize: 18,
+    fontFamily: 'Outfit-Bold',
+    color: '#000',
+  },
   bellWrap: { padding: 4 },
   profileSummary: {
     flexDirection: 'row',
