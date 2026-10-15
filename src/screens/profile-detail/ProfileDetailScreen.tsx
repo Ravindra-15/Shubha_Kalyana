@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  Animated,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -165,9 +166,11 @@ function ContactRow({
 function Section({
   title,
   children,
+  onLayout,
 }: {
   title: string;
   children: React.ReactNode;
+  onLayout?: (e: any) => void;
 }) {
   const [open, setOpen] = useState(true);
   const toggle = () => {
@@ -181,7 +184,7 @@ function Section({
     setOpen(!open);
   };
   return (
-    <View style={styles.section}>
+    <View style={styles.section} onLayout={onLayout}>
       <TouchableOpacity
         style={styles.sectionHead}
         onPress={toggle}
@@ -226,6 +229,35 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const [togglingInterest, setTogglingInterest] = useState(false);
   const [showCoverLightbox, setShowCoverLightbox] = useState(false);
   const { bumpInterestCount } = useInterestBadge();
+
+  // Quick-links row (Shaadi.com reference): tapping a chip scrolls the page
+  // to that section's measured position. Showing the name/age/verified
+  // badge in the header once the cover photo scrolls out of view is the
+  // same reference's "collapsing title" behaviour.
+  const scrollRef = useRef<ScrollView>(null);
+  const sectionY = useRef<Record<string, number>>({});
+  const [showHeaderIdentity, setShowHeaderIdentity] = useState(false);
+  const scrollToSection = (key: string) => {
+    const y = sectionY.current[key];
+    if (y != null) scrollRef.current?.scrollTo({ y: y - 12, animated: true });
+  };
+  const [activeSection, setActiveSection] = useState('personal');
+  const underlineAnim = useRef(new Animated.Value(1)).current;
+  const selectQuickLink = (key: string) => {
+    setActiveSection(key);
+    scrollToSection(key);
+    underlineAnim.setValue(0);
+    Animated.timing(underlineAnim, {
+      toValue: 1,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
+  };
+  const handleScroll = (e: any) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const next = y > SCREEN_HEIGHT * 0.45;
+    setShowHeaderIdentity((prev) => (prev === next ? prev : next));
+  };
 
   const loadProfile = useCallback(
     async (silent = false) => {
@@ -628,12 +660,24 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         buttonLabel="Done"
         onBackToChat={() => setShowReportSubmitted(false)}
       />
-      {/* Header */}
+      {/* Header -- collapses into the profile's name/age/verified badge
+          once the cover photo scrolls out of view (Shaadi.com reference),
+          and shows "Profile Details" the rest of the time. */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <ArrowLeft color="#000" size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile Details</Text>
+        {showHeaderIdentity ? (
+          <View style={styles.headerIdentityRow}>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {name}
+              {age ? `, ${age}` : ''}
+            </Text>
+            {verified && <BadgeCheck color="#1a7f37" size={16} fill="#1a7f37" />}
+          </View>
+        ) : (
+          <Text style={styles.headerTitle}>Profile Details</Text>
+        )}
         <View style={styles.headerActions}>
           <View>
             <TouchableOpacity onPress={openOptionsMenu} accessibilityLabel="Profile options">
@@ -659,8 +703,15 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       </View>
 
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 30 }}
+        // Index 3 is the quick-links nav row (cover photo, gallery,
+        // action buttons, then quick links) -- pins it to the top, right
+        // below the fixed header, once the user scrolls past it.
+        stickyHeaderIndices={[3]}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#D20236']} tintColor="#D20236" />
         }
@@ -815,8 +866,51 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           )}
         </View>
 
+        {/* Quick links -- Shaadi.com reference: a plain scrollable tab
+            navbar (not chips) that jumps to a section further down the
+            page; the active tab turns red with an underline that animates
+            in on select. */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.quickLinksRow}
+          contentContainerStyle={styles.quickLinksContent}
+        >
+          {[
+            { key: 'personal', label: 'Personal Details' },
+            ...(hobbies.length > 0 || life.smoking || life.drinking
+              ? [{ key: 'hobbies', label: 'Hobbies & Interests' }]
+              : []),
+            { key: 'contact', label: 'Contact Details' },
+            { key: 'education', label: 'Education Details' },
+            { key: 'employment', label: 'Employment Details' },
+            { key: 'family', label: 'Family Details' },
+            { key: 'location', label: 'Location' },
+            { key: 'preferences', label: 'Partner Preferences' },
+            { key: 'match', label: 'Compatibility' },
+          ].map(({ key, label }) => (
+            <TouchableOpacity
+              key={key}
+              style={styles.navTab}
+              onPress={() => selectQuickLink(key)}
+            >
+              <Text style={[styles.navTabText, activeSection === key && styles.navTabTextActive]}>
+                {label}
+              </Text>
+              {activeSection === key && (
+                <Animated.View
+                  style={[styles.navUnderline, { transform: [{ scaleX: underlineAnim }] }]}
+                />
+              )}
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
         {/* Personal Details */}
-        <Section title="Personal Details">
+        <Section
+          title="Personal Details"
+          onLayout={(e: any) => { sectionY.current.personal = e.nativeEvent.layout.y; }}
+        >
           <Row
             label="Date of Birth"
             value={
@@ -836,7 +930,10 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
         {/* Hobbies */}
         {(hobbies.length > 0 || life.smoking || life.drinking) && (
-          <Section title="Hobbies & Interests">
+          <Section
+            title="Hobbies & Interests"
+            onLayout={(e: any) => { sectionY.current.hobbies = e.nativeEvent.layout.y; }}
+          >
             {hobbies.length > 0 && (
               <View style={styles.hobbyWrap}>
                 {hobbies.slice(0, 6).map((h: string, i: number) => (
@@ -870,7 +967,10 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         )}
 
         {/* Contact Details */}
-        <Section title="Contact Details">
+        <Section
+          title="Contact Details"
+          onLayout={(e: any) => { sectionY.current.contact = e.nativeEvent.layout.y; }}
+        >
           <ContactRow
             Icon={MessageCircle}
             iconColor="#1a7f37"
@@ -898,13 +998,19 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         </Section>
 
         {/* Education */}
-        <Section title="Education Details">
+        <Section
+          title="Education Details"
+          onLayout={(e: any) => { sectionY.current.education = e.nativeEvent.layout.y; }}
+        >
           <Row label="Highest Qualification" value={edu.highestQualification} />
           <Row label="College / University" value={edu.college} />
         </Section>
 
         {/* Employment */}
-        <Section title="Employment Details">
+        <Section
+          title="Employment Details"
+          onLayout={(e: any) => { sectionY.current.employment = e.nativeEvent.layout.y; }}
+        >
           <Row label="Employment Type" value={emp.employedType?.replace(/_/g, ' ')} />
           {!isAgriculture && <>
           {(isJob || isBusiness) && <Row label={isGovernment ? 'Name of the department' : isBusiness ? 'Designation' : 'Profession'} value={emp.designation} />}
@@ -923,7 +1029,10 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         </Section>
 
         {/* Family */}
-        <Section title="Family Details">
+        <Section
+          title="Family Details"
+          onLayout={(e: any) => { sectionY.current.family = e.nativeEvent.layout.y; }}
+        >
           <Row
             label="Father"
             value={
@@ -966,7 +1075,10 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         </Section>
 
         {/* Location */}
-        <Section title="Location">
+        <Section
+          title="Location"
+          onLayout={(e: any) => { sectionY.current.location = e.nativeEvent.layout.y; }}
+        >
           <Row
             label="Present Address"
             value={fmtAddr(addr.current)}
@@ -980,7 +1092,10 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         </Section>
 
         {/* Partner Preferences */}
-        <Section title="Partner Preferences">
+        <Section
+          title="Partner Preferences"
+          onLayout={(e: any) => { sectionY.current.preferences = e.nativeEvent.layout.y; }}
+        >
           <Row
             label="Preferred Age Range"
             value={
@@ -1016,14 +1131,16 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           />
         </Section>
 
-        <MatchBreakdownSection
-          myPhoto={myPhoto}
-          theirPhoto={photo}
-          theirName={name}
-          fields={matchBreakdown.fields}
-          matchedCount={matchBreakdown.matchedCount}
-          totalCount={matchBreakdown.totalCount}
-        />
+        <View onLayout={(e: any) => { sectionY.current.match = e.nativeEvent.layout.y; }}>
+          <MatchBreakdownSection
+            myPhoto={myPhoto}
+            theirPhoto={photo}
+            theirName={name}
+            fields={matchBreakdown.fields}
+            matchedCount={matchBreakdown.matchedCount}
+            totalCount={matchBreakdown.totalCount}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -1039,7 +1156,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#fff',
   },
-  headerTitle: { fontSize: 17, fontFamily: 'Outfit-Bold', color: '#000' },
+  headerTitle: { fontSize: 17, fontFamily: 'Outfit-Bold', color: '#000', flexShrink: 1 },
+  headerIdentityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 1,
+    minWidth: 0,
+  },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 18 },
   menuBackdrop: {
     position: 'absolute',
@@ -1100,6 +1224,30 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   coverIconText: { color: '#fff', fontSize: 12 },
+  quickLinksRow: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  quickLinksContent: {
+    paddingHorizontal: 16,
+  },
+  navTab: {
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  navTabText: { fontSize: 14, color: '#666', fontFamily: 'Outfit-SemiBold' },
+  navTabTextActive: { color: '#D20236' },
+  navUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: 10,
+    right: 10,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: '#D20236',
+  },
   actionWrap: { backgroundColor: '#fff', padding: 16 },
   sendBtn: {
     marginTop: 10,
