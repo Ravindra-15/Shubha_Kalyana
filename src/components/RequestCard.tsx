@@ -43,7 +43,12 @@ export default function RequestCard({
 
   return (
     <View style={[styles.card, width ? { width } : null, style]}>
-      <View style={styles.imageWrap}>
+      <TouchableOpacity
+        style={styles.imageWrap}
+        onPress={onView}
+        activeOpacity={0.9}
+        disabled={busy}
+      >
         {profile.image ? (
           <TopCroppedImage
             uri={resolveImageUrl(profile.image)}
@@ -57,7 +62,7 @@ export default function RequestCard({
             <Text style={styles.metaText}>{metaLabel}</Text>
           </View>
         ) : null}
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.info}>
         <View style={styles.nameRow}>

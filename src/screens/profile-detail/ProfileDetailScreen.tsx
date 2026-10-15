@@ -746,6 +746,21 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
         {/* Action button */}
         <View style={styles.actionWrap}>
+          <TouchableOpacity
+            style={[styles.interestBtn, togglingInterest && styles.interestBtnDisabled]}
+            onPress={toggleInterestLocal}
+            disabled={togglingInterest}
+          >
+            <Heart
+              color="#D20236"
+              fill={interested ? '#D20236' : 'transparent'}
+              size={17}
+            />
+            <Text style={styles.interestText}>
+              {interested ? 'Interested' : 'Interest'}
+            </Text>
+          </TouchableOpacity>
+
           {primaryAction === 'chat' ? (
             <TouchableOpacity style={styles.sendBtn} onPress={openChat}>
               <Heart color="#fff" size={17} />
@@ -798,21 +813,6 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               </Text>
             </TouchableOpacity>
           )}
-
-          <TouchableOpacity
-            style={[styles.interestBtn, togglingInterest && styles.interestBtnDisabled]}
-            onPress={toggleInterestLocal}
-            disabled={togglingInterest}
-          >
-            <Heart
-              color="#D20236"
-              fill={interested ? '#D20236' : 'transparent'}
-              size={17}
-            />
-            <Text style={styles.interestText}>
-              {interested ? 'Interested' : 'Interest'}
-            </Text>
-          </TouchableOpacity>
         </View>
 
         {/* Personal Details */}
@@ -1102,6 +1102,7 @@ const styles = StyleSheet.create({
   coverIconText: { color: '#fff', fontSize: 12 },
   actionWrap: { backgroundColor: '#fff', padding: 16 },
   sendBtn: {
+    marginTop: 10,
     backgroundColor: '#D20236',
     borderRadius: 8,
     paddingVertical: 15,
@@ -1112,7 +1113,6 @@ const styles = StyleSheet.create({
   },
   sendText: { color: '#fff', fontSize: 16, fontFamily: 'Outfit-Bold' },
   interestBtn: {
-    marginTop: 10,
     borderWidth: 1.5,
     borderColor: '#D20236',
     borderRadius: 8,

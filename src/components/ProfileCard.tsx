@@ -24,7 +24,7 @@ type Props = {
 export default function ProfileCard({ profile, onView, width, style }: Props) {
   return (
     <View style={[styles.card, width ? { width } : null, style]}>
-      <View style={styles.imageWrap}>
+      <TouchableOpacity style={styles.imageWrap} onPress={onView} activeOpacity={0.9}>
         {profile.image ? (
           <TopCroppedImage uri={profile.image} style={styles.image} />
         ) : (
@@ -35,7 +35,7 @@ export default function ProfileCard({ profile, onView, width, style }: Props) {
             <Text style={styles.matchText}>{profile.matchPercentage}% Match</Text>
           </View>
         )}
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.info}>
         <View style={styles.nameRow}>
