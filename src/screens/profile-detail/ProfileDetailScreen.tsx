@@ -1125,7 +1125,15 @@ const styles = StyleSheet.create({
   },
   interestBtnDisabled: { opacity: 0.6 },
   interestText: { color: '#D20236', fontSize: 15, fontFamily: 'Outfit-Bold' },
-  section: { backgroundColor: '#fff', marginTop: 10, paddingHorizontal: 16 },
+  section: {
+    backgroundColor: '#fff',
+    marginTop: 12,
+    marginHorizontal: 16,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#000',
+  },
   sectionHead: {
     flexDirection: 'row',
     justifyContent: 'space-between',
