@@ -44,6 +44,7 @@ const mapInterest = (item: any) => {
     userId: item.userId || item.user?._id,
     name: [item.user?.firstName, item.user?.lastName].filter(Boolean).join(' ') || 'Profile',
     age: getAge(basic.dob),
+    caste: basic.customCasteName || basic.caste?.casteName || '',
     profession: p.employment?.designation || '',
     location:
       [

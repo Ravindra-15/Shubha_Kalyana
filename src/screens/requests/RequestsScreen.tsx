@@ -19,6 +19,7 @@ import RequestCard from '../../components/RequestCard';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess } from '../../api/membershipPayment';
+import { isProfileFullyVerified } from '../../api/profile';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import BackArrowIcon from '../../components/BackArrowIcon';
 
@@ -75,6 +76,10 @@ const mapCard = (item: any, fallbackDirection?: RequestDirection) => {
     age: getAge(basic.dob),
     caste: basic.customCasteName || basic.caste?.casteName || '',
     profession: p.employment?.designation || '',
+    location: [(p.address?.current || {}).district, (p.address?.current || {}).state || (p.address?.current || {}).stateOrProvince]
+        .filter((x: any) => x && x !== 'blur')
+        .join(', '),
+    verified: Boolean(p.verified || isProfileFullyVerified(p)),
     image: photo,
   };
 };

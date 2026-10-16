@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { BadgeCheck } from 'lucide-react-native';
 import TopCroppedImage from './TopCroppedImage';
+import { cardFrame, NameCardDetails } from './nameCard';
 
 const IMAGE_HEIGHT = 220;
 
@@ -21,48 +22,54 @@ type Props = {
   style?: StyleProp<ViewStyle>;
 };
 
+// Client name-card spec: whole card opens the profile; photo on top, then
+// Name / "age yrs, profession" / caste / location. With a fixed width the
+// frame follows the doc's 6.5cm x 3.8cm card and 3.6cm photo proportions,
+// so every Home row card is exactly the same size.
 export default function ProfileCard({ profile, onView, width, style }: Props) {
+  const frame = width ? cardFrame(width) : null;
   return (
-    <View style={[styles.card, width ? { width } : null, style]}>
-      <TouchableOpacity style={styles.imageWrap} onPress={onView} activeOpacity={0.9}>
+    <TouchableOpacity
+      style={[styles.card, frame ? { width, height: frame.cardHeight } : null, style]}
+      onPress={onView}
+      activeOpacity={0.9}
+    >
+      <View style={styles.imageWrap}>
         {profile.image ? (
-          <TopCroppedImage uri={profile.image} style={styles.image} />
+          <TopCroppedImage
+            uri={profile.image}
+            style={[styles.image, { height: frame ? frame.photoHeight : IMAGE_HEIGHT }]}
+          />
         ) : (
-          <View style={[styles.image, styles.imagePlaceholder]} />
+          <View
+            style={[
+              styles.image,
+              styles.imagePlaceholder,
+              { height: frame ? frame.photoHeight : IMAGE_HEIGHT },
+            ]}
+          />
+        )}
+        {profile.verified && (
+          <View style={styles.verifiedTag}>
+            <BadgeCheck color="#fff" size={13} fill="#1a7f37" />
+            <Text style={styles.verifiedText}>Verified</Text>
+          </View>
         )}
         {profile.matchPercentage != null && (
           <View style={styles.matchBadge}>
             <Text style={styles.matchText}>{profile.matchPercentage}% Match</Text>
           </View>
         )}
-      </TouchableOpacity>
-
-      <View style={styles.info}>
-        <View style={styles.nameRow}>
-          <Text style={styles.name} numberOfLines={1}>
-            {profile.name}
-            {profile.age ? `, ${profile.age}` : ''}
-          </Text>
-          {profile.verified && (
-            <BadgeCheck color="#FFFFFF" size={16} fill="#D20236" />
-          )}
-        </View>
-        <Text style={styles.detail} numberOfLines={1}>
-          {profile.profession || 'Not specified'}
-        </Text>
-        <Text style={styles.detail} numberOfLines={1}>
-          {profile.location}
-        </Text>
-
-        <TouchableOpacity
-          style={styles.viewBtn}
-          onPress={onView}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.viewText}>View Profile</Text>
-        </TouchableOpacity>
       </View>
-    </View>
+
+      <View style={[styles.info, frame && styles.infoFixed]}>
+        <NameCardDetails profile={profile} />
+
+        <View style={styles.viewBtn}>
+          <Text style={styles.viewText}>View Profile</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 }
 
@@ -80,8 +87,21 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   imageWrap: { position: 'relative' },
-  image: { width: '100%', height: IMAGE_HEIGHT, backgroundColor: '#eee' },
+  image: { width: '100%', backgroundColor: '#eee' },
   imagePlaceholder: { backgroundColor: '#eee' },
+  verifiedTag: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#1a7f37',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  verifiedText: { color: '#fff', fontSize: 11, fontFamily: 'Outfit-Bold' },
   matchBadge: {
     position: 'absolute',
     left: 10,
@@ -93,15 +113,13 @@ const styles = StyleSheet.create({
   },
   matchText: { color: '#fff', fontSize: 12, fontFamily: 'Outfit-Bold' },
   info: { padding: 12 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  name: { fontSize: 16, fontFamily: 'Outfit-Bold', color: '#000', flexShrink: 1 },
-  detail: { fontSize: 13, color: '#666', marginTop: 2 },
+  infoFixed: { flex: 1, justifyContent: 'space-between' },
   viewBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,
-    paddingVertical: 11,
+    paddingVertical: 9,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 8,
   },
   viewText: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
 });

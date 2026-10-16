@@ -65,6 +65,7 @@ export const mapProfileViewer = (item: any) => {
         .filter(Boolean)
         .join(' ') || 'Profile',
     age: getAge(basic.dob),
+    caste: basic.customCasteName || basic.caste?.casteName || '',
     profession: p.employment?.designation || '',
     location:
       [

@@ -11,6 +11,7 @@ import {
 import { BadgeCheck } from 'lucide-react-native';
 import { resolveImageUrl } from '../utils/imageUrl';
 import TopCroppedImage from './TopCroppedImage';
+import { cardFrame, NameCardDetails } from './nameCard';
 
 const IMAGE_HEIGHT = 220;
 
@@ -28,6 +29,8 @@ type Props = {
   style?: StyleProp<ViewStyle>;
 };
 
+// Same name card / frame as ProfileCard (client spec), plus Accept/Reject.
+// Tapping anywhere outside those two buttons opens the profile.
 export default function RequestCard({
   profile,
   onAccept,
@@ -40,42 +43,40 @@ export default function RequestCard({
   style,
 }: Props) {
   const busy = accepting || rejecting;
+  const frame = width ? cardFrame(width) : null;
+  const photoHeight = frame ? frame.photoHeight : IMAGE_HEIGHT;
 
   return (
-    <View style={[styles.card, width ? { width } : null, style]}>
-      <TouchableOpacity
-        style={styles.imageWrap}
-        onPress={onView}
-        activeOpacity={0.9}
-        disabled={busy}
-      >
+    <TouchableOpacity
+      style={[styles.card, frame ? { width, height: frame.cardHeight } : null, style]}
+      onPress={onView}
+      activeOpacity={0.9}
+      disabled={busy}
+    >
+      <View style={styles.imageWrap}>
         {profile.image ? (
           <TopCroppedImage
             uri={resolveImageUrl(profile.image)}
-            style={styles.image}
+            style={[styles.image, { height: photoHeight }]}
           />
         ) : (
-          <View style={[styles.image, styles.imagePlaceholder]} />
+          <View style={[styles.image, styles.imagePlaceholder, { height: photoHeight }]} />
+        )}
+        {profile.verified && (
+          <View style={styles.verifiedTag}>
+            <BadgeCheck color="#fff" size={13} fill="#1a7f37" />
+            <Text style={styles.verifiedText}>Verified</Text>
+          </View>
         )}
         {metaLabel ? (
           <View style={styles.metaBadge}>
             <Text style={styles.metaText}>{metaLabel}</Text>
           </View>
         ) : null}
-      </TouchableOpacity>
+      </View>
 
-      <View style={styles.info}>
-        <View style={styles.nameRow}>
-          <Text style={styles.name} numberOfLines={1}>
-            {profile.name}
-            {profile.age ? `, ${profile.age}` : ''}
-          </Text>
-          <BadgeCheck color="#FFFFFF" size={16} fill="#D20236" />
-        </View>
-        <Text style={styles.detail} numberOfLines={1}>
-          {[profile.caste, profile.profession].filter(Boolean).join('  |  ') ||
-            'Not specified'}
-        </Text>
+      <View style={[styles.info, frame && styles.infoFixed]}>
+        <NameCardDetails profile={profile} />
 
         <View style={styles.btnRow}>
           <TouchableOpacity
@@ -103,12 +104,8 @@ export default function RequestCard({
             )}
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity onPress={onView} style={styles.viewWrap} disabled={busy}>
-          <Text style={styles.viewText}>View Profile</Text>
-        </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -126,8 +123,21 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   imageWrap: { position: 'relative' },
-  image: { width: '100%', height: IMAGE_HEIGHT, backgroundColor: '#eee' },
+  image: { width: '100%', backgroundColor: '#eee' },
   imagePlaceholder: { backgroundColor: '#eee' },
+  verifiedTag: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#1a7f37',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  verifiedText: { color: '#fff', fontSize: 11, fontFamily: 'Outfit-Bold' },
   metaBadge: {
     position: 'absolute',
     left: 10,
@@ -144,15 +154,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   info: { padding: 12 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  name: { fontSize: 16, fontFamily: 'Outfit-Bold', color: '#000', flexShrink: 1 },
-  detail: { fontSize: 13, color: '#888', marginTop: 3 },
-  btnRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  infoFixed: { flex: 1, justifyContent: 'space-between' },
+  btnRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
   acceptBtn: {
     flex: 1,
     backgroundColor: '#1a7f37',
     borderRadius: 8,
-    paddingVertical: 11,
+    paddingVertical: 9,
     alignItems: 'center',
   },
   disabledBtn: { opacity: 0.65 },
@@ -161,10 +169,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f0f0f0',
     borderRadius: 8,
-    paddingVertical: 11,
+    paddingVertical: 9,
     alignItems: 'center',
   },
   rejectText: { color: '#333', fontSize: 13, fontFamily: 'Outfit-Bold' },
-  viewWrap: { alignItems: 'center', marginTop: 10 },
-  viewText: { fontSize: 14, color: '#333', fontFamily: 'Outfit-SemiBold' },
 });

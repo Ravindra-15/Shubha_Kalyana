@@ -41,7 +41,8 @@ import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const VENDOR_CARD_WIDTH = SCREEN_WIDTH * 0.7;
 const PROFILE_CARD_WIDTH = SCREEN_WIDTH * 0.62;
-const REQUEST_CARD_WIDTH = SCREEN_WIDTH * 0.72;
+// Same frame as the profile cards (client spec: one card size everywhere).
+const REQUEST_CARD_WIDTH = PROFILE_CARD_WIDTH;
 export default function HomeScreen({ navigation }: any) {
   const { bumpInterestCount } = useInterestBadge();
   const [firstName, setFirstName] = useState('');
@@ -208,6 +209,10 @@ export default function HomeScreen({ navigation }: any) {
       age: getAgeFromDob(basic.dob),
       caste: basic.customCasteName || basic.caste?.casteName || '',
       profession: req.profile?.employment?.designation || '',
+      location: [(req.profile?.address?.current || {}).district, (req.profile?.address?.current || {}).state || (req.profile?.address?.current || {}).stateOrProvince]
+        .filter((x: any) => x && x !== 'blur')
+        .join(', '),
+      verified: Boolean(req.profile?.verified || isProfileFullyVerified(req.profile)),
       image: photo,
     };
   };
@@ -266,6 +271,7 @@ export default function HomeScreen({ navigation }: any) {
         [item.user?.firstName, item.user?.lastName].filter(Boolean).join(' ') ||
         'Profile',
       age: getAgeFromDob(basic.dob),
+      caste: basic.customCasteName || basic.caste?.casteName || '',
       profession: item.profile?.employment?.designation || '',
       location:
         [
@@ -633,10 +639,7 @@ export default function HomeScreen({ navigation }: any) {
               <View>
                 <Text style={styles.sectionTitle}>
                   Premium Matches{premiumTotal > 0 ? ` (${premiumTotal})` : ''}
-                </Text>
-                <Text style={styles.sectionSub}>
-                  Profiles matching your preferences
-                </Text>
+                </Text>
               </View>
               <TouchableOpacity
                 onPress={() =>
@@ -687,10 +690,7 @@ export default function HomeScreen({ navigation }: any) {
               <View>
                 <Text style={styles.sectionTitle}>
                   New Matches{newTotal > 0 ? ` (${newTotal})` : ''}
-                </Text>
-                <Text style={styles.sectionSub}>
-                  Profiles matching your preferences
-                </Text>
+                </Text>
               </View>
               <TouchableOpacity
                 onPress={() =>
@@ -737,10 +737,7 @@ export default function HomeScreen({ navigation }: any) {
           <>
             <View style={[styles.sectionHeader, styles.sectionHeaderSpaced]}>
               <View>
-                <Text style={styles.sectionTitle}>Received Requests</Text>
-                <Text style={styles.sectionSub}>
-                  Profiles matching your preferences
-                </Text>
+                <Text style={styles.sectionTitle}>Received Requests</Text>
               </View>
               <TouchableOpacity
                 onPress={() =>
@@ -782,10 +779,7 @@ export default function HomeScreen({ navigation }: any) {
           <>
             <View style={[styles.sectionHeader, styles.sectionHeaderSpaced]}>
               <View>
-                <Text style={styles.sectionTitle}>Interested Profiles</Text>
-                <Text style={styles.sectionSub}>
-                  Profiles matching your preferences
-                </Text>
+                <Text style={styles.sectionTitle}>Interested Profiles</Text>
               </View>
               <TouchableOpacity
                 onPress={() =>
@@ -828,10 +822,7 @@ export default function HomeScreen({ navigation }: any) {
                 <Text style={styles.sectionTitle}>
                   Profile Viewers
                   {profileViewersTotal > 0 ? ` (${profileViewersTotal})` : ''}
-                </Text>
-                <Text style={styles.sectionSub}>
-                  People who viewed your profile
-                </Text>
+                </Text>
               </View>
               <TouchableOpacity
                 onPress={() => navigation.navigate('ProfileViewers')}
