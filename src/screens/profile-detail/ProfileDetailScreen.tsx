@@ -35,6 +35,8 @@ import {
   Share2,
   Ban,
   Flag,
+  Send,
+  MailCheck,
   Calendar,
   Landmark,
   Users,
@@ -1036,7 +1038,11 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               onPress={sendRequest}
               disabled={!!requestStatus}
             >
-              <Heart color="#fff" size={17} />
+              {requestStatus === 'PENDING' ? (
+                <MailCheck color="#fff" size={17} />
+              ) : (
+                <Send color="#fff" size={17} />
+              )}
               <Text style={styles.sendText}>
                 {requestStatus === 'PENDING' ? 'Request Sent' : 'Send Request'}
               </Text>

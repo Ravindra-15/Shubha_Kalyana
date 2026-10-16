@@ -102,10 +102,12 @@ export default function HomeScreen({ navigation }: any) {
     loop.start();
     return () => loop.stop();
   }, [shineAnim]);
-  const shineWidth = upgradeBtnWidth * 0.33;
+  // Web values: a stripe 1/3 of the button wide whose left edge travels
+  // from -45% to 115% of the button width.
+  const shineWidth = upgradeBtnWidth / 3;
   const shineTranslate = shineAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-upgradeBtnWidth * 0.45 - shineWidth, upgradeBtnWidth * 1.15],
+    outputRange: [-upgradeBtnWidth * 0.45, upgradeBtnWidth * 1.15],
   });
 
   const showAccessRequired = async (
@@ -577,11 +579,11 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={styles.upgradeText}>
               {hasActivePlan ? 'Explore Now' : 'Upgrade Now'}
             </Text>
-            <ArrowRight color="#E60076" size={18} />
+            <ArrowRight color="#fff" size={16} />
 
-            {/* White line sweep, same effect as the web navbar's
-                membership pill -- purely decorative, pointerEvents none so
-                it never blocks the button's tap. */}
+            {/* White line sweep, identical to the web navbar's membership
+                pill -- purely decorative, pointerEvents none so it never
+                blocks the button's tap. */}
             {upgradeBtnWidth > 0 && (
               <Animated.View
                 pointerEvents="none"
@@ -597,11 +599,9 @@ export default function HomeScreen({ navigation }: any) {
                 ]}
               >
                 <LinearGradient
-                  // Same single transparent-via-transparent sweep as the
-                  // web navbar's shine, just tinted silver/light-gray
-                  // instead of white -- a literal white fill would be
-                  // invisible against this button's own white background.
-                  colors={['transparent', 'rgba(192,192,192,0.65)', 'transparent']}
+                  // Web's "via-white/55" sweep, visible now that the button
+                  // uses the web crimson instead of white.
+                  colors={['transparent', 'rgba(255,255,255,0.55)', 'transparent']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={StyleSheet.absoluteFill}
@@ -1008,28 +1008,41 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     lineHeight: 17,
   },
+  // Matches the web navbar's membership pill (#d9043d, white text). The
+  // thin white border is mobile-only: this pill sits on the red plan card,
+  // where the web one sits on a white navbar, so it needs an edge.
   upgradeBtn: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingVertical: 9,
-    paddingHorizontal: 16,
+    backgroundColor: '#d9043d',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.75)',
+    height: 40,
+    paddingHorizontal: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'flex-start',
     position: 'relative',
     overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
   },
   upgradeText: {
-    color: '#E60076',
-    fontSize: 15,
-    fontFamily: 'Outfit-Bold',
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: 'Outfit-SemiBold',
     marginRight: 6,
   },
+  // left: 0 anchors the sweep to the button's left edge; without it the
+  // stripe started from the centre (the button centres its content).
   upgradeShine: {
     position: 'absolute',
     top: 0,
     bottom: 0,
+    left: 0,
   },
   sectionHeader: {
     flexDirection: 'row',
