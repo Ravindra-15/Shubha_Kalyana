@@ -17,7 +17,6 @@ import BottomNav from '../../components/BottomNav';
 import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
-import { isProfileFullyVerified } from '../../api/profile';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { startChat } from '../../api/chat';
 import BackArrowIcon from '../../components/BackArrowIcon';
@@ -57,7 +56,7 @@ const mapInterest = (item: any) => {
     image: photo,
     matchPercentage,
     matchPercent: matchPercentage,
-    verified: Boolean(p.verified || isProfileFullyVerified(p)),
+    verified: Boolean(p.verified),
     bothHaveActivePlans: Boolean(item.bothHaveActivePlans),
   };
 };

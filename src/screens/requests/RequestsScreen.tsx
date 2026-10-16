@@ -19,7 +19,6 @@ import RequestCard from '../../components/RequestCard';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess } from '../../api/membershipPayment';
-import { isProfileFullyVerified } from '../../api/profile';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import BackArrowIcon from '../../components/BackArrowIcon';
 
@@ -79,7 +78,7 @@ const mapCard = (item: any, fallbackDirection?: RequestDirection) => {
     location: [(p.address?.current || {}).district, (p.address?.current || {}).state || (p.address?.current || {}).stateOrProvince]
         .filter((x: any) => x && x !== 'blur')
         .join(', '),
-    verified: Boolean(p.verified || isProfileFullyVerified(p)),
+    verified: Boolean(p.verified),
     image: photo,
   };
 };
@@ -113,7 +112,7 @@ function SimpleCard({
         <View style={styles.info}>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{profile.name}{profile.age ? `, ${profile.age}` : ''}</Text>
-            <BadgeCheck color="#fff" size={18} fill="#D20236" />
+            {profile.verified && <BadgeCheck color="#fff" size={18} fill="#D20236" />}
           </View>
           <Text style={styles.detail}>
             {[profile.caste, profile.profession].filter(Boolean).join('  |  ') || 'Not specified'}

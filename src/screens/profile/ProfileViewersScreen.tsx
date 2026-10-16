@@ -16,7 +16,7 @@ import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import apiClient from '../../api/client';
 import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
-import { getProfileViewers, isProfileFullyVerified } from '../../api/profile';
+import { getProfileViewers } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { startChat } from '../../api/chat';
@@ -78,7 +78,7 @@ export const mapProfileViewer = (item: any) => {
     image: photo ? resolveImageUrl(photo) : '',
     matchPercentage,
     matchPercent: matchPercentage,
-    verified: Boolean(p.verified || isProfileFullyVerified(p)),
+    verified: Boolean(p.verified),
     viewedAt: item.viewedAt,
     viewCount: Number(item.viewCount || 0),
     bothHaveActivePlans: Boolean(item.bothHaveActivePlans),

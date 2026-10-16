@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Settings, BadgeCheck, Edit3, CreditCard, Download, Heart, ChevronRight, Crown, Eye, Users, HelpCircle } from 'lucide-react-native';
 import apiClient from '../../api/client';
 import { getActiveMembership } from '../../api/membership';
-import { getProfileViewersSummary, getNavbarCounts, isProfileFullyVerified } from '../../api/profile';
+import { getProfileViewersSummary, getNavbarCounts } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import GalleryPreviewGrid from '../../components/GalleryPreviewGrid';
@@ -109,7 +109,8 @@ export default function ProfileScreen({ navigation }: any) {
     .filter((p: any) => !p.isProfilePhoto)
     .map((p: any) => ({ publicId: p.publicId, url: resolveImageUrl(p.url) }));
   // Verified badge requires an active plan too, not just photo + Aadhaar.
-  const verified = Boolean(membership) && isProfileFullyVerified(profile);
+  // "Verified" badge = active plan (client decision, Oct 2026).
+  const verified = Boolean(membership);
   const location = [profile?.address?.current?.district, profile?.address?.current?.state]
     .filter(Boolean).join(', ');
   const completion = profile?.completionPercentage || 0;

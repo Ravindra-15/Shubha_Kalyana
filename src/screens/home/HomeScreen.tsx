@@ -34,7 +34,7 @@ import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess } from '../../api/membershipPayment';
 import { getUnreadCount } from '../../api/notification';
-import { isProfileFullyVerified, getProfileViewers } from '../../api/profile';
+import { getProfileViewers } from '../../api/profile';
 import { mapProfileViewer } from '../profile/ProfileViewersScreen';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
@@ -214,7 +214,7 @@ export default function HomeScreen({ navigation }: any) {
       location: [(req.profile?.address?.current || {}).district, (req.profile?.address?.current || {}).state || (req.profile?.address?.current || {}).stateOrProvince]
         .filter((x: any) => x && x !== 'blur')
         .join(', '),
-      verified: Boolean(req.profile?.verified || isProfileFullyVerified(req.profile)),
+      verified: Boolean(req.profile?.verified),
       image: photo,
     };
   };
@@ -286,9 +286,7 @@ export default function HomeScreen({ navigation }: any) {
       image: photo,
       matchPercentage,
       matchPercent: matchPercentage,
-      verified: Boolean(
-        item.profile?.verified || isProfileFullyVerified(item.profile),
-      ),
+      verified: Boolean(item.profile?.verified),
       bothHaveActivePlans: Boolean(item.bothHaveActivePlans),
     };
   };
