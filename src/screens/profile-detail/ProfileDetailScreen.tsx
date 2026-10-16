@@ -86,6 +86,12 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 const SCREEN_HEIGHT = Dimensions.get('window').height;
+// Header height below the status-bar inset: paddingTop 10 + 38 button + 10.
+const HEADER_BAR_HEIGHT = 58;
+const SECTION_ORDER = [
+  'personal', 'hobbies', 'contact', 'education', 'employment',
+  'family', 'location', 'preferences', 'match',
+];
 const isBlur = (v: any) =>
   v === 'blur' || v === undefined || v === null || v === '';
 const isLocked = (v: any) => v === 'blur';
@@ -279,37 +285,78 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   const scrollRef = useRef<ScrollView>(null);
   const sectionY = useRef<Record<string, number>>({});
   const [showHeaderIdentity, setShowHeaderIdentity] = useState(false);
+  // The floating header (minus the status-bar inset the ScrollView already
+  // sits below) and the docked quick-links bar both cover the top of the
+  // scroll area, so scroll targets and the scroll-spy probe are offset by
+  // that covered height -- otherwise a section's title lands under them.
+  const quickLinksHeight = useRef(48);
+  const coveredTop = () => HEADER_BAR_HEIGHT + quickLinksHeight.current;
   const scrollToSection = (key: string) => {
     const y = sectionY.current[key];
-    if (y != null) scrollRef.current?.scrollTo({ y: y - 12, animated: true });
+    if (y != null) {
+      scrollRef.current?.scrollTo({ y: Math.max(0, y - coveredTop() - 8), animated: true });
+    }
   };
   const [activeSection, setActiveSection] = useState('personal');
+  const activeRef = useRef('personal');
   const underlineAnim = useRef(new Animated.Value(1)).current;
-  const selectQuickLink = (key: string) => {
+  const tabX = useRef<Record<string, number>>({});
+  const dockedLinksRef = useRef<ScrollView>(null);
+  const inlineLinksRef = useRef<ScrollView>(null);
+  const spyLockUntil = useRef(0);
+  const setActive = (key: string) => {
+    if (activeRef.current === key) return;
+    activeRef.current = key;
     setActiveSection(key);
-    scrollToSection(key);
     underlineAnim.setValue(0);
     Animated.timing(underlineAnim, {
       toValue: 1,
       duration: 220,
       useNativeDriver: true,
     }).start();
+    // Keep the active tab in view in the horizontal bar.
+    const x = Math.max(0, (tabX.current[key] ?? 0) - 24);
+    dockedLinksRef.current?.scrollTo({ x, animated: true });
+    inlineLinksRef.current?.scrollTo({ x, animated: true });
+  };
+  const selectQuickLink = (key: string) => {
+    // Stop the scroll-spy from fighting the programmatic scroll while it
+    // animates through the sections in between.
+    spyLockUntil.current = Date.now() + 700;
+    setActive(key);
+    scrollToSection(key);
   };
   // Replaces stickyHeaderIndices: that approach pins content to the
   // ScrollView's own literal top edge, which is now *behind* the floating
   // header (since the header overlays the ScrollView instead of taking
   // its own space) -- so the quick-links bar stuck right under the
   // header, overlapping it. A manually-docked duplicate bar, shown once
-  // scrolled past the real one's position, docks correctly below the
-  // header instead.
+  // the real one reaches the header, docks correctly below it instead.
   const [stickyQuickLinks, setStickyQuickLinks] = useState(false);
   const handleScroll = (e: any) => {
-    const y = e.nativeEvent.contentOffset.y;
+    const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
+    const y = contentOffset.y;
     const next = y > SCREEN_HEIGHT * 0.45;
     setShowHeaderIdentity((prev) => (prev === next ? prev : next));
     const quickLinksY = sectionY.current.quickLinks;
-    const nextSticky = quickLinksY != null && y > quickLinksY;
+    const nextSticky = quickLinksY != null && y > quickLinksY - HEADER_BAR_HEIGHT;
     setStickyQuickLinks((prev) => (prev === nextSticky ? prev : nextSticky));
+
+    // Scroll-spy: highlight the last section whose top has reached the
+    // area just below the docked bar; at the very bottom, the last one.
+    if (Date.now() < spyLockUntil.current) return;
+    const present = SECTION_ORDER.filter((k) => sectionY.current[k] != null);
+    if (!present.length) return;
+    let current = present[0];
+    if (y + layoutMeasurement.height >= contentSize.height - 4) {
+      current = present[present.length - 1];
+    } else {
+      const probe = y + coveredTop() + 24;
+      for (const k of present) {
+        if (sectionY.current[k] <= probe) current = k;
+      }
+    }
+    setActive(current);
   };
 
   const loadProfile = useCallback(
@@ -815,6 +862,8 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
       {stickyQuickLinks && (
         <View style={[styles.dockedQuickLinks, { top: headerHeight }]}>
           <ScrollView
+            ref={dockedLinksRef}
+            contentOffset={{ x: Math.max(0, (tabX.current[activeSection] ?? 0) - 24), y: 0 }}
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.quickLinksRow}
@@ -1000,8 +1049,14 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             page; the active tab turns red with an underline that animates
             in on select. A duplicate docks below the header (see above)
             once this one scrolls out of view. */}
-        <View onLayout={(e: any) => { sectionY.current.quickLinks = e.nativeEvent.layout.y; }}>
+        <View
+          onLayout={(e: any) => {
+            sectionY.current.quickLinks = e.nativeEvent.layout.y;
+            quickLinksHeight.current = e.nativeEvent.layout.height;
+          }}
+        >
           <ScrollView
+            ref={inlineLinksRef}
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.quickLinksRow}
@@ -1012,6 +1067,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
                 key={key}
                 style={styles.navTab}
                 onPress={() => selectQuickLink(key)}
+                onLayout={(e: any) => { tabX.current[key] = e.nativeEvent.layout.x; }}
               >
                 <Text style={[styles.navTabText, activeSection === key && styles.navTabTextActive]}>
                   {label}
@@ -1452,9 +1508,14 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginHorizontal: 16,
     paddingHorizontal: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#000',
+    borderColor: '#f0f0f0',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
   },
   sectionHead: {
     flexDirection: 'row',
