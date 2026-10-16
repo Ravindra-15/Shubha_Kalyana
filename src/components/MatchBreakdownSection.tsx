@@ -1,21 +1,16 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { ArrowLeftRight, Check, X, Minus, Lock } from 'lucide-react-native';
+import { ArrowLeftRight, Check } from 'lucide-react-native';
 import { resolveImageUrl } from '../utils/imageUrl';
 
 type MatchField = {
   key: string;
   label: string;
-  // null = viewer never set a preference for this field (shown neutrally,
-  // not counted toward matchedCount/totalCount -- see getProfileMatchBreakdown).
+  // null = viewer never set a preference for this field.
   matched: boolean | null;
   hasPreference: boolean;
   value: string;
-  // Resident only: true when the viewer hasn't unlocked this profile --
-  // its value is masked server-side ("blur"), shown with a lock icon
-  // instead of a check/cross, same convention as the rest of the app.
-  locked?: boolean;
 };
 
 type Props = {
@@ -41,6 +36,7 @@ export default function MatchBreakdownSection({
 }: Props) {
   const hasAnyPreference = fields.some((field) => field.hasPreference);
   if (!hasAnyPreference) return null;
+  const matchedFields = fields.filter((field) => field.matched === true);
 
   return (
     <View style={styles.wrap}>
@@ -79,42 +75,31 @@ export default function MatchBreakdownSection({
           You Match {matchedCount}/{totalCount} of Preferences
         </Text>
 
-        {fields.map((field, idx) => (
-          <View
-            key={field.key}
-            style={[
-              styles.fieldRow,
-              idx === fields.length - 1 && styles.fieldRowLast,
-            ]}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={styles.fieldLabel}>{field.label}</Text>
-              <Text style={styles.fieldValue} numberOfLines={1}>
-                {field.locked ? 'Locked' : field.value}
-              </Text>
-            </View>
+        {/* Client decision: list only the points that match. Unmatched and
+            not-set fields still count toward the total above. */}
+        {matchedFields.length === 0 ? (
+          <Text style={styles.emptyText}>No matching preferences yet.</Text>
+        ) : (
+          matchedFields.map((field, idx) => (
             <View
+              key={field.key}
               style={[
-                styles.statusCircle,
-                field.locked || !field.hasPreference
-                  ? styles.statusNeutral
-                  : field.matched
-                    ? styles.statusMatched
-                    : styles.statusUnmatched,
+                styles.fieldRow,
+                idx === matchedFields.length - 1 && styles.fieldRowLast,
               ]}
             >
-              {field.locked ? (
-                <Lock color="#bbb" size={14} strokeWidth={2.5} />
-              ) : !field.hasPreference ? (
-                <Minus color="#bbb" size={16} strokeWidth={3} />
-              ) : field.matched ? (
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fieldLabel}>{field.label}</Text>
+                <Text style={styles.fieldValue} numberOfLines={1}>
+                  {field.value}
+                </Text>
+              </View>
+              <View style={[styles.statusCircle, styles.statusMatched]}>
                 <Check color="#1a7f37" size={16} strokeWidth={3} />
-              ) : (
-                <X color="#999" size={16} strokeWidth={3} />
-              )}
+              </View>
             </View>
-          </View>
-        ))}
+          ))
+        )}
       </View>
     </View>
   );
@@ -187,6 +172,5 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   statusMatched: { backgroundColor: '#e8f6ec' },
-  statusUnmatched: { backgroundColor: '#f2f2f2' },
-  statusNeutral: { backgroundColor: '#fafafa' },
+  emptyText: { fontSize: 14, color: '#888', fontFamily: 'Outfit-Medium', paddingVertical: 6 },
 });
