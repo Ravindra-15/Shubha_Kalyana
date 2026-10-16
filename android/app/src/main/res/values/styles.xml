@@ -9,6 +9,10 @@
              visible gap under full-bleed screens like the splash. Pinning
              it explicitly keeps it consistent across devices. -->
         <item name="android:navigationBarColor">#000000</item>
+        <!-- White status bar with dark icons (matches App.tsx) instead of
+             the theme's default dark grey band. -->
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
 </resources>

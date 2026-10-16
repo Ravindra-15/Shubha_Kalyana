@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { StatusBar, useColorScheme } from 'react-native';
+import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import './src/utils/setupDefaultFont';
 import './src/i18n';
@@ -15,15 +15,16 @@ import { ChatProvider } from './src/context/ChatContext';
 import { InterestBadgeProvider } from './src/context/InterestBadgeContext';
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark';
-
   return (
     <AuthProvider>
       <SignupProvider>
         <ChatProvider>
           <InterestBadgeProvider>
             <SafeAreaProvider>
-              <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+              {/* White background + dark icons so the status bar blends into
+                  the app's white screens instead of Android's default grey
+                  band. The splash screen overrides this with its own red. */}
+              <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
               <RootNavigator />
             </SafeAreaProvider>
           </InterestBadgeProvider>
