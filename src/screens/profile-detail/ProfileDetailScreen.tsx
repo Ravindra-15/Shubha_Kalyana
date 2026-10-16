@@ -1113,7 +1113,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           >
             {hobbies.length > 0 && (
               <View style={styles.hobbyWrap}>
-                {hobbies.slice(0, 6).map((h: string, i: number) => (
+                {hobbies.slice(0, 9).map((h: string, i: number) => (
                   <View key={i} style={styles.hobbyChip}>
                     <Text style={styles.hobbyText}>{h}</Text>
                   </View>

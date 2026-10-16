@@ -14,21 +14,14 @@ import apiClient from '../../../api/client';
 import { useSignup } from '../../../context/SignupContext';
 import { useTranslation } from 'react-i18next';
 import SplitTitle from '../../../components/SplitTitle';
-
-const GROUPS = [
-  {
-    title: 'Entertainment',
-    items: ['Music', 'Movies', 'Web Series', 'Reading', 'Podcasts', 'Others'],
-  },
-  {
-    title: 'Lifestyle & Activities',
-    items: ['Traveling', 'Cooking', 'Gardening', 'Shopping', 'Drinking', 'Driving', 'Smoking', 'Others'],
-  },
-  {
-    title: 'Fitness & Health',
-    items: ['Gym', 'Yoga', 'Running', 'Meditation', 'Sports', 'Cycling','Others'],
-  },
-];
+import {
+  HOBBY_GROUPS as GROUPS,
+  HOBBY_GROUP_LIMIT,
+  countInGroup,
+  groupOfHobby,
+  hobbyLimitMessage,
+  initialOthersGroups,
+} from '../../../utils/hobbies';
 
 export default function HobbiesScreen({ navigation }: any) {
   const { t } = useTranslation();
@@ -39,21 +32,34 @@ export default function HobbiesScreen({ navigation }: any) {
   // of them lit up all three, since they were indistinguishable. Tracked
   // here separately, per group, so each toggles independently; `selected`
   // still only ever stores plain "Others" (once, if any group has it
-  // active), so the saved data shape is completely unchanged. Initialized
-  // to "all active" only when Others was already saved, since which
-  // specific group it originally came from was never recorded.
+  // active), so the saved data shape is completely unchanged.
   const [othersActiveGroups, setOthersActiveGroups] = useState<Set<string>>(
-    () => new Set((data.hobbies || []).includes('Others') ? GROUPS.map((g) => g.title) : []),
+    () => initialOthersGroups(data.hobbies || []),
   );
   const [loading, setLoading] = useState(false);
 
+  // Max 3 per section (its Others chip included); deselecting is always allowed.
+  const isGroupFull = (groupTitle: string) => {
+    const group = GROUPS.find((g) => g.title === groupTitle);
+    return Boolean(group) && countInGroup(selected, othersActiveGroups, group!) >= HOBBY_GROUP_LIMIT;
+  };
+
   const toggle = (item: string) => {
+    const group = groupOfHobby(item);
+    if (!selected.includes(item) && group && isGroupFull(group.title)) {
+      Alert.alert('Limit reached', hobbyLimitMessage(group.title));
+      return;
+    }
     setSelected((prev) =>
       prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item]
     );
   };
 
   const toggleOthers = (groupTitle: string) => {
+    if (!othersActiveGroups.has(groupTitle) && isGroupFull(groupTitle)) {
+      Alert.alert('Limit reached', hobbyLimitMessage(groupTitle));
+      return;
+    }
     setOthersActiveGroups((prev) => {
       const next = new Set(prev);
       if (next.has(groupTitle)) next.delete(groupTitle);

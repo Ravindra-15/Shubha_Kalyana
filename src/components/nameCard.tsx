@@ -1,13 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-// Client spec (in cm): card frame 6.5 tall x 3.8 wide, photo 3.6 tall x 3.8
-// wide, the rest for the name card details.
-const CARD_RATIO = 6.5 / 3.8;
+// Client spec (in cm): photo 3.6 tall x 3.8 wide. The card itself grows to
+// fit the details so there's no empty gap above the buttons.
 const PHOTO_RATIO = 3.6 / 3.8;
 
 export const cardFrame = (width: number) => ({
-  cardHeight: Math.round(width * CARD_RATIO),
   photoHeight: Math.round(width * PHOTO_RATIO),
 });
 

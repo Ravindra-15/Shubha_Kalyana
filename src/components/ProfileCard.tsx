@@ -24,13 +24,13 @@ type Props = {
 
 // Client name-card spec: whole card opens the profile; photo on top, then
 // Name / "age yrs, profession" / caste / location. With a fixed width the
-// frame follows the doc's 6.5cm x 3.8cm card and 3.6cm photo proportions,
-// so every Home row card is exactly the same size.
+// photo follows the doc's 3.6cm x 3.8cm proportions, so every Home row
+// card's photo frame is the same size.
 export default function ProfileCard({ profile, onView, width, style }: Props) {
   const frame = width ? cardFrame(width) : null;
   return (
     <TouchableOpacity
-      style={[styles.card, frame ? { width, height: frame.cardHeight } : null, style]}
+      style={[styles.card, width ? { width } : null, style]}
       onPress={onView}
       activeOpacity={0.9}
     >
@@ -62,7 +62,7 @@ export default function ProfileCard({ profile, onView, width, style }: Props) {
         )}
       </View>
 
-      <View style={[styles.info, frame && styles.infoFixed]}>
+      <View style={styles.info}>
         <NameCardDetails profile={profile} />
 
         <View style={styles.viewBtn}>
@@ -113,7 +113,6 @@ const styles = StyleSheet.create({
   },
   matchText: { color: '#fff', fontSize: 12, fontFamily: 'Outfit-Bold' },
   info: { padding: 12 },
-  infoFixed: { flex: 1, justifyContent: 'space-between' },
   viewBtn: {
     backgroundColor: '#D20236',
     borderRadius: 8,

@@ -48,7 +48,7 @@ export default function RequestCard({
 
   return (
     <TouchableOpacity
-      style={[styles.card, frame ? { width, height: frame.cardHeight } : null, style]}
+      style={[styles.card, width ? { width } : null, style]}
       onPress={onView}
       activeOpacity={0.9}
       disabled={busy}
@@ -75,7 +75,7 @@ export default function RequestCard({
         ) : null}
       </View>
 
-      <View style={[styles.info, frame && styles.infoFixed]}>
+      <View style={styles.info}>
         <NameCardDetails profile={profile} />
 
         <View style={styles.btnRow}>
@@ -154,7 +154,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   info: { padding: 12 },
-  infoFixed: { flex: 1, justifyContent: 'space-between' },
   btnRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
   acceptBtn: {
     flex: 1,

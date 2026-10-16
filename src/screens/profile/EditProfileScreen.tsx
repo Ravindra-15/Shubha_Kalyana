@@ -33,6 +33,14 @@ import { INDIAN_STATE_OPTIONS } from '../../constants/indianStates';
 import { getDistrictOptionsForStates } from '../../constants/districtsByState';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import BackArrowIcon from '../../components/BackArrowIcon';
+import {
+  HOBBY_GROUPS,
+  HOBBY_GROUP_LIMIT,
+  countInGroup,
+  groupOfHobby,
+  hobbyLimitMessage,
+  initialOthersGroups,
+} from '../../utils/hobbies';
 
 type ResidenceType = 'INDIA' | 'NRI';
 type Option = { label: string; value: string };
@@ -228,21 +236,6 @@ const EDUCATION_OPTIONS: Option[] = [
   'CS',
   'Others',
 ].map((item) => ({ label: item, value: item }));
-
-const HOBBY_GROUPS = [
-  {
-    title: 'Entertainment',
-    options: ['Music', 'Movies', 'Web Series', 'Reading', 'Others'],
-  },
-  {
-    title: 'Lifestyle & Activities',
-    options: ['Traveling', 'Cooking', 'Gardening', 'Shopping', 'Drinking', 'Driving', 'Smoking', 'Podcasts', 'Others'],
-  },
-  {
-    title: 'Fitness & Health',
-    options: ['Gym', 'Yoga', 'Running', 'Meditation', 'Sports', 'Cycling','Others'],
-  },
-];
 
 const ANY_CASTE_VALUE = 'ANY_CASTE';
 
@@ -622,12 +615,7 @@ export default function EditProfileScreen({ navigation }: any) {
       setAboutMe(profile.about?.aboutMe || '');
       const loadedHobbies = toArray(profile.hobbiesAndInterests);
       setSelectedHobbies(loadedHobbies);
-      // Which specific group "Others" originally came from was never
-      // recorded, so if it's set, show all three as active to match what
-      // was previously visible -- each still toggles independently from here.
-      setOthersActiveGroups(
-        new Set(loadedHobbies.includes('Others') ? HOBBY_GROUPS.map((g) => g.title) : []),
-      );
+      setOthersActiveGroups(initialOthersGroups(loadedHobbies));
 
       setPrefAgeMin(pref.ageRange?.min ? String(pref.ageRange.min) : '');
       setPrefAgeMax(pref.ageRange?.max ? String(pref.ageRange.max) : '');
@@ -707,7 +695,21 @@ export default function EditProfileScreen({ navigation }: any) {
     markChanged();
   };
 
+  // Max 3 per section (its Others chip included); deselecting is always allowed.
+  const isHobbyGroupFull = (groupTitle: string) => {
+    const group = HOBBY_GROUPS.find((g) => g.title === groupTitle);
+    return (
+      Boolean(group) &&
+      countInGroup(selectedHobbies, othersActiveGroups, group!) >= HOBBY_GROUP_LIMIT
+    );
+  };
+
   const toggleHobby = (item: string) => {
+    const group = groupOfHobby(item);
+    if (!selectedHobbies.includes(item) && group && isHobbyGroupFull(group.title)) {
+      Alert.alert('Limit reached', hobbyLimitMessage(group.title));
+      return;
+    }
     setSelectedHobbies((prev) =>
       prev.includes(item) ? prev.filter((value) => value !== item) : [...prev, item],
     );
@@ -715,6 +717,10 @@ export default function EditProfileScreen({ navigation }: any) {
   };
 
   const toggleOthersHobby = (groupTitle: string) => {
+    if (!othersActiveGroups.has(groupTitle) && isHobbyGroupFull(groupTitle)) {
+      Alert.alert('Limit reached', hobbyLimitMessage(groupTitle));
+      return;
+    }
     setOthersActiveGroups((prev) => {
       const next = new Set(prev);
       if (next.has(groupTitle)) next.delete(groupTitle);
@@ -1785,7 +1791,7 @@ export default function EditProfileScreen({ navigation }: any) {
               <View key={group.title} style={styles.group}>
                 <Text style={styles.groupTitle}>{group.title}</Text>
                 <ChipWrap
-                  options={group.options.map((option) => ({ label: option, value: option }))}
+                  options={group.items.map((option) => ({ label: option, value: option }))}
                   selected={groupSelected}
                   disabled={hobbiesLocked}
                   onToggle={(value) =>
