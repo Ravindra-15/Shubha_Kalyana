@@ -37,6 +37,8 @@ import {
   Flag,
   Send,
   MailCheck,
+  Contact,
+  UserCheck,
   Calendar,
   Landmark,
   Users,
@@ -994,7 +996,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
 
           {primaryAction === 'chat' ? (
             <TouchableOpacity style={styles.sendBtn} onPress={openChat}>
-              <Heart color="#fff" size={17} />
+              <MessageCircle color="#fff" size={17} />
               <Text style={styles.sendText}>Chat Now</Text>
             </TouchableOpacity>
           ) : primaryAction === 'viewContact' ? (
@@ -1003,7 +1005,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               onPress={handleViewContact}
               disabled={unlockingContact}
             >
-              <Heart color="#fff" size={17} />
+              <Contact color="#fff" size={17} />
               <Text style={styles.sendText}>
                 {unlockingContact ? 'Unlocking...' : 'View Contact'}
               </Text>
@@ -1018,7 +1020,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
                 )
               }
             >
-              <Heart color="#fff" size={17} />
+              <MessageCircle color="#fff" size={17} />
               <Text style={styles.sendText}>Chat Now</Text>
             </TouchableOpacity>
           ) : primaryAction === 'acceptRequest' ? (
@@ -1027,7 +1029,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               onPress={acceptIncomingRequest}
               disabled={acceptingRequest}
             >
-              <Heart color="#fff" size={17} />
+              <UserCheck color="#fff" size={17} />
               <Text style={styles.sendText}>
                 {acceptingRequest ? 'Accepting...' : 'Accept Request'}
               </Text>
