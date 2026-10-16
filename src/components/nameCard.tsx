@@ -9,6 +9,11 @@ export const cardFrame = (width: number) => ({
   photoHeight: Math.round(width * PHOTO_RATIO),
 });
 
+// Full-width stacked cards (the View All lists): the photo scales with the
+// card's width and is about as tall as the whole card used to be
+// (~1.15x its width, Shaadi.com-style). Width / height for RN aspectRatio.
+export const STACKED_PHOTO_SIZE = { aspectRatio: 1 / 1.15 };
+
 const hasText = (v: any) => typeof v === 'string' && v.trim() && v !== 'blur';
 
 // Name / "32 yrs, Software Engineer" / caste / location -- in that order.

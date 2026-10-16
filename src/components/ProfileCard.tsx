@@ -9,9 +9,7 @@ import {
 } from 'react-native';
 import { BadgeCheck } from 'lucide-react-native';
 import TopCroppedImage from './TopCroppedImage';
-import { cardFrame, NameCardDetails } from './nameCard';
-
-const IMAGE_HEIGHT = 220;
+import { cardFrame, NameCardDetails, STACKED_PHOTO_SIZE } from './nameCard';
 
 type Props = {
   profile: any;
@@ -28,6 +26,7 @@ type Props = {
 // card's photo frame is the same size.
 export default function ProfileCard({ profile, onView, width, style }: Props) {
   const frame = width ? cardFrame(width) : null;
+  const photoSize = frame ? { height: frame.photoHeight } : STACKED_PHOTO_SIZE;
   return (
     <TouchableOpacity
       style={[styles.card, width ? { width } : null, style]}
@@ -38,14 +37,14 @@ export default function ProfileCard({ profile, onView, width, style }: Props) {
         {profile.image ? (
           <TopCroppedImage
             uri={profile.image}
-            style={[styles.image, { height: frame ? frame.photoHeight : IMAGE_HEIGHT }]}
+            style={[styles.image, photoSize]}
           />
         ) : (
           <View
             style={[
               styles.image,
               styles.imagePlaceholder,
-              { height: frame ? frame.photoHeight : IMAGE_HEIGHT },
+              photoSize,
             ]}
           />
         )}
