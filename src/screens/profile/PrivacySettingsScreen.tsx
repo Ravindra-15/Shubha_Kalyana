@@ -1,18 +1,19 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, ShieldOff } from 'lucide-react-native';
+import { ShieldOff } from 'lucide-react-native';
 import BottomNav from '../../components/BottomNav';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 export default function PrivacySettingsScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Privacy Settings</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 38 }} />
       </View>
 
       <ScrollView

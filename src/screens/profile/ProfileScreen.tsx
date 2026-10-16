@@ -4,9 +4,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import {
-  ArrowLeft, Settings, BadgeCheck, Edit3, CreditCard, Download, Heart, ChevronRight, Crown, Eye, Users, HelpCircle,
-} from 'lucide-react-native';
+import { Settings, BadgeCheck, Edit3, CreditCard, Download, Heart, ChevronRight, Crown, Eye, Users, HelpCircle } from 'lucide-react-native';
 import apiClient from '../../api/client';
 import { getActiveMembership } from '../../api/membership';
 import { getProfileViewersSummary, getNavbarCounts, isProfileFullyVerified } from '../../api/profile';
@@ -14,6 +12,7 @@ import { resolveImageUrl } from '../../utils/imageUrl';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import GalleryPreviewGrid from '../../components/GalleryPreviewGrid';
 import GalleryLightboxModal from '../../components/GalleryLightboxModal';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 
 const getAge = (dob?: string) => {
@@ -144,7 +143,7 @@ export default function ProfileScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate('MainTabs', { screen: 'HomeTab' })}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Profile</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Settings')}>

@@ -4,10 +4,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, Download } from 'lucide-react-native';
+import { Download } from 'lucide-react-native';
 import BottomNav from '../../components/BottomNav';
 import { getMyPaymentOrders, downloadAndShareReceipt, PaymentOrder } from '../../api/payment';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 const PURPOSE_LABELS: Record<string, string> = {
   MEMBERSHIP: 'Membership',
@@ -79,10 +80,10 @@ export default function PaymentHistoryScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Payment History</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 38 }} />
       </View>
 
       {loading ? (

@@ -1,11 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  ArrowLeft, Edit3, Phone, Mail, CreditCard, Trash2, LogOut, ChevronRight,
-} from 'lucide-react-native';
+import { Edit3, Phone, Mail, CreditCard, Trash2, LogOut, ChevronRight } from 'lucide-react-native';
 import BottomNav from '../../components/BottomNav';
 import { useAuth } from '../../context/AuthContext';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 export default function AccountSettingsScreen({ navigation }: any) {
   const { logout } = useAuth();
@@ -43,10 +42,10 @@ export default function AccountSettingsScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Account Settings</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 38 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>

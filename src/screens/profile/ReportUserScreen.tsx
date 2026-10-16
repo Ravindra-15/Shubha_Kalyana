@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, ShieldAlert, ChevronRight } from 'lucide-react-native';
+import { ShieldAlert, ChevronRight } from 'lucide-react-native';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 type Section = {
   heading: string;
@@ -71,10 +72,10 @@ export default function ReportUserScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Report User</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 38 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>

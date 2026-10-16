@@ -4,12 +4,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, Search } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
 import { getChatList } from '../../api/chat';
 import { connectSocket } from '../../services/socket';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import BottomNav from '../../components/BottomNav';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 const timeAgo = (dateStr?: string) => {
   if (!dateStr) return '';
@@ -108,7 +109,7 @@ export default function ChatListScreen({ navigation, route }: any) {
       <View style={styles.header}>
         {pushed ? (
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <ArrowLeft color="#000" size={24} />
+            <BackArrowIcon />
           </TouchableOpacity>
         ) : (
           <View style={{ width: 24 }} />

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, Search, Filter } from 'lucide-react-native';
+import { Search, Filter } from 'lucide-react-native';
 import apiClient from '../../api/client';
 import ProfileCard from '../../components/ProfileCard';
 import FilterModal, { Filters } from '../../components/FilterModal';
@@ -22,6 +22,7 @@ import { getProfileAccess, unlockProfileWithMembership } from '../../api/members
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { startChat } from '../../api/chat';
 import { useInterestBadge } from '../../context/InterestBadgeContext';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 export default function AllMatchesScreen({ navigation, route }: any) {
   const { bumpInterestCount } = useInterestBadge();
@@ -279,10 +280,10 @@ export default function AllMatchesScreen({ navigation, route }: any) {
           }
           style={styles.backBtn}
         >
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{screenTitle}</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 38 }} />
       </View>
 
       {/* Search + filter row */}

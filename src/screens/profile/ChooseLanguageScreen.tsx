@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ArrowLeft, Check } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import i18n from '../../i18n';
 import { getAccountSettings, saveLanguagePreference } from '../../api/settings';
 import { ONBOARDING_LANGUAGES } from '../../constants/languages';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 export default function ChooseLanguageScreen({ navigation }: any) {
   const [selected, setSelected] = useState('en');
@@ -47,10 +48,10 @@ export default function ChooseLanguageScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Choose Language</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 38 }} />
       </View>
 
       {loading ? (

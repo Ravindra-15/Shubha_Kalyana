@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, User, Globe, CreditCard, ChevronRight } from 'lucide-react-native';
+import { User, Globe, CreditCard, ChevronRight } from 'lucide-react-native';
 import BottomNav from '../../components/BottomNav';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 export default function SettingsScreen({ navigation }: any) {
   const sections = [
@@ -26,10 +27,10 @@ export default function SettingsScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 38 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>

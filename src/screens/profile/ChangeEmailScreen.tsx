@@ -5,8 +5,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, Check } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import { getAccountSettings, sendEmailOtp, verifyEmailOtp } from '../../api/settings';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 type Step = 'ENTER' | 'OTP' | 'SUCCESS';
 
@@ -165,10 +166,10 @@ export default function ChangeEmailScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleHeaderBack}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Change Email Address</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 38 }} />
       </View>
 
       <KeyboardAvoidingView

@@ -8,9 +8,10 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {launchCamera} from 'react-native-image-picker';
-import {ArrowLeft, BadgeCheck, Camera} from 'lucide-react-native';
+import { BadgeCheck, Camera } from 'lucide-react-native';
 import {compareFacePhoto} from '../../api/profile';
 import {requestCameraPermission, showCameraPermissionAlert} from '../../utils/cameraPermission';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 type VerificationStatus = 'idle' | 'uploading' | 'completed' | 'failed';
 
@@ -97,7 +98,7 @@ const PhotoCompareScreen = ({navigation}: any) => {
           onPress={goBackToEditProfile}
           disabled={isProcessing}
           style={styles.backBtn}>
-          <ArrowLeft color={isProcessing ? '#bbb' : '#000'} size={24} />
+          <BackArrowIcon color={isProcessing ? '#bbb' : '#000'} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Verify Profile</Text>
         <View style={styles.headerSpacer} />

@@ -13,12 +13,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ArrowLeft, Check } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import {
   getAccountSettings,
   sendChangeMobileOtp,
   verifyChangeMobileOtp,
 } from '../../api/settings';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 type Step = 'ENTER' | 'OTP' | 'SUCCESS';
 const extractWaitSeconds = (message?: string): number | null => {
@@ -186,10 +187,10 @@ export default function ChangeMobileNumberScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleHeaderBack}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Change Mobile Number</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 38 }} />
       </View>
 
       <KeyboardAvoidingView

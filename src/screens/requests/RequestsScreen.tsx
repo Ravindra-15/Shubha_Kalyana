@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, BadgeCheck } from 'lucide-react-native';
+import { BadgeCheck } from 'lucide-react-native';
 import apiClient from '../../api/client';
 import BottomNav from '../../components/BottomNav';
 import RequestCard from '../../components/RequestCard';
@@ -20,6 +20,7 @@ import { resolveImageUrl } from '../../utils/imageUrl';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess } from '../../api/membershipPayment';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 const TABS = ['Received', 'Sent', 'Accepted'] as const;
 type Tab = (typeof TABS)[number];
@@ -316,7 +317,7 @@ export default function RequestsScreen({ navigation, route }: any) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Requests</Text>
         <View style={styles.headerSpacer} />
@@ -385,7 +386,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 12,
   },
   headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
-  headerSpacer: { width: 24 },
+  headerSpacer: { width: 38 },
   chipScroller: { flexGrow: 0, marginBottom: 8 },
   chipRow: { flexDirection: 'row', paddingHorizontal: 16, paddingRight: 24, gap: 8 },
   chip: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 30, paddingVertical: 7, paddingHorizontal: 18 },

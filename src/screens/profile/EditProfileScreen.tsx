@@ -14,15 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import {
-  ArrowLeft,
-  BadgeCheck,
-  Camera,
-  Check,
-  ChevronDown,
-  Lock,
-  X,
-} from 'lucide-react-native';
+import { BadgeCheck, Camera, Check, ChevronDown, Lock, X } from 'lucide-react-native';
 import KeyboardWrapper from '../../components/KeyboardWrapper';
 import SearchableDropdown from '../../components/SearchableDropdown';
 import GalleryPhotoRow from '../../components/GalleryPhotoRow';
@@ -40,6 +32,7 @@ import {
 import { INDIAN_STATE_OPTIONS } from '../../constants/indianStates';
 import { getDistrictOptionsForStates } from '../../constants/districtsByState';
 import { resolveImageUrl } from '../../utils/imageUrl';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 type ResidenceType = 'INDIA' | 'NRI';
 type Option = { label: string; value: string };
@@ -1075,7 +1068,7 @@ export default function EditProfileScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleHeaderBack}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
         <TouchableOpacity

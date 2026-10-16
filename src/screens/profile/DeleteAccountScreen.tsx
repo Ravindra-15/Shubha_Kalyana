@@ -4,9 +4,10 @@ import {
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Square, CheckSquare, Check } from 'lucide-react-native';
+import { Square, CheckSquare, Check } from 'lucide-react-native';
 import { requestDeleteAccount } from '../../api/settings';
 import { useAuth } from '../../context/AuthContext';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 const REASONS = [
   'Found a Match',
@@ -71,10 +72,10 @@ export default function DeleteAccountScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Delete Account</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 38 }} />
       </View>
 
       <KeyboardAvoidingView

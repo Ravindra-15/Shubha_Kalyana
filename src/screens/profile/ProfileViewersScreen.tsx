@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft } from 'lucide-react-native';
+
 import ProfileCard from '../../components/ProfileCard';
 import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
@@ -20,6 +20,7 @@ import { getProfileViewers, isProfileFullyVerified } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { startChat } from '../../api/chat';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 const getAge = (dob?: string) => {
   if (!dob) return null;
@@ -255,7 +256,7 @@ export default function ProfileViewersScreen({ navigation }: any) {
 
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile Viewers</Text>
         <View style={styles.headerSpacer} />
@@ -329,7 +330,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
-  headerSpacer: { width: 24 },
+  headerSpacer: { width: 38 },
   content: { flex: 1 },
   list: { paddingHorizontal: 16, paddingBottom: 20, flexGrow: 1 },
   countText: { color: '#999', fontSize: 13, fontFamily: 'Outfit-SemiBold', marginBottom: 12 },

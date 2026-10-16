@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft } from 'lucide-react-native';
+
 import apiClient from '../../api/client';
 import ProfileCard from '../../components/ProfileCard';
 import BottomNav from '../../components/BottomNav';
@@ -20,6 +20,7 @@ import { getProfileAccess, unlockProfileWithMembership } from '../../api/members
 import { isProfileFullyVerified } from '../../api/profile';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { startChat } from '../../api/chat';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 const getAge = (dob?: string) => {
   if (!dob) return null;
@@ -213,7 +214,7 @@ export default function AllInterestedScreen({ navigation, route }: any) {
       <View style={styles.header}>
         {pushed ? (
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <ArrowLeft color="#000" size={24} />
+            <BackArrowIcon />
           </TouchableOpacity>
         ) : (
           <View style={{ width: 24 }} />

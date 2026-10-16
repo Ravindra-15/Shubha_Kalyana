@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {ArrowLeft, BadgeCheck, Camera} from 'lucide-react-native';
+import { BadgeCheck, Camera } from 'lucide-react-native';
 
 import {API_BASE_URL} from '../../api/client';
 import {
@@ -19,6 +19,7 @@ import {
   initializeFaceTec,
   startFaceTecEnrollment,
 } from '../../services/faceTecService';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 const FACETEC_PROCESS_SESSION_URL =
   `${API_BASE_URL.replace(/\/+$/, '')}/facetec/session-request`;
@@ -133,10 +134,7 @@ const FaceTecTestScreen = ({navigation}: any) => {
           onPress={goBackToEditProfile}
           disabled={isProcessing}
           style={styles.backBtn}>
-          <ArrowLeft
-            color={isProcessing ? '#bbb' : '#000'}
-            size={24}
-          />
+          <BackArrowIcon color={isProcessing ? '#bbb' : '#000'} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Verify Profile</Text>
         <View style={styles.headerSpacer} />

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, Crown, Check } from 'lucide-react-native';
+import { Crown, Check } from 'lucide-react-native';
 import { getPlans, getActiveMembership, createMembershipOrder } from '../../api/membershipPlans';
 import type { Plan } from '../../api/membershipPlans';
 import { getMyFullProfile } from '../../api/profile';
@@ -24,6 +24,7 @@ import VerificationPromptModal from '../../components/VerificationPromptModal';
 import AadhaarVerificationModal from '../../components/AadhaarVerificationModal';
 import { getVerificationPromptStatus } from '../../utils/verificationPrompt';
 import type { VerificationPromptStatus } from '../../utils/verificationPrompt';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 // "Valid for N Month" -- always singular unit, matching the client's
 // plan-features wording exactly (e.g. "Valid for 3 Month", not "Months").
@@ -224,7 +225,7 @@ export default function PlansScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Upgrade to Premium</Text>
         <TouchableOpacity onPress={() => navigation.navigate('PaymentHistory')}>

@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  ArrowLeft, HelpCircle, Phone, AlertTriangle, FileText, Shield, Mail, ChevronRight,
-} from 'lucide-react-native';
+import { HelpCircle, Phone, AlertTriangle, FileText, Shield, Mail, ChevronRight } from 'lucide-react-native';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 export default function HelpSupportScreen({ navigation }: any) {
   const supportSections = [
@@ -21,10 +20,10 @@ export default function HelpSupportScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Help & Support</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 38 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>

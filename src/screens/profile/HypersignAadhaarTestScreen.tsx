@@ -10,11 +10,12 @@ import {
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {AlertCircle, ArrowLeft, CheckCircle, Fingerprint, Smartphone} from 'lucide-react-native';
+import { AlertCircle, CheckCircle, Fingerprint, Smartphone } from 'lucide-react-native';
 import {
   confirmHypersignAadhaarOtp,
   requestHypersignAadhaarOtp,
 } from '../../api/hypersignAadhaar';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 const digitsOnly = (value = '') => String(value).replace(/\D/g, '');
 
@@ -79,7 +80,7 @@ const HypersignAadhaarTestScreen = ({navigation}: any) => {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#111" size={20} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hypersign Aadhaar OTP (Test)</Text>
       </View>

@@ -529,6 +529,7 @@ export default function HomeScreen({ navigation }: any) {
               {profileCode ? ` · ${profileCode}` : ''}
             </Text>
             <TouchableOpacity
+              style={styles.editProfileChip}
               hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               onPress={() => navigation.navigate('EditProfile')}
             >
@@ -976,11 +977,18 @@ const styles = StyleSheet.create({
   profileSummaryInfo: { flex: 1, minWidth: 0, marginRight: 8 },
   profileSummaryName: { fontSize: 17, fontFamily: 'Outfit-Bold', color: '#000' },
   profileSummaryMeta: { fontSize: 13, color: '#888', marginTop: 3, fontFamily: 'Outfit-Medium' },
+  editProfileChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f2f2f2',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginTop: 8,
+  },
   editProfileText: {
     fontSize: 13,
     color: '#000',
     fontFamily: 'Outfit-Bold',
-    marginTop: 6,
   },
   badge: {
     position: 'absolute',

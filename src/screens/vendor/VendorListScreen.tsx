@@ -4,12 +4,13 @@ import {
   Image, ActivityIndicator, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Search, Filter, BadgeCheck, MapPin, Briefcase, Phone, Globe } from 'lucide-react-native';
+import { Search, Filter, BadgeCheck, MapPin, Briefcase, Phone, Globe } from 'lucide-react-native';
 import { getPublicVendors } from '../../api/vendor';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import BottomNav from '../../components/BottomNav';
 import VendorFilterModal, { VendorFilters } from '../../components/VendorFilterModal';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 const PAGE_SIZE = 6;
 
@@ -86,10 +87,10 @@ export default function VendorListScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Vendor Directory</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 38 }} />
       </View>
 
       <View style={styles.searchRow}>

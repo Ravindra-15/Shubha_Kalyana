@@ -10,16 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import {
-  ArrowLeft,
-  Heart,
-  UserPlus,
-  CreditCard,
-  MessageCircle,
-  Eye,
-  Bell,
-  CheckCheck,
-} from 'lucide-react-native';
+import { Heart, UserPlus, CreditCard, MessageCircle, Eye, Bell, CheckCheck } from 'lucide-react-native';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import {
   getNotifications,
@@ -27,6 +18,7 @@ import {
   markAllNotificationsRead,
 } from '../../api/notification';
 import { resolveImageUrl } from '../../utils/imageUrl';
+import BackArrowIcon from '../../components/BackArrowIcon';
 
 const profileVerifiedBadge = require('../../assets/images/profileVerifiedBadge.png');
 const paymentSuccessful = require('../../assets/images/paymentSuccessful.png');
@@ -196,7 +188,7 @@ export default function NotificationScreen({ navigation }: any) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#000" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
         <TouchableOpacity onPress={markAll}>

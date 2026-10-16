@@ -13,15 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import {
-  ArrowLeft,
-  MoreVertical,
-  Send,
-  Smile,
-  Check,
-  CheckCheck,
-  Lock,
-} from 'lucide-react-native';
+import { MoreVertical, Send, Smile, Check, CheckCheck, Lock } from 'lucide-react-native';
 import { useAuth } from '../../context/AuthContext';
 import { getMessages, sendMessageApi, markChatRead } from '../../api/chat';
 import { useChat } from '../../context/ChatContext';
@@ -40,6 +32,7 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import ReportUserModal from '../../components/ReportUserModal';
 import ReportSubmittedModal from '../../components/ReportSubmittedModal';
 import { blockChatUser, unblockChatUser } from '../../api/chat';
+import BackArrowIcon from '../../components/BackArrowIcon';
 import { Alert } from 'react-native'; // add Alert if not already imported
 
 const genClientId = () =>
@@ -421,7 +414,7 @@ export default function ConversationScreen({ route, navigation }: any) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#fff" size={24} />
+          <BackArrowIcon />
         </TouchableOpacity>
         {photo ? (
           <Image
