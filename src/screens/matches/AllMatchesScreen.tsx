@@ -20,9 +20,12 @@ import BottomNav from '../../components/BottomNav';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import { useOneCardPaging } from '../../hooks/useOneCardPaging';
 import { startChat } from '../../api/chat';
 import { useInterestBadge } from '../../context/InterestBadgeContext';
 import BackArrowIcon from '../../components/BackArrowIcon';
+
+const CARD_GAP = 14;
 
 export default function AllMatchesScreen({ navigation, route }: any) {
   const { bumpInterestCount } = useInterestBadge();
@@ -136,6 +139,9 @@ export default function AllMatchesScreen({ navigation, route }: any) {
   const loadMore = () => {
     if (!loading && hasNext) load(page + 1, false);
   };
+
+  // One card per swipe, Shaadi.com style.
+  const { listRef, onRowLayout, pagingProps } = useOneCardPaging(profiles.length, CARD_GAP);
 
   const { refreshing, onRefresh } = usePullToRefresh(() => load(1, true));
 
@@ -333,12 +339,17 @@ export default function AllMatchesScreen({ navigation, route }: any) {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          ref={listRef}
+          {...pagingProps}
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
           refreshing={refreshing}
           onRefresh={onRefresh}
-          renderItem={({ item }) => (
-            <View style={{ marginBottom: 14 }}>
+          renderItem={({ item, index }) => (
+            <View
+              style={{ marginBottom: CARD_GAP }}
+              onLayout={(e) => onRowLayout(index, e.nativeEvent.layout.height)}
+            >
               <ProfileCard
                 profile={item}
                 onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}

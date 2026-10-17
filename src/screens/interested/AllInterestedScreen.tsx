@@ -18,6 +18,7 @@ import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import { useOneCardPaging } from '../../hooks/useOneCardPaging';
 import { startChat } from '../../api/chat';
 import BackArrowIcon from '../../components/BackArrowIcon';
 
@@ -61,6 +62,8 @@ const mapInterest = (item: any) => {
   };
 };
 
+const CARD_GAP = 14;
+
 export default function AllInterestedScreen({ navigation, route }: any) {
   const pushed = route?.params?.pushed === true;
   const [items, setItems] = useState<any[]>([]);
@@ -70,6 +73,10 @@ export default function AllInterestedScreen({ navigation, route }: any) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [sentModal, setSentModal] = useState<{ show: boolean; name?: string }>({ show: false });
   const [accessPrompt, setAccessPrompt] = useState<{ profileId: string; name?: string; access: any } | null>(null);
+
+  // View All (pushed) moves exactly one card per swipe, Shaadi.com style;
+  // the Interests tab keeps the normal free-scrolling list.
+  const { listRef, onRowLayout, pagingProps } = useOneCardPaging(items.length, CARD_GAP, pushed);
 
   const load = useCallback(async (pageNum: number, replace = false) => {
     if (loading) return;
@@ -232,12 +239,17 @@ export default function AllInterestedScreen({ navigation, route }: any) {
             keyExtractor={(item) => item.profileId}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
+            ref={listRef}
+            {...pagingProps}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             refreshing={refreshing}
             onRefresh={onRefresh}
-            renderItem={({ item }) => (
-              <View style={{ marginBottom: 14 }}>
+            renderItem={({ item, index }) => (
+              <View
+                style={{ marginBottom: CARD_GAP }}
+                onLayout={(e) => onRowLayout(index, e.nativeEvent.layout.height)}
+              >
                 <ProfileCard
                   profile={item}
                   onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}

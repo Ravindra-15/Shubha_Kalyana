@@ -19,6 +19,7 @@ import { getProfileAccess, unlockProfileWithMembership } from '../../api/members
 import { getProfileViewers } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import { useOneCardPaging } from '../../hooks/useOneCardPaging';
 import { startChat } from '../../api/chat';
 import BackArrowIcon from '../../components/BackArrowIcon';
 
@@ -84,6 +85,9 @@ export const mapProfileViewer = (item: any) => {
     bothHaveActivePlans: Boolean(item.bothHaveActivePlans),
   };
 };
+
+const CARD_GAP = 14;
+const COUNT_TEXT_GAP = 12;
 
 export default function ProfileViewersScreen({ navigation }: any) {
   const [items, setItems] = useState<any[]>([]);
@@ -163,6 +167,12 @@ export default function ProfileViewersScreen({ navigation }: any) {
   const loadMore = () => {
     if (!loading && hasNext) load(page + 1, false);
   };
+
+  // One card per swipe, Shaadi.com style.
+  const { listRef, onRowLayout, onHeaderLayout, pagingProps } = useOneCardPaging(
+    items.length,
+    CARD_GAP,
+  );
 
   const { refreshing, onRefresh } = usePullToRefresh(() => load(1, true));
 
@@ -272,17 +282,25 @@ export default function ProfileViewersScreen({ navigation }: any) {
             keyExtractor={(item) => item.profileId}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
+            ref={listRef}
+            {...pagingProps}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             refreshing={refreshing}
             onRefresh={onRefresh}
             ListHeaderComponent={
-              <Text style={styles.countText}>
+              <Text
+                style={styles.countText}
+                onLayout={(e) => onHeaderLayout(e.nativeEvent.layout.height + COUNT_TEXT_GAP)}
+              >
                 {total} profile viewer{total === 1 ? '' : 's'}
               </Text>
             }
-            renderItem={({ item }) => (
-              <View style={{ marginBottom: 14 }}>
+            renderItem={({ item, index }) => (
+              <View
+                style={{ marginBottom: CARD_GAP }}
+                onLayout={(e) => onRowLayout(index, e.nativeEvent.layout.height)}
+              >
                 <ProfileCard
                   profile={item}
                   onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}
@@ -334,7 +352,7 @@ const styles = StyleSheet.create({
   headerSpacer: { width: 38 },
   content: { flex: 1 },
   list: { paddingHorizontal: 16, paddingBottom: 20, flexGrow: 1 },
-  countText: { color: '#999', fontSize: 13, fontFamily: 'Outfit-SemiBold', marginBottom: 12 },
+  countText: { color: '#999', fontSize: 13, fontFamily: 'Outfit-SemiBold', marginBottom: COUNT_TEXT_GAP },
   empty: { textAlign: 'center', color: '#999', marginTop: 40 },
   initialLoader: { marginTop: 40 },
   footerLoader: { marginVertical: 20 },
