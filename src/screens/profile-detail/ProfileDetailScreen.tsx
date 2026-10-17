@@ -689,10 +689,9 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               ? 'viewContact'
               : 'sendRequest';
   const photo = profile.photos?.find((p: any) => p.isProfilePhoto)?.url || '';
-  // `data.verified` is the backend's combined check (active plan + photo
-  // verification + Aadhaar verification) -- the nested `profile` object has
-  // no such field of its own, and isProfileFullyVerified() alone doesn't
-  // account for the active-plan requirement.
+  // `data.verified` comes from the backend (isProfileVerifiedForDisplay):
+  // true when this profile's owner has an active plan. The nested `profile`
+  // object has no such field of its own.
   const verified = Boolean(data.verified);
   const caste = basic.customCasteName || basic.caste?.casteName || basic.caste?.name || '';
   const location = [addr.current?.district, addr.current?.state]
@@ -919,12 +918,6 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           ) : (
             <View style={[styles.cover, styles.coverPlaceholder]} />
           )}
-          {verified && (
-            <View style={styles.verifiedBadge}>
-              <BadgeCheck color="#fff" size={16} fill="#1a7f37" />
-              <Text style={styles.verifiedText}>Verified Profile</Text>
-            </View>
-          )}
           <LinearGradient
             pointerEvents="none"
             colors={['transparent', 'rgba(0,0,0,0.75)']}
@@ -954,12 +947,18 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
               </Text>
             </View>
             {!!location && (
-              <View style={styles.coverIconRow}>
+              <View style={[styles.coverIconRow, verified && styles.coverRowBesideBadge]}>
                 <MapPin color="#fff" size={13} />
-                <Text style={styles.coverIconText}>{location}</Text>
+                <Text style={[styles.coverIconText, styles.coverIconTextShrink]}>{location}</Text>
               </View>
             )}
           </LinearGradient>
+          {verified && (
+            <View style={styles.verifiedBadge} pointerEvents="none">
+              <BadgeCheck color="#fff" size={16} fill="#1a7f37" />
+              <Text style={styles.verifiedText}>Verified</Text>
+            </View>
+          )}
         </View>
 
         {Array.isArray(data?.galleryPhotos) && data.galleryPhotos.length > 0 && (
@@ -1413,13 +1412,17 @@ const styles = StyleSheet.create({
   coverWrap: { height: SCREEN_HEIGHT * 0.6, position: 'relative' },
   cover: { width: '100%', height: '100%' },
   coverPlaceholder: { backgroundColor: '#ccc' },
+  // See-through green badge in the cover's bottom-right corner, level with
+  // the location line (which leaves room for it via coverRowBesideBadge).
   verifiedBadge: {
     position: 'absolute',
-    top: 16,
-    left: 16,
+    right: 16,
+    bottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a7f37',
+    backgroundColor: 'rgba(26,127,55,0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.45)',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 5,
@@ -1445,6 +1448,8 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   coverIconText: { color: '#fff', fontSize: 12 },
+  coverIconTextShrink: { flexShrink: 1 },
+  coverRowBesideBadge: { paddingRight: 100 },
   quickLinksRow: {
     backgroundColor: '#fff',
     borderBottomWidth: 1,

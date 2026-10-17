@@ -17,14 +17,12 @@ export default function AppSplash({ showSpinner = true }: Props) {
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
-      {/* Without an explicit backgroundColor, Android falls back to the
-          theme's default status bar color, which some OEMs/versions render
-          white -- leaving a visible gap above this full-bleed screen on
-          those devices even though the gradient itself fills the rest.
-          Setting it here (and nowhere else) scopes the fix to just the
-          splash; it reverts automatically once this unmounts. */}
+      {/* Transparent, translucent status bar so the gradient runs right up
+          behind the clock/battery icons -- no separate coloured band at the
+          top. Scoped to the splash: once this unmounts, RN's StatusBar stack
+          falls back to App.tsx's white bar (translucent reverts to false). */}
       {Platform.OS === 'android' && (
-        <StatusBar backgroundColor="#6C011C" barStyle="light-content" />
+        <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       )}
       <View style={styles.logoWrap}>
         <View style={styles.logoBox}>

@@ -228,9 +228,9 @@ export default function PlansScreen({ navigation }: any) {
           <BackArrowIcon />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Upgrade to Premium</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('PaymentHistory')}>
-          <Text style={styles.billingLink}>Billing</Text>
-        </TouchableOpacity>
+        {/* Spacer keeps the title centred. Payment history is still under
+            My Profile and Account Settings. */}
+        <View style={{ width: 38 }} />
       </View>
 
       <View style={styles.content}>
@@ -356,10 +356,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 12,
   },
   headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
-  billingLink: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#D20236' },
   content: { flex: 1 },
-  scroll: { padding: 16, paddingBottom: 20 },
-  planCard: { borderRadius: 16, padding: 18, marginBottom: 16 },
+  // Narrow side padding: cards fill the width with just a thin edge showing.
+  scroll: { paddingHorizontal: 8, paddingTop: 12, paddingBottom: 20 },
+  planCard: {
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
   planHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
   planName: { fontSize: 18, fontFamily: 'Outfit-Bold' },
   planSub: { fontSize: 13, marginBottom: 12, opacity: 0.9 },

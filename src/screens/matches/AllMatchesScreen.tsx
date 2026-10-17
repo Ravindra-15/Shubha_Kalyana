@@ -286,18 +286,22 @@ export default function AllMatchesScreen({ navigation, route }: any) {
         <View style={{ width: 38 }} />
       </View>
 
-      {/* Search + filter row */}
-      <View style={styles.searchRow}>
-        <View style={styles.searchBox}>
-          <Search color="#999" size={16} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search Matches..."
-            placeholderTextColor="#999"
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View>
+      {/* Search + filter row. The search box is only for the bottom Search
+          tab -- View All lists (opened with pushed: true) don't show it. */}
+      {(!pushed || !strictMode) && (
+      <View style={[styles.searchRow, pushed && styles.searchRowFilterOnly]}>
+        {!pushed && (
+          <View style={styles.searchBox}>
+            <Search color="#999" size={16} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search Matches..."
+              placeholderTextColor="#999"
+              value={search}
+              onChangeText={setSearch}
+            />
+          </View>
+        )}
         {!strictMode && (
           <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
             <Filter color="#333" size={18} />
@@ -309,6 +313,7 @@ export default function AllMatchesScreen({ navigation, route }: any) {
           </TouchableOpacity>
         )}
       </View>
+      )}
 
       {!initialLoading && (
         <Text style={styles.countText}>{total} profile{total !== 1 ? 's' : ''} found</Text>
@@ -389,6 +394,7 @@ const styles = StyleSheet.create({
   backBtn: { padding: 4 },
   headerTitle: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   searchRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 10, height: 44 },
+  searchRowFilterOnly: { justifyContent: 'flex-end' },
   searchBox: {
     flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: '#f5f5f5', borderRadius: 10, paddingHorizontal: 12,

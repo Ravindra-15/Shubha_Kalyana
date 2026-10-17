@@ -62,8 +62,7 @@ export default function RequestCard({
         )}
         {profile.verified && (
           <View style={styles.verifiedTag}>
-            <BadgeCheck color="#fff" size={13} fill="#1a7f37" />
-            <Text style={styles.verifiedText}>Verified</Text>
+            <BadgeCheck color="#fff" size={20} fill="#1a7f37" />
           </View>
         )}
         {metaLabel ? (
@@ -123,19 +122,15 @@ const styles = StyleSheet.create({
   imageWrap: { position: 'relative' },
   image: { width: '100%', backgroundColor: '#eee' },
   imagePlaceholder: { backgroundColor: '#eee' },
+  // Tick only on cards; the full "Verified Profile" label is on the details screen.
   verifiedTag: {
     position: 'absolute',
     top: 10,
     left: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#1a7f37',
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 1,
   },
-  verifiedText: { color: '#fff', fontSize: 11, fontFamily: 'Outfit-Bold' },
   metaBadge: {
     position: 'absolute',
     left: 10,

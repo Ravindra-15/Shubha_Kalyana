@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,13 @@ import {
   StyleSheet,
   Modal,
   ScrollView,
+  Pressable,
+  Animated,
+  PanResponder,
+  PanResponderGestureState,
+  Easing,
+  Dimensions,
+  Platform,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import SearchableDropdown from './SearchableDropdown';
@@ -64,6 +71,9 @@ const PROFESSION = [
   'Government Officer',
 ];
 
+// Sheet is 85% of the screen tall (styles.sheet); used as its off-screen offset.
+const SHEET_HEIGHT = Dimensions.get('window').height * 0.85;
+
 const DEFAULT: Filters = {
   minAge: 24, maxAge: 30, religion: '', caste: [], subCaste: [], maritalStatus: '', education: [], profession: [], preferredLocation: [], district: [],
 };
@@ -121,30 +131,136 @@ export default function FilterModal({ visible, onClose, onApply, initial, gender
   // union of districts across all currently-selected states
   const districtOptions = getDistrictOptionsForStates(preferredLocation);
 
+  // Bottom-sheet motion. The Modal itself doesn't animate (animationType
+  // "none"); the sheet slides with translateY and the dim backdrop fades
+  // with it, so dragging, flicking, tapping outside, Back, Apply and Reset
+  // all close with the same quick slide-down.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const backdropOpacity = translateY.interpolate({
+    inputRange: [0, SHEET_HEIGHT],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+  const closingRef = useRef(false);
+  const scrollYRef = useRef(0);
+  const dragStartedAtTopRef = useRef(false);
+
+  useEffect(() => {
+    if (!visible) return;
+    closingRef.current = false;
+    scrollYRef.current = 0;
+    translateY.setValue(SHEET_HEIGHT);
+    Animated.timing(translateY, {
+      toValue: 0,
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [visible, translateY]);
+
+  // Only uses refs + the stable Animated value, so the PanResponder below
+  // (created once) can safely call it.
+  const closeSheet = useRef(() => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    Animated.timing(translateY, {
+      toValue: SHEET_HEIGHT,
+      duration: 180,
+      easing: Easing.in(Easing.quad),
+      useNativeDriver: true,
+    }).start(() => onCloseRef.current());
+  }).current;
+
+  const springBack = () =>
+    Animated.spring(translateY, { toValue: 0, useNativeDriver: true, bounciness: 4 }).start();
+
   const reset = () => {
     setMinAge(DEFAULT.minAge); setMaxAge(DEFAULT.maxAge);
     setReligion(''); setCaste([]); setSubCaste([]); setMaritalStatus(''); setEducation([]); setProfession([]); setPreferredLocation([]); setDistrict([]);
     onApply(null); // clear all filters → reload full list
-    onClose();
+    closeSheet();
   };
 
   const apply = () => {
     onApply({ minAge, maxAge, religion, caste, subCaste, maritalStatus, education, profession, preferredLocation, district });
-    onClose();
+    closeSheet();
   };
 
+  // Swipe down anywhere on the sheet: always from the handle/title, and from
+  // the body while the options list is scrolled to the top (otherwise the
+  // swipe just scrolls the list back up). Mostly-vertical moves only, so the
+  // horizontal age sliders keep working.
+  const isDownSwipe = (g: PanResponderGestureState) => g.dy > 3 && g.dy > Math.abs(g.dx) * 1.5;
+  const dragHandlers = {
+    onPanResponderTerminationRequest: () => false,
+    onPanResponderMove: (_: unknown, g: PanResponderGestureState) =>
+      translateY.setValue(Math.max(0, g.dy)),
+    onPanResponderRelease: (_: unknown, g: PanResponderGestureState) => {
+      if (g.dy > 80 || g.vy > 0.5) closeSheet();
+      else springBack();
+    },
+    onPanResponderTerminate: springBack,
+  };
+  // Whole sheet: only while the options list is at the top.
+  const sheetPan = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponderCapture: (_, g) => scrollYRef.current <= 0 && isDownSwipe(g),
+      ...dragHandlers,
+    }),
+  ).current;
+  // Handle + title: always draggable.
+  const headerPan = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => isDownSwipe(g),
+      ...dragHandlers,
+    }),
+  ).current;
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={closeSheet}>
       <View style={styles.overlay}>
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
-          <Text style={styles.title}>Filters</Text>
+        {/* Tapping the dimmed area above the sheet closes it. */}
+        <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, { opacity: backdropOpacity }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={closeSheet} />
+        </Animated.View>
+        <Animated.View
+          style={[styles.sheet, { transform: [{ translateY }] }]}
+          {...sheetPan.panHandlers}
+        >
+          <View style={styles.dragZone} {...headerPan.panHandlers}>
+            <View style={styles.handle} />
+            <Text style={styles.title}>Filters</Text>
+          </View>
 
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled
             contentContainerStyle={{ paddingBottom: 10 }}
+            scrollEventThrottle={16}
+            onScroll={(e) => {
+              scrollYRef.current = e.nativeEvent.contentOffset.y;
+            }}
+            onScrollBeginDrag={(e) => {
+              dragStartedAtTopRef.current = e.nativeEvent.contentOffset.y <= 0;
+            }}
+            onScrollEndDrag={(e) => {
+              // A fast flick down at the top can be grabbed by Android's
+              // native ScrollView before the swipe handler sees it. Android
+              // reports finger velocity (dp/ms, positive = downwards), so a
+              // downward flick that started at the top closes the sheet.
+              const vy = e.nativeEvent.velocity?.y ?? 0;
+              if (
+                Platform.OS === 'android' &&
+                dragStartedAtTopRef.current &&
+                e.nativeEvent.contentOffset.y <= 0 &&
+                vy > 0.5
+              ) {
+                closeSheet();
+              }
+            }}
           >
             <Text style={styles.label}>Age Between : {minAge} - {maxAge}</Text>
             <Text style={styles.sliderHint}>Min Age: {minAge}</Text>
@@ -252,14 +368,15 @@ export default function FilterModal({ visible, onClose, onApply, initial, gender
               <Text style={styles.applyText}>Apply Filters</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  overlay: { flex: 1, justifyContent: 'flex-end' },
+  backdrop: { backgroundColor: 'rgba(0,0,0,0.4)' },
   sheet: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
@@ -269,6 +386,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     height: '85%',
   },
+  dragZone: { paddingTop: 4 },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#ddd', alignSelf: 'center', marginBottom: 16 },
   title: { fontSize: 20, fontFamily: 'Outfit-Bold', color: '#000', marginBottom: 16 },
   label: { fontSize: 15, fontFamily: 'Outfit-SemiBold', color: '#000', marginBottom: 8, marginTop: 10 },
