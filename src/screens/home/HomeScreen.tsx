@@ -931,7 +931,7 @@ const styles = StyleSheet.create({
     marginLeft: 14,
     fontSize: 18,
     fontFamily: 'Outfit-Bold',
-    color: '#000',
+    color: '#D20236',
   },
   bellWrap: { padding: 4 },
   profileSummary: {

@@ -50,8 +50,8 @@ const styles = StyleSheet.create({
   // with margins alone. Positioning it absolutely (anchored to this fixed-
   // size box around the logo image) and rotating around its own center is
   // the only way to land it exactly where the text block actually is.
-  logoBox: { width: 180, height: 180, position: 'relative' },
-  logo: { width: 180, height: 180 },
+  logoBox: { width: 200, height: 200, position: 'relative' },
+  logo: { width: 200, height: 200 },
   // Rotated -90deg so it reads bottom-to-top, attached right next to the
   // wordmark. Same display font as the logo's "SHUBHA KALYANA" text
   // (Yeseva One). width here becomes the visual height after rotation --
@@ -60,11 +60,12 @@ const styles = StyleSheet.create({
   // past the wordmark's right edge, vertically centered on it.
   domText: {
     position: 'absolute',
-    left: 112,
-    top: 93,
-    width: 110,
+    // Scaled with the 200px logo box (was 112 / 93 / 110 / 22 at 180px).
+    left: 124,
+    top: 103,
+    width: 122,
     color: '#fff',
-    fontSize: 22,
+    fontSize: 24,
     fontFamily: 'YesevaOne-Regular',
     letterSpacing: 2,
     transform: [{ rotate: '-90deg' }],

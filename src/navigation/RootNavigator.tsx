@@ -62,11 +62,11 @@ export default function RootNavigator() {
   // instantly, so it's actually perceptible rather than a single-frame
   // flash. Brand-new users head to the dedicated 'Splash' stack screen
   // right after this, which already shows this exact same screen for its
-  // own 2.5s, so the minimum hold is skipped in that case only -- otherwise
+  // own 4s, so the minimum hold is skipped in that case only -- otherwise
   // it'd show twice back to back.
   const [minSplashElapsed, setMinSplashElapsed] = useState(false);
   useEffect(() => {
-    const timer = setTimeout(() => setMinSplashElapsed(true), 1200);
+    const timer = setTimeout(() => setMinSplashElapsed(true), 2700);
     return () => clearTimeout(timer);
   }, []);
 

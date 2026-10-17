@@ -169,7 +169,7 @@ export default function ProfileViewersScreen({ navigation }: any) {
   };
 
   // One card per swipe, Shaadi.com style.
-  const { listRef, onRowLayout, onHeaderLayout, pagingProps } = useOneCardPaging(
+  const { listRef, onRowLayout, onHeaderLayout, pagingProps, rowMinHeight } = useOneCardPaging(
     items.length,
     CARD_GAP,
   );
@@ -298,11 +298,12 @@ export default function ProfileViewersScreen({ navigation }: any) {
             }
             renderItem={({ item, index }) => (
               <View
-                style={{ marginBottom: CARD_GAP }}
+                style={[{ marginBottom: CARD_GAP }, rowMinHeight != null && { minHeight: rowMinHeight }]}
                 onLayout={(e) => onRowLayout(index, e.nativeEvent.layout.height)}
               >
                 <ProfileCard
                   profile={item}
+                  fill={rowMinHeight != null}
                   onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}
                 />
                 <Text style={styles.viewerMeta}>

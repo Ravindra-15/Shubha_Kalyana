@@ -18,6 +18,7 @@ import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import { useInterestBadge } from '../../context/InterestBadgeContext';
 import { useOneCardPaging } from '../../hooks/useOneCardPaging';
 import { startChat } from '../../api/chat';
 import BackArrowIcon from '../../components/BackArrowIcon';
@@ -76,7 +77,13 @@ export default function AllInterestedScreen({ navigation, route }: any) {
 
   // View All (pushed) moves exactly one card per swipe, Shaadi.com style;
   // the Interests tab keeps the normal free-scrolling list.
-  const { listRef, onRowLayout, pagingProps } = useOneCardPaging(items.length, CARD_GAP, pushed);
+  const { listRef, onRowLayout, onRowRemoved, pagingProps, rowMinHeight } = useOneCardPaging(
+    items.length,
+    CARD_GAP,
+    pushed,
+  );
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const { bumpInterestCount } = useInterestBadge();
 
   const load = useCallback(async (pageNum: number, replace = false) => {
     if (loading) return;
@@ -197,12 +204,31 @@ export default function AllInterestedScreen({ navigation, route }: any) {
   };
 
   const removeInterest = async (profileId: string) => {
+    setRemovingId(profileId);
     try {
       await apiClient.delete(`/relationship/interests/${profileId}`);
+      const index = items.findIndex((p) => p.profileId === profileId);
+      if (index >= 0) onRowRemoved(index);
       setItems((prev) => prev.filter((p) => p.profileId !== profileId));
+      bumpInterestCount(-1);
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.message || 'Could not remove');
+    } finally {
+      setRemovingId(null);
     }
+  };
+
+  // Trash button on each card -- asks first, since a stray tap on a phone
+  // would otherwise drop the profile straight away.
+  const confirmRemove = (p: any) => {
+    Alert.alert(
+      'Remove from Interested?',
+      `${p.name || 'This profile'} will be removed from your interested profiles.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: () => removeInterest(p.profileId) },
+      ],
+    );
   };
 
   return (
@@ -247,12 +273,15 @@ export default function AllInterestedScreen({ navigation, route }: any) {
             onRefresh={onRefresh}
             renderItem={({ item, index }) => (
               <View
-                style={{ marginBottom: CARD_GAP }}
+                style={[{ marginBottom: CARD_GAP }, rowMinHeight != null && { minHeight: rowMinHeight }]}
                 onLayout={(e) => onRowLayout(index, e.nativeEvent.layout.height)}
               >
                 <ProfileCard
                   profile={item}
+                  fill={rowMinHeight != null}
                   onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}
+                  onRemove={() => confirmRemove(item)}
+                  removing={removingId === item.profileId}
                 />
               </View>
             )}

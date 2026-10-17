@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -57,7 +58,8 @@ const benefitLines = (plan: Plan): string[] => {
 const planTheme = (planName?: string) => {
   const n = (planName || '').toLowerCase();
   if (n.includes('gold')) return { bg: '#C99700', light: 'rgba(255,255,255,0.18)', text: '#fff', btnText: '#C99700' };
-  if (n.includes('silver')) return { bg: '#B4B4B4', light: 'rgba(255,255,255,0.25)', text: '#fff', btnText: '#6b6b6b' };
+  // Darker silver so the white text on the card stays readable.
+  if (n.includes('silver')) return { bg: '#8E8E8E', light: 'rgba(255,255,255,0.22)', text: '#fff', btnText: '#5E5E5E' };
   if (n.includes('bronze')) return { bg: '#CD7F32', light: 'rgba(255,255,255,0.20)', text: '#fff', btnText: '#CD7F32' };
   if (n.includes('platinum')) return { bg: '#3A4A5A', light: 'rgba(255,255,255,0.18)', text: '#fff', btnText: '#3A4A5A' };
   if (n.includes('diamond')) return { bg: '#2b6cb0', light: 'rgba(255,255,255,0.18)', text: '#fff', btnText: '#2b6cb0' };
@@ -91,6 +93,19 @@ type PendingPayment = {
 };
 
 export default function PlansScreen({ navigation }: any) {
+  // Blinking red border on the buy buttons (fades 1 -> 0.15 -> 1, forever).
+  const borderBlink = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(borderBlink, { toValue: 0.15, duration: 650, useNativeDriver: true }),
+        Animated.timing(borderBlink, { toValue: 1, duration: 650, useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [borderBlink]);
+
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
@@ -304,6 +319,15 @@ export default function PlansScreen({ navigation }: any) {
                       onPress={() => !isActive && !cannotUpgrade && buy(plan)}
                       disabled={isActive || cannotUpgrade || buyingId === plan._id}
                     >
+                      {/* Theme-red border; blinks on plans the user can buy
+                          to draw attention, steady on the active one. */}
+                      <Animated.View
+                        pointerEvents="none"
+                        style={[
+                          styles.buyBtnBorder,
+                          { opacity: isActive || cannotUpgrade ? 1 : borderBlink },
+                        ]}
+                      />
                       {buyingId === plan._id ? (
                         <ActivityIndicator color={theme.btnText} />
                       ) : (
@@ -385,6 +409,16 @@ const styles = StyleSheet.create({
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   benefitText: { fontSize: 13 },
   buyBtn: { backgroundColor: '#fff', borderRadius: 8, paddingVertical: 14, alignItems: 'center' },
+  buyBtnBorder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#D20236',
+  },
   buyBtnActive: { backgroundColor: '#eafaf0' },
   buyText: { fontSize: 15, fontFamily: 'Outfit-Bold' },
   empty: { textAlign: 'center', color: '#999', marginTop: 40 },

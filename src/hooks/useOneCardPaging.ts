@@ -16,19 +16,33 @@ import { FlatList } from 'react-native';
  * `onLayout={(e) => onRowLayout(index, e.nativeEvent.layout.height)}`, give
  * the FlatList `ref={listRef}` and `{...pagingProps}`. A ListHeaderComponent
  * reports its height through onHeaderLayout.
+ *
+ * rowMinHeight: each row should be at least this tall (use it as the row's
+ * minHeight with a "fill" card) so one card takes the screen and only a
+ * PEEK-high strip of the next card shows below it, inviting the next swipe.
+ * null until the list has been measured.
  */
+const PEEK = 60;
+
 export function useOneCardPaging(itemCount: number, gap: number, enabled = true) {
   const listRef = useRef<FlatList<any>>(null);
   const rowHeights = useRef<number[]>([]);
   const headerHeight = useRef(0);
   const gestureSnaps = useRef<number[]>([]);
   const [snapOffsets, setSnapOffsets] = useState<number[]>([]);
+  const [listHeight, setListHeight] = useState(0);
+  const rowMinHeight = enabled && listHeight ? Math.max(0, listHeight - gap - PEEK) : null;
 
   const onRowLayout = (index: number, height: number) => {
     rowHeights.current[index] = height;
   };
   const onHeaderLayout = (height: number) => {
     headerHeight.current = height;
+  };
+  // Call when a row is removed from the list, so later rows' measured
+  // heights shift up with them.
+  const onRowRemoved = (index: number) => {
+    rowHeights.current.splice(index, 1);
   };
 
   const getRowTops = () => {
@@ -79,6 +93,10 @@ export function useOneCardPaging(itemCount: number, gap: number, enabled = true)
         snapToStart: false,
         snapToEnd: false,
         decelerationRate: 'fast' as const,
+        onLayout: (e: any) => {
+          const h = Math.round(e.nativeEvent.layout.height);
+          if (h && h !== listHeight) setListHeight(h);
+        },
         disableIntervalMomentum: true,
         onScrollBeginDrag: (e: any) => onSwipeStart(e.nativeEvent.contentOffset.y),
         onMomentumScrollEnd: (e: any) => {
@@ -88,5 +106,5 @@ export function useOneCardPaging(itemCount: number, gap: number, enabled = true)
       }
     : {};
 
-  return { listRef, onRowLayout, onHeaderLayout, pagingProps };
+  return { listRef, onRowLayout, onHeaderLayout, onRowRemoved, pagingProps, rowMinHeight };
 }

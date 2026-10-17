@@ -141,7 +141,10 @@ export default function AllMatchesScreen({ navigation, route }: any) {
   };
 
   // One card per swipe, Shaadi.com style.
-  const { listRef, onRowLayout, pagingProps } = useOneCardPaging(profiles.length, CARD_GAP);
+  const { listRef, onRowLayout, pagingProps, rowMinHeight } = useOneCardPaging(
+    profiles.length,
+    CARD_GAP,
+  );
 
   const { refreshing, onRefresh } = usePullToRefresh(() => load(1, true));
 
@@ -347,11 +350,12 @@ export default function AllMatchesScreen({ navigation, route }: any) {
           onRefresh={onRefresh}
           renderItem={({ item, index }) => (
             <View
-              style={{ marginBottom: CARD_GAP }}
+              style={[{ marginBottom: CARD_GAP }, rowMinHeight != null && { minHeight: rowMinHeight }]}
               onLayout={(e) => onRowLayout(index, e.nativeEvent.layout.height)}
             >
               <ProfileCard
                 profile={item}
+                fill={rowMinHeight != null}
                 onView={() => navigation.navigate('ProfileDetail', { profileId: item.profileId })}
               />
             </View>
