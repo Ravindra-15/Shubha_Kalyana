@@ -570,7 +570,7 @@ export default function HomeScreen({ navigation }: any) {
             onLayout={e => setUpgradeBtnWidth(e.nativeEvent.layout.width)}
             onPress={() =>
               hasActivePlan
-                ? navigation.navigate('AllMatches', { pushed: true })
+                ? navigation.navigate('AllMatches', { pushed: true, showSearch: true })
                 : navigation.navigate('Plans')
             }
           >

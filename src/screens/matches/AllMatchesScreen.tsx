@@ -27,6 +27,9 @@ import BackArrowIcon from '../../components/BackArrowIcon';
 export default function AllMatchesScreen({ navigation, route }: any) {
   const { bumpInterestCount } = useInterestBadge();
   const pushed = route?.params?.pushed === true;
+  // Home's "Explore Now" opens the full Find Matches list, so it keeps the
+  // search box like the Search tab does.
+  const showSearch = !pushed || route?.params?.showSearch === true;
   // Home's Premium/New Matches "View All" redirects here with these set --
   // a fixed, pre-matched list (age/caste/never-married already locked by
   // the viewer's own profile, plus whether the candidate has an active
@@ -287,10 +290,11 @@ export default function AllMatchesScreen({ navigation, route }: any) {
       </View>
 
       {/* Search + filter row. The search box is only for the bottom Search
-          tab -- View All lists (opened with pushed: true) don't show it. */}
-      {(!pushed || !strictMode) && (
-      <View style={[styles.searchRow, pushed && styles.searchRowFilterOnly]}>
-        {!pushed && (
+          tab and Explore Now -- View All lists (opened with pushed: true)
+          don't show it. */}
+      {(showSearch || !strictMode) && (
+      <View style={[styles.searchRow, !showSearch && styles.searchRowFilterOnly]}>
+        {showSearch && (
           <View style={styles.searchBox}>
             <Search color="#999" size={16} />
             <TextInput
