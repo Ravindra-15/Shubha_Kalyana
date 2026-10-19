@@ -597,9 +597,9 @@ export default function HomeScreen({ navigation }: any) {
                 ]}
               >
                 <LinearGradient
-                  // Web's "via-white/55" sweep, visible now that the button
-                  // uses the web crimson instead of white.
-                  colors={['transparent', 'rgba(255,255,255,0.55)', 'transparent']}
+                  // White sweep, a bit stronger than web's white/55 so it
+                  // reads clearly on the dark maroon button.
+                  colors={['transparent', 'rgba(255,255,255,0.7)', 'transparent']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={StyleSheet.absoluteFill}
@@ -1010,7 +1010,9 @@ const styles = StyleSheet.create({
   // thin white border is mobile-only: this pill sits on the red plan card,
   // where the web one sits on a white navbar, so it needs an edge.
   upgradeBtn: {
-    backgroundColor: '#d9043d',
+    // Deep maroon: same brand family as the red banner behind it but
+    // clearly darker, so the button stands out and the white shine shows.
+    backgroundColor: '#5E0B22',
     borderRadius: 999,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.75)',

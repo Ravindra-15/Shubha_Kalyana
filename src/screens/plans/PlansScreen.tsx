@@ -93,13 +93,13 @@ type PendingPayment = {
 };
 
 export default function PlansScreen({ navigation }: any) {
-  // Blinking red border on the buy buttons (fades 1 -> 0.15 -> 1, forever).
+  // Blinking red border on the buy buttons (fully off -> on, forever).
   const borderBlink = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(borderBlink, { toValue: 0.15, duration: 650, useNativeDriver: true }),
-        Animated.timing(borderBlink, { toValue: 1, duration: 650, useNativeDriver: true }),
+        Animated.timing(borderBlink, { toValue: 0, duration: 500, useNativeDriver: true }),
+        Animated.timing(borderBlink, { toValue: 1, duration: 500, useNativeDriver: true }),
       ]),
     );
     loop.start();
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: 8,
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: '#D20236',
   },
   buyBtnActive: { backgroundColor: '#eafaf0' },

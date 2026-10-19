@@ -34,11 +34,15 @@ export default function TopCroppedImage({ uri, style }: Props) {
       style={[{ overflow: 'hidden', backgroundColor: '#fce4ec' }, style]}
       onLayout={onLayout}
     >
+      {/* Absolutely positioned so the oversized image never feeds back
+          into the box's own size -- otherwise a box that can grow (the
+          View All "fill" cards) grows with the image, gets re-measured,
+          and the photo zooms in over and over. */}
       {boxHeight > 0 && (
         <Image
           source={{ uri }}
           resizeMode="cover"
-          style={{ width: '100%', height: imageHeight, marginTop }}
+          style={{ position: 'absolute', left: 0, width: '100%', top: marginTop, height: imageHeight }}
         />
       )}
     </View>
