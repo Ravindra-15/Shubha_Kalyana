@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -93,18 +94,21 @@ type PendingPayment = {
 };
 
 export default function PlansScreen({ navigation }: any) {
-  // Blinking red border on the buy buttons (fully off -> on, forever).
-  const borderBlink = useRef(new Animated.Value(1)).current;
+  // Glowing white ring around the buy buttons: pulses (fades + grows a
+  // little) every 1.2s to draw attention. White reads on every plan colour.
+  const glowPulse = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(borderBlink, { toValue: 0, duration: 500, useNativeDriver: true }),
-        Animated.timing(borderBlink, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.timing(glowPulse, { toValue: 1, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(glowPulse, { toValue: 0, duration: 600, easing: Easing.in(Easing.quad), useNativeDriver: true }),
       ]),
     );
     loop.start();
     return () => loop.stop();
-  }, [borderBlink]);
+  }, [glowPulse]);
+  const glowOpacity = glowPulse.interpolate({ inputRange: [0, 1], outputRange: [0.2, 1] });
+  const glowScale = glowPulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.04] });
 
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -314,20 +318,23 @@ export default function PlansScreen({ navigation }: any) {
                       ))}
                     </View>
 
+                    <View style={styles.buyWrap}>
+                    {/* Pulsing ring just outside the button, only on plans
+                        the user can actually buy. */}
+                    {!isActive && !cannotUpgrade && (
+                      <Animated.View
+                        pointerEvents="none"
+                        style={[
+                          styles.buyGlow,
+                          { opacity: glowOpacity, transform: [{ scale: glowScale }] },
+                        ]}
+                      />
+                    )}
                     <TouchableOpacity
                       style={[styles.buyBtn, isActive && styles.buyBtnActive]}
                       onPress={() => !isActive && !cannotUpgrade && buy(plan)}
                       disabled={isActive || cannotUpgrade || buyingId === plan._id}
                     >
-                      {/* Theme-red border; blinks on plans the user can buy
-                          to draw attention, steady on the active one. */}
-                      <Animated.View
-                        pointerEvents="none"
-                        style={[
-                          styles.buyBtnBorder,
-                          { opacity: isActive || cannotUpgrade ? 1 : borderBlink },
-                        ]}
-                      />
                       {buyingId === plan._id ? (
                         <ActivityIndicator color={theme.btnText} />
                       ) : (
@@ -336,6 +343,7 @@ export default function PlansScreen({ navigation }: any) {
                         </Text>
                       )}
                     </TouchableOpacity>
+                    </View>
                   </View>
                 );
               })
@@ -400,7 +408,7 @@ const styles = StyleSheet.create({
   planSub: { fontSize: 13, marginBottom: 12, opacity: 0.9 },
   planPrice: { fontSize: 26, fontFamily: 'Outfit-ExtraBold', marginBottom: 4 },
   planDuration: { fontSize: 13, fontFamily: 'Outfit-Medium' },
-  upgradeCredit: { marginTop: -8, marginBottom: 14, fontSize: 12, fontFamily: 'Outfit-Bold', opacity: 0.88 },
+  upgradeCredit: { marginTop: 4, marginBottom: 14, fontSize: 12, fontFamily: 'Outfit-Bold', opacity: 0.88 },
   strikethrough: { textDecorationLine: 'line-through', opacity: 0.75 },
   discountPercent: { fontFamily: 'Outfit-Bold' },
   gstLine: { fontSize: 12, fontFamily: 'Outfit-Medium', opacity: 0.85, marginBottom: 2 },
@@ -409,15 +417,16 @@ const styles = StyleSheet.create({
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   benefitText: { fontSize: 13 },
   buyBtn: { backgroundColor: '#fff', borderRadius: 8, paddingVertical: 14, alignItems: 'center' },
-  buyBtnBorder: {
+  buyWrap: { marginTop: 4 },
+  buyGlow: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 8,
+    top: -6,
+    left: -6,
+    right: -6,
+    bottom: -6,
+    borderRadius: 13,
     borderWidth: 3,
-    borderColor: '#D20236',
+    borderColor: '#FFFFFF',
   },
   buyBtnActive: { backgroundColor: '#eafaf0' },
   buyText: { fontSize: 15, fontFamily: 'Outfit-Bold' },
