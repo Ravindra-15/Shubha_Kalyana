@@ -72,7 +72,7 @@ export default function MatchBreakdownSection({
 
       <View style={styles.body}>
         <Text style={styles.matchCountText}>
-          You Match {matchedCount}/{totalCount} of Preferences
+          You match {matchedCount}/{totalCount}
         </Text>
 
         {/* Client decision: list only the points that match. Unmatched and

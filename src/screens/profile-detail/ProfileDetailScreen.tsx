@@ -1332,8 +1332,10 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
             theirPhoto={photo}
             theirName={name}
             fields={matchBreakdown.fields}
-            matchedCount={matchBreakdown.matchedCount}
-            totalCount={matchBreakdown.totalCount}
+            // Heading counts every point incl. the extra (unscored) ones;
+            // the card percentage still uses matchedCount/totalCount.
+            matchedCount={matchBreakdown.allMatchedCount ?? matchBreakdown.matchedCount}
+            totalCount={matchBreakdown.allTotalCount ?? matchBreakdown.totalCount}
           />
         </View>
       </ScrollView>
