@@ -295,12 +295,16 @@ export default function PlansScreen({ navigation }: any) {
                         {formatMoney(upgradePricing.targetPlanPrice, plan.currency)} before {formatMoney(upgradePricing.creditAmount, plan.currency)} credit
                       </Text>
                     ) : discountInfo && discountInfo.discountPercent > 0 ? (
-                      <Text style={[styles.upgradeCredit, { color: theme.text }]}>
-                        <Text style={styles.strikethrough}>
+                      // Row (not nested Text) so there's a real gap between
+                      // the crossed-out price and the offer.
+                      <View style={styles.discountRow}>
+                        <Text style={[styles.discountText, styles.strikethrough, { color: theme.text }]}>
                           {formatMoney(discountInfo.actualPrice, plan.currency)}
-                        </Text>{' '}
-                        <Text style={styles.discountPercent}>{discountInfo.discountPercent}% OFF</Text>
-                      </Text>
+                        </Text>
+                        <Text style={[styles.discountText, styles.discountPercent, { color: theme.text }]}>
+                          {discountInfo.discountPercent}% OFF
+                        </Text>
+                      </View>
                     ) : null}
                     <Text style={[styles.gstLine, { color: theme.text }]}>
                       + 18% GST {formatMoney(gstBreakup.taxAmount, plan.currency)}
@@ -411,6 +415,8 @@ const styles = StyleSheet.create({
   upgradeCredit: { marginTop: 4, marginBottom: 14, fontSize: 12, fontFamily: 'Outfit-Bold', opacity: 0.88 },
   strikethrough: { textDecorationLine: 'line-through', opacity: 0.75 },
   discountPercent: { fontFamily: 'Outfit-Bold' },
+  discountRow: { flexDirection: 'row', alignItems: 'center', columnGap: 10, marginTop: 4, marginBottom: 14 },
+  discountText: { fontSize: 12, fontFamily: 'Outfit-Bold', opacity: 0.88 },
   gstLine: { fontSize: 12, fontFamily: 'Outfit-Medium', opacity: 0.85, marginBottom: 2 },
   finalAmount: { fontSize: 14, fontFamily: 'Outfit-Bold', marginBottom: 14 },
   benefitBox: { borderRadius: 12, padding: 14, marginBottom: 16 },
