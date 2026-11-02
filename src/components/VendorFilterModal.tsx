@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { X } from 'lucide-react-native';
+import SearchableDropdown from './SearchableDropdown';
+import { INDIAN_STATE_OPTIONS } from '../constants/indianStates';
+import { getDistrictOptionsForStates } from '../constants/districtsByState';
 
 export type VendorFilters = {
-  location: string;
+  state: string;
+  city: string;
   minExperience: number;
 };
 
@@ -17,22 +21,25 @@ type Props = {
 };
 
 export default function VendorFilterModal({ visible, initial, onClose, onApply, onReset }: Props) {
-  const [location, setLocation] = useState(initial.location);
+  const [state, setState] = useState(initial.state);
+  const [city, setCity] = useState(initial.city);
   const [minExperience, setMinExperience] = useState(initial.minExperience);
 
   useEffect(() => {
     if (visible) {
-      setLocation(initial.location);
+      setState(initial.state);
+      setCity(initial.city);
       setMinExperience(initial.minExperience);
     }
   }, [visible, initial]);
 
   const handleApply = () => {
-    onApply({ location: location.trim(), minExperience });
+    onApply({ state, city, minExperience });
   };
 
   const handleReset = () => {
-    setLocation('');
+    setState('');
+    setCity('');
     setMinExperience(0);
     onReset();
   };
@@ -50,21 +57,26 @@ export default function VendorFilterModal({ visible, initial, onClose, onApply, 
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.label}>Select Location</Text>
-          <View style={styles.inputWrap}>
-            <TextInput
-              style={styles.input}
-              placeholder="E.g Bangalore"
-              placeholderTextColor="#999"
-              value={location}
-              onChangeText={setLocation}
-            />
-            {!!location && (
-              <TouchableOpacity onPress={() => setLocation('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <X color="#999" size={16} />
-              </TouchableOpacity>
-            )}
-          </View>
+          <Text style={styles.label}>State</Text>
+          <SearchableDropdown
+            placeholder="All States"
+            value={state}
+            options={INDIAN_STATE_OPTIONS}
+            onSelect={(next) => {
+              setState(next);
+              // Districts belong to one state, so a new state clears it.
+              setCity('');
+            }}
+          />
+
+          <Text style={styles.label}>City / District</Text>
+          <SearchableDropdown
+            placeholder={state ? 'All Cities / Districts' : 'Select a state first'}
+            value={city}
+            options={getDistrictOptionsForStates(state ? [state] : [])}
+            onSelect={setCity}
+            disabled={!state}
+          />
 
           <View style={styles.expHeadRow}>
             <Text style={styles.label}>Experience</Text>
@@ -105,13 +117,7 @@ const styles = StyleSheet.create({
   headRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   title: { fontSize: 18, fontFamily: 'Outfit-Bold', color: '#000' },
   label: { fontSize: 14, fontFamily: 'Outfit-SemiBold', color: '#333', marginBottom: 10 },
-  inputWrap: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 12, marginBottom: 24,
-  },
-  input: { flex: 1, fontSize: 14, color: '#000' },
-  expHeadRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  expHeadRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
   expValue: { fontSize: 13, fontFamily: 'Outfit-Bold', color: '#D20236', marginBottom: 10 },
   applyBtn: {
     backgroundColor: '#D20236', borderRadius: 10, paddingVertical: 15,

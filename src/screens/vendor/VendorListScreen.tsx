@@ -13,6 +13,7 @@ import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import BackArrowIcon from '../../components/BackArrowIcon';
 
 const PAGE_SIZE = 6;
+const NO_FILTERS: VendorFilters = { state: '', city: '', minExperience: 0 };
 
 export default function VendorListScreen({ navigation }: any) {
   const [allVendors, setAllVendors] = useState<any[]>([]);
@@ -20,7 +21,7 @@ export default function VendorListScreen({ navigation }: any) {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [showFilter, setShowFilter] = useState(false);
-  const [filters, setFilters] = useState<VendorFilters>({ location: '', minExperience: 0 });
+  const [filters, setFilters] = useState<VendorFilters>(NO_FILTERS);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const load = useCallback(async (silent = false) => {
@@ -48,7 +49,10 @@ export default function VendorListScreen({ navigation }: any) {
     return allVendors.filter((v) => {
       if (activeCategory !== 'All' && v.serviceCategory !== activeCategory) return false;
       if (search.trim() && !v.vendorName.toLowerCase().includes(search.trim().toLowerCase())) return false;
-      if (filters.location.trim() && !(v.location || '').toLowerCase().includes(filters.location.trim().toLowerCase())) return false;
+      // The server sends each vendor's state/city using the same names as the
+      // State / District lists, so an exact match is enough.
+      if (filters.state && v.state !== filters.state) return false;
+      if (filters.city && v.city !== filters.city) return false;
       if (filters.minExperience > 0 && (v.experience || 0) < filters.minExperience) return false;
       return true;
     });
@@ -71,9 +75,11 @@ export default function VendorListScreen({ navigation }: any) {
   };
 
   const handleResetFilters = () => {
-    setFilters({ location: '', minExperience: 0 });
+    setFilters(NO_FILTERS);
     setShowFilter(false);
   };
+
+  const hasActiveFilters = Boolean(filters.state || filters.city || filters.minExperience > 0);
 
   const contactVendor = (contactNumber: string) => {
     if (contactNumber) Linking.openURL(`tel:${contactNumber}`);
@@ -106,6 +112,7 @@ export default function VendorListScreen({ navigation }: any) {
         </View>
         <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
           <Filter color="#333" size={18} />
+          {hasActiveFilters && <View style={styles.filterDot} />}
         </TouchableOpacity>
       </View>
 
@@ -237,6 +244,10 @@ const styles = StyleSheet.create({
   filterBtn: {
     width: 44, height: 44, borderRadius: 10, borderWidth: 1, borderColor: '#e0e0e0',
     alignItems: 'center', justifyContent: 'center',
+  },
+  filterDot: {
+    position: 'absolute', top: 8, right: 8,
+    width: 8, height: 8, borderRadius: 4, backgroundColor: '#D20236',
   },
   chipsWrap: { marginBottom: 12 },
   chip: {
