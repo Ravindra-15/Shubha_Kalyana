@@ -133,6 +133,17 @@ const formatIncomeBucket = (amount?: number) => {
   return `${bucket[0]} Lakh to ${bucket[1]} Lakh`;
 };
 
+// The age range is optional, so a saved preference can have no min/max at all
+// (that used to show "undefined yrs to undefined yrs").
+const formatAgeRange = (ageRange?: { min?: number; max?: number }) => {
+  const min = Number(ageRange?.min) || 0;
+  const max = Number(ageRange?.max) || 0;
+  if (min && max) return `${min} yrs to ${max} yrs`;
+  if (min) return `${min} yrs and above`;
+  if (max) return `Up to ${max} yrs`;
+  return '';
+};
+
 // A row that shows value OR a lock if blurred
 function Row({
   label,
@@ -1288,11 +1299,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
           <Row
             Icon={Calendar}
             label="Preferred Age Range"
-            value={
-              pref.ageRange
-                ? `${pref.ageRange.min} yrs to ${pref.ageRange.max} yrs`
-                : ''
-            }
+            value={formatAgeRange(pref.ageRange)}
           />
           <Row
             Icon={Users}
