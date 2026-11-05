@@ -81,6 +81,7 @@ import {
 import { startChat, blockChatUser } from '../../api/chat';
 import { useFocusEffect } from '@react-navigation/native';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import { useScreenSecure } from '../../hooks/useScreenSecure';
 import { useInterestBadge } from '../../context/InterestBadgeContext';
 
 if (
@@ -90,6 +91,9 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 const SCREEN_HEIGHT = Dimensions.get('window').height;
+// Shared profiles link to the web app's View Profile page: logged-in members
+// see the profile (per their plan); anyone else logs in or signs up first.
+const WEB_PROFILE_URL = 'https://user.shubhakalyana.com/user/';
 // Header height below the status-bar inset: paddingTop 10 + 38 button + 10.
 const HEADER_BAR_HEIGHT = 58;
 const SECTION_ORDER = [
@@ -261,6 +265,9 @@ function Section({
 
 export default function ProfileDetailScreen({ route, navigation }: any) {
   const { profileId } = route.params || {};
+  // Client request: no screenshots / screen recording of another member's
+  // profile or photos (Android; also covers the full-screen photo viewer).
+  useScreenSecure();
   // The header is absolutely positioned (floats over the cover photo), so
   // it no longer sits inside SafeAreaView's own top padding -- it needs
   // its own explicit offset for the status bar / notch, or it overlaps it.
@@ -574,9 +581,10 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
   // the "have to press back manually" bug the client reported.
   const handleShareProfile = async () => {
     setOptionsMenuOpen(false);
+    if (!user._id) return;
     try {
       await Share.share({
-        message: `Check out ${name}'s profile${user.profileCode ? ` (Profile ID: ${user.profileCode})` : ''} on Shubha Kalyana!`,
+        message: `Check out ${name}'s profile${user.profileCode ? ` (Profile ID: ${user.profileCode})` : ''} on Shubha Kalyana!\n\n${WEB_PROFILE_URL}${user._id}`,
       });
     } catch {}
   };
