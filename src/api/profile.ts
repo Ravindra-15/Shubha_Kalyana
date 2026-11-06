@@ -15,6 +15,16 @@ export const getNavbarCounts = async () => {
   };
 };
 
+// Profiles this member has opened (ids only), for "Profile Viewed" buttons.
+export const getMyViewedProfiles = async () => {
+  const res = await apiClient.get('/relationship/profile-views/mine');
+  const data = res.data?.data || {};
+  return {
+    profileIds: Array.isArray(data.profileIds) ? data.profileIds.map(String) : [],
+    userIds: Array.isArray(data.userIds) ? data.userIds.map(String) : [],
+  };
+};
+
 export const getProfileViewersSummary = async () => {
   const res = await apiClient.get('/relationship/profile-viewers/me/count');
   const data = res.data?.data || {};

@@ -61,6 +61,7 @@ import {
   UserRound,
 } from 'lucide-react-native';
 import { getPartnerProfile } from '../../api/profile';
+import { useViewedProfiles } from '../../context/ViewedProfilesContext';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import apiClient from '../../api/client';
 import { LayoutAnimation, Platform, UIManager } from 'react-native';
@@ -265,6 +266,7 @@ function Section({
 
 export default function ProfileDetailScreen({ route, navigation }: any) {
   const { profileId } = route.params || {};
+  const { markProfileViewed } = useViewedProfiles();
   // Client request: no screenshots / screen recording of another member's
   // profile or photos (Android; also covers the full-screen photo viewer).
   useScreenSecure();
@@ -388,6 +390,9 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         const res = await getPartnerProfile(profileId);
         setData(res);
         setInterested(Boolean(res?.isInterested));
+        // Opened successfully (the server has recorded the view): every card
+        // for this person now shows "Profile Viewed".
+        markProfileViewed(profileId, res?._id, res?.profile?._id);
 
         // load access status
         try {
@@ -445,7 +450,7 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
         if (!silent) setLoading(false);
       }
     },
-    [navigation, profileId],
+    [navigation, profileId, markProfileViewed],
   );
 
   useEffect(() => {

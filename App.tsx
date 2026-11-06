@@ -13,6 +13,7 @@ import { SignupProvider } from './src/context/SignupContext';
 import RootNavigator from './src/navigation/RootNavigator';
 import { ChatProvider } from './src/context/ChatContext';
 import { InterestBadgeProvider } from './src/context/InterestBadgeContext';
+import { ViewedProfilesProvider } from './src/context/ViewedProfilesContext';
 
 function App() {
   return (
@@ -20,13 +21,15 @@ function App() {
       <SignupProvider>
         <ChatProvider>
           <InterestBadgeProvider>
-            <SafeAreaProvider>
-              {/* White background + dark icons so the status bar blends into
-                  the app's white screens instead of Android's default grey
-                  band. The splash screen overrides this with its own red. */}
-              <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-              <RootNavigator />
-            </SafeAreaProvider>
+            <ViewedProfilesProvider>
+              <SafeAreaProvider>
+                {/* White background + dark icons so the status bar blends into
+                    the app's white screens instead of Android's default grey
+                    band. The splash screen overrides this with its own red. */}
+                <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+                <RootNavigator />
+              </SafeAreaProvider>
+            </ViewedProfilesProvider>
           </InterestBadgeProvider>
         </ChatProvider>
       </SignupProvider>

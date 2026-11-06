@@ -21,6 +21,7 @@ import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess } from '../../api/membershipPayment';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import BackArrowIcon from '../../components/BackArrowIcon';
+import { useViewedProfiles } from '../../context/ViewedProfilesContext';
 
 const TABS = ['Received', 'Sent', 'Accepted'] as const;
 type Tab = (typeof TABS)[number];
@@ -101,6 +102,9 @@ function SimpleCard({
   busy?: boolean;
   metaLabel?: string;
 }) {
+  // Already opened this person's profile: green "Profile Viewed" button.
+  const { isProfileViewed } = useViewedProfiles();
+  const viewed = isProfileViewed(profile.profileId, profile.userId);
   return (
     <View style={styles.card}>
       <View style={styles.topRow}>
@@ -137,8 +141,14 @@ function SimpleCard({
 
       {kind === 'Accepted' ? (
         <View style={styles.acceptedActions}>
-          <TouchableOpacity onPress={onView} style={styles.profileBtn} activeOpacity={0.85}>
-            <Text style={styles.profileBtnText}>View Profile</Text>
+          <TouchableOpacity
+            onPress={onView}
+            style={[styles.profileBtn, viewed && styles.viewedBtn]}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.profileBtnText, viewed && styles.viewedBtnText]}>
+              {viewed ? 'Profile Viewed' : 'View Profile'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={onRemove}
@@ -154,8 +164,13 @@ function SimpleCard({
           </TouchableOpacity>
         </View>
       ) : (
-        <TouchableOpacity onPress={onView} style={styles.viewWrap}>
-          <Text style={styles.viewText}>View Profile</Text>
+        <TouchableOpacity
+          onPress={onView}
+          style={[styles.viewWrap, viewed && styles.viewedPill]}
+        >
+          <Text style={[styles.viewText, viewed && styles.viewedBtnText]}>
+            {viewed ? 'Profile Viewed' : 'View Profile'}
+          </Text>
         </TouchableOpacity>
       )}
     </View>
@@ -422,6 +437,14 @@ const styles = StyleSheet.create({
   withdrawText: { color: '#D20236', fontSize: 14, fontFamily: 'Outfit-Bold' },
   viewWrap: { alignItems: 'center', marginTop: 12 },
   viewText: { fontSize: 14, color: '#333', fontFamily: 'Outfit-SemiBold' },
+  // "Profile Viewed": green background, white text (same green everywhere).
+  viewedBtn: { backgroundColor: '#15803d', borderColor: '#15803d' },
+  viewedPill: {
+    backgroundColor: '#15803d',
+    borderRadius: 8,
+    paddingVertical: 10,
+  },
+  viewedBtnText: { color: '#fff' },
   acceptedActions: { flexDirection: 'row', gap: 10, marginTop: 12 },
   profileBtn: {
     flex: 1,

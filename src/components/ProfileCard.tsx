@@ -11,6 +11,7 @@ import {
 import { BadgeCheck, Trash2 } from 'lucide-react-native';
 import TopCroppedImage from './TopCroppedImage';
 import { cardFrame, NameCardDetails, STACKED_PHOTO_SIZE } from './nameCard';
+import { useViewedProfiles } from '../context/ViewedProfilesContext';
 
 type Props = {
   profile: any;
@@ -41,6 +42,10 @@ export default function ProfileCard({
   removing = false,
   fill = false,
 }: Props) {
+  // Already opened this person's profile: the button turns green and says
+  // "Profile Viewed" (on every card for them, on every screen).
+  const { isProfileViewed } = useViewedProfiles();
+  const viewed = isProfileViewed(profile.profileId, profile.userId, profile.id, profile._id);
   const frame = width ? cardFrame(width) : null;
   const photoSize = fill
     ? styles.fillPhoto
@@ -86,8 +91,14 @@ export default function ProfileCard({
         {/* Row layout only with the trash button -- otherwise View Profile
             stays a plain full-width button exactly as before. */}
         <View style={onRemove ? styles.actionRow : undefined}>
-          <View style={[styles.viewBtn, onRemove && styles.viewBtnWithRemove]}>
-            <Text style={styles.viewText}>View Profile</Text>
+          <View
+            style={[
+              styles.viewBtn,
+              viewed && styles.viewedBtn,
+              onRemove && styles.viewBtnWithRemove,
+            ]}
+          >
+            <Text style={styles.viewText}>{viewed ? 'Profile Viewed' : 'View Profile'}</Text>
           </View>
           {onRemove && (
             <TouchableOpacity
@@ -157,6 +168,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   viewText: { color: '#fff', fontSize: 14, fontFamily: 'Outfit-Bold' },
+  // Same green as the web app's "Profile Viewed" button.
+  viewedBtn: { backgroundColor: '#15803d' },
   actionRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   viewBtnWithRemove: { flex: 1 },
   removeBtn: {
