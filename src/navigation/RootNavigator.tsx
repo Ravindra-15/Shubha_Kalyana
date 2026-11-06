@@ -51,6 +51,7 @@ import HypersignAadhaarTestScreen from '../screens/profile/HypersignAadhaarTestS
 import ChooseLanguageScreen from '../screens/profile/ChooseLanguageScreen';
 import PrivacySettingsScreen from '../screens/profile/PrivacySettingsScreen';
 import VendorListScreen from '../screens/vendor/VendorListScreen';
+import VendorDetailScreen from '../screens/vendor/VendorDetailScreen';
 import ProfileViewersScreen from '../screens/profile/ProfileViewersScreen';
 const Stack = createNativeStackNavigator();
 
@@ -123,6 +124,7 @@ export default function RootNavigator() {
             <Stack.Screen name="ChooseLanguage" component={ChooseLanguageScreen} />
             <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
             <Stack.Screen name="VendorList" component={VendorListScreen} />
+            <Stack.Screen name="VendorDetail" component={VendorDetailScreen} />
             <Stack.Screen name="ProfileViewers" component={ProfileViewersScreen} />
           </>
         ) : (

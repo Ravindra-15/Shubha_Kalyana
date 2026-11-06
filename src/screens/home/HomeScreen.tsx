@@ -637,7 +637,7 @@ export default function HomeScreen({ navigation }: any) {
               <View>
                 <Text style={styles.sectionTitle}>
                   Premium Matches{premiumTotal > 0 ? ` (${premiumTotal})` : ''}
-                </Text>
+                </Text>
               </View>
               <TouchableOpacity
                 onPress={() =>
@@ -688,7 +688,7 @@ export default function HomeScreen({ navigation }: any) {
               <View>
                 <Text style={styles.sectionTitle}>
                   New Matches{newTotal > 0 ? ` (${newTotal})` : ''}
-                </Text>
+                </Text>
               </View>
               <TouchableOpacity
                 onPress={() =>
@@ -735,7 +735,7 @@ export default function HomeScreen({ navigation }: any) {
           <>
             <View style={[styles.sectionHeader, styles.sectionHeaderSpaced]}>
               <View>
-                <Text style={styles.sectionTitle}>Received Requests</Text>
+                <Text style={styles.sectionTitle}>Received Requests</Text>
               </View>
               <TouchableOpacity
                 onPress={() =>
@@ -777,7 +777,7 @@ export default function HomeScreen({ navigation }: any) {
           <>
             <View style={[styles.sectionHeader, styles.sectionHeaderSpaced]}>
               <View>
-                <Text style={styles.sectionTitle}>Interested Profiles</Text>
+                <Text style={styles.sectionTitle}>Interested Profiles</Text>
               </View>
               <TouchableOpacity
                 onPress={() =>
@@ -820,7 +820,7 @@ export default function HomeScreen({ navigation }: any) {
                 <Text style={styles.sectionTitle}>
                   Profile Viewers
                   {profileViewersTotal > 0 ? ` (${profileViewersTotal})` : ''}
-                </Text>
+                </Text>
               </View>
               <TouchableOpacity
                 onPress={() => navigation.navigate('ProfileViewers')}
@@ -855,16 +855,22 @@ export default function HomeScreen({ navigation }: any) {
         {vendors.length > 0 && (
           <View style={styles.vendorSection}>
             <View style={styles.vendorHeaderRow}>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.sectionTitle}>Vendors</Text>
                 <Text style={styles.sectionSub}>
                   Explore trusted wedding vendors
                 </Text>
               </View>
               <TouchableOpacity
+                style={styles.viewAllVendorsBtn}
+                activeOpacity={0.7}
                 onPress={() => navigation.navigate('VendorList')}
               >
-                <ArrowRight color="#D20236" size={22} />
+                <Text style={styles.viewAllVendorsText}>View all vendors</Text>
+                {/* Same grey circle as the back buttons. */}
+                <View style={styles.viewAllVendorsCircle}>
+                  <ArrowRight color="#D20236" size={18} />
+                </View>
               </TouchableOpacity>
             </View>
 
@@ -877,7 +883,11 @@ export default function HomeScreen({ navigation }: any) {
               decelerationRate="fast"
               contentContainerStyle={{ paddingRight: 20, paddingTop: 14 }}
               renderItem={({ item }) => (
-                <TouchableOpacity style={styles.vendorCard} activeOpacity={0.9}>
+                <TouchableOpacity
+                  style={styles.vendorCard}
+                  activeOpacity={0.9}
+                  onPress={() => navigation.navigate('VendorDetail', { vendor: item })}
+                >
                   {item.image?.url ? (
                     <Image
                       source={{ uri: resolveImageUrl(item.image.url) }}
@@ -1074,11 +1084,23 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   filterText: { fontSize: 14, color: '#333', fontFamily: 'Outfit-SemiBold' },
-  vendorSection: { marginTop: 10, marginBottom: 20 },
+  // marginTop: space between the profile cards above and the Vendors section.
+  vendorSection: { marginTop: 32, marginBottom: 20 },
   vendorHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    gap: 10,
+  },
+  viewAllVendorsBtn: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  viewAllVendorsText: { fontSize: 14, color: '#D20236', fontFamily: 'Outfit-SemiBold' },
+  viewAllVendorsCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   vendorCard: {
     width: VENDOR_CARD_WIDTH,

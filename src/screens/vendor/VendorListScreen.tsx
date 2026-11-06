@@ -152,7 +152,11 @@ export default function VendorListScreen({ navigation }: any) {
           refreshing={refreshing}
           onRefresh={onRefresh}
           renderItem={({ item }) => (
-            <View style={styles.card}>
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.9}
+              onPress={() => navigation.navigate('VendorDetail', { vendor: item })}
+            >
               <View style={styles.topRow}>
                 {item.image?.url ? (
                   <Image source={{ uri: resolveImageUrl(item.image.url) }} style={styles.cardImage} />
@@ -208,7 +212,7 @@ export default function VendorListScreen({ navigation }: any) {
                   </TouchableOpacity>
                 )}
               </View>
-            </View>
+            </TouchableOpacity>
           )}
           ListEmptyComponent={<Text style={styles.empty}>No vendors found</Text>}
           ListFooterComponent={hasMore ? <ActivityIndicator color="#D20236" style={{ marginVertical: 20 }} /> : null}

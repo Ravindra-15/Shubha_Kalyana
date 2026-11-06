@@ -1595,7 +1595,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     gap: 10,
   },
-  contactLabel: { fontSize: 14, color: '#333', flex: 1 },
+  // minWidth keeps the label visible next to a long value (e.g. an email).
+  contactLabel: { fontSize: 14, color: '#333', flex: 1, minWidth: 72 },
   hobbyWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1630,6 +1631,14 @@ const styles = StyleSheet.create({
   lifestyleBadgeText: { fontSize: 12, color: '#333', fontFamily: 'Outfit-Medium' },
   sendBtnDisabled: { backgroundColor: '#e69aab' },
   lockedInline: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  contactValue: { fontSize: 14, color: '#000', fontFamily: 'Outfit-Medium' },
+  // flexShrink lets a long email wrap inside the card instead of running
+  // off the screen.
+  contactValue: {
+    fontSize: 14,
+    color: '#000',
+    fontFamily: 'Outfit-Medium',
+    flexShrink: 1,
+    textAlign: 'right',
+  },
   notProvided: { fontSize: 14, color: '#bbb', fontStyle: 'italic', flex: 1, textAlign: 'right' },
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { ArrowLeftRight, Check } from 'lucide-react-native';
+import { ArrowLeftRight, Check, X } from 'lucide-react-native';
 import { resolveImageUrl } from '../utils/imageUrl';
 
 type MatchField = {
@@ -36,7 +36,6 @@ export default function MatchBreakdownSection({
 }: Props) {
   const hasAnyPreference = fields.some((field) => field.hasPreference);
   if (!hasAnyPreference) return null;
-  const matchedFields = fields.filter((field) => field.matched === true);
 
   return (
     <View style={styles.wrap}>
@@ -75,31 +74,41 @@ export default function MatchBreakdownSection({
           You Match {matchedCount}/{totalCount}
         </Text>
 
-        {/* Client decision: list only the points that match. Unmatched and
-            not-set fields still count toward the total above. */}
-        {matchedFields.length === 0 ? (
-          <Text style={styles.emptyText}>No matching preferences yet.</Text>
-        ) : (
-          matchedFields.map((field, idx) => (
+        {/* Client decision: list all 10 points, a green tick for the ones that
+            match and a red cross for the rest, so the user can see which
+            points don't line up (same as the web app). A point with no
+            value/preference to compare counts as not matching, same as in
+            the total above. */}
+        {fields.map((field, idx) => {
+          const matched = field.matched === true;
+          return (
             <View
               key={field.key}
               style={[
                 styles.fieldRow,
-                idx === matchedFields.length - 1 && styles.fieldRowLast,
+                idx === fields.length - 1 && styles.fieldRowLast,
               ]}
             >
               <View style={{ flex: 1 }}>
                 <Text style={styles.fieldLabel}>{field.label}</Text>
-                <Text style={styles.fieldValue} numberOfLines={1}>
-                  {field.value}
-                </Text>
+                <Text style={styles.fieldValue}>{field.value}</Text>
               </View>
-              <View style={[styles.statusCircle, styles.statusMatched]}>
-                <Check color="#1a7f37" size={16} strokeWidth={3} />
+              <View
+                style={[
+                  styles.statusCircle,
+                  matched ? styles.statusMatched : styles.statusUnmatched,
+                ]}
+                accessibilityLabel={matched ? 'Matches' : "Doesn't match"}
+              >
+                {matched ? (
+                  <Check color="#1a7f37" size={16} strokeWidth={3} />
+                ) : (
+                  <X color="#dc2626" size={16} strokeWidth={3} />
+                )}
               </View>
             </View>
-          ))
-        )}
+          );
+        })}
       </View>
     </View>
   );
@@ -172,5 +181,5 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   statusMatched: { backgroundColor: '#e8f6ec' },
-  emptyText: { fontSize: 14, color: '#888', fontFamily: 'Outfit-Medium', paddingVertical: 6 },
+  statusUnmatched: { backgroundColor: '#fdecec' },
 });
