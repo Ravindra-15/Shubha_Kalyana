@@ -15,9 +15,10 @@ export const getNavbarCounts = async () => {
   };
 };
 
-// Profiles this member has opened (ids only), for "Profile Viewed" buttons.
+// Profiles whose contact this member has viewed (ids only), for the green
+// "Profile Viewed" buttons.
 export const getMyViewedProfiles = async () => {
-  const res = await apiClient.get('/relationship/profile-views/mine');
+  const res = await apiClient.get('/relationship/contact-views/mine');
   const data = res.data?.data || {};
   return {
     profileIds: Array.isArray(data.profileIds) ? data.profileIds.map(String) : [],

@@ -42,10 +42,12 @@ export default function ProfileCard({
   removing = false,
   fill = false,
 }: Props) {
-  // Already opened this person's profile: the button turns green and says
+  // Already viewed this person's CONTACT: the button turns green and says
   // "Profile Viewed" (on every card for them, on every screen).
   const { isProfileViewed } = useViewedProfiles();
-  const viewed = isProfileViewed(profile.profileId, profile.userId, profile.id, profile._id);
+  const viewed =
+    Boolean(profile.isContactUnlocked) ||
+    isProfileViewed(profile.profileId, profile.userId, profile.id, profile._id);
   const frame = width ? cardFrame(width) : null;
   const photoSize = fill
     ? styles.fillPhoto

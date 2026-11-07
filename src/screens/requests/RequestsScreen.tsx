@@ -102,7 +102,7 @@ function SimpleCard({
   busy?: boolean;
   metaLabel?: string;
 }) {
-  // Already opened this person's profile: green "Profile Viewed" button.
+  // Already viewed this person's contact: green "Profile Viewed" button.
   const { isProfileViewed } = useViewedProfiles();
   const viewed = isProfileViewed(profile.profileId, profile.userId);
   return (

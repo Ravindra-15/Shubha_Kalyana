@@ -1,4 +1,9 @@
+import { DeviceEventEmitter } from 'react-native';
 import apiClient from './client';
+
+// Fired after a contact is viewed (unlocked), from whichever screen it
+// happened on, so every card for that person turns to "Profile Viewed".
+export const CONTACT_VIEWED_EVENT = 'contactViewed';
 
 // get access status for a specific profile (isMembershipProfileUnlocked, bothHaveActivePlans, etc.)
 export const getProfileAccess = async (profileId: string) => {
@@ -13,6 +18,7 @@ export const getProfileAccess = async (profileId: string) => {
 // spend one membership credit to unlock this profile's contact details
 export const unlockProfileWithMembership = async (profileId: string) => {
   const res = await apiClient.post(`/membership/access/profiles/${profileId}/unlock-membership`);
+  DeviceEventEmitter.emit(CONTACT_VIEWED_EVENT, String(profileId));
   return res.data?.data;
 };
 
