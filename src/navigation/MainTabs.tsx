@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, Search, Heart, MessageCircle, User } from 'lucide-react-native';
 import HomeScreen from '../screens/home/HomeScreen';
@@ -8,12 +8,6 @@ import ChatListScreen from '../screens/chat/ChatListScreen';
 import { useChat } from '../context/ChatContext';
 import { useInterestBadge } from '../context/InterestBadgeContext';
 import ProfileScreen from '../screens/profile/ProfileScreen';
-import { getMyFullProfile } from '../api/profile';
-import { getActiveMembership } from '../api/membership';
-import VerificationPromptModal from '../components/VerificationPromptModal';
-import AadhaarVerificationModal from '../components/AadhaarVerificationModal';
-import { getVerificationPromptStatus } from '../utils/verificationPrompt';
-import type { VerificationPromptStatus } from '../utils/verificationPrompt';
 
 const Tab = createBottomTabNavigator();
 
@@ -28,48 +22,11 @@ const InterestsTabIcon = ({ color, size }: TabIconProps) => <Heart color={color}
 const ChatTabIcon = ({ color, size }: TabIconProps) => <MessageCircle color={color} size={size} />;
 const ProfileTabIcon = ({ color, size }: TabIconProps) => <User color={color} size={size} />;
 
-export default function MainTabs({ navigation }: any) {
+export default function MainTabs() {
   const { unreadCount } = useChat();
   const { newInterestCount, markInterestsSeen } = useInterestBadge();
-  const [verificationPrompt, setVerificationPrompt] =
-    useState<VerificationPromptStatus | null>(null);
-  const [aadhaarPromptVisible, setAadhaarPromptVisible] = useState(false);
-  const [aadhaarPhotoVerified, setAadhaarPhotoVerified] = useState(false);
-  const [userName, setUserName] = useState('');
-
-  const showVerificationPrompt = useCallback(async () => {
-    try {
-      const [profile, activeMembership] = await Promise.all([
-        getMyFullProfile(),
-        getActiveMembership(),
-      ]);
-      setUserName(profile?.profile?.basicInfo?.firstName || profile?.user?.firstName || '');
-      const status = getVerificationPromptStatus(profile, activeMembership);
-      if (status.shouldShow) {
-        setVerificationPrompt(status);
-      } else {
-        setVerificationPrompt(null);
-      }
-    } catch {
-      setVerificationPrompt(null);
-    }
-  }, []);
-
-  const closeVerificationPrompt = () => {
-    setVerificationPrompt(null);
-  };
-
-  const verifyPhoto = () => {
-    setVerificationPrompt(null);
-    setAadhaarPromptVisible(false);
-    navigation.navigate('PhotoCompare');
-  };
-
-  const verifyAadhaar = () => {
-    setAadhaarPhotoVerified(Boolean(verificationPrompt?.profilePhotoVerified));
-    setVerificationPrompt(null);
-    setAadhaarPromptVisible(true);
-  };
+  // The photo / Aadhaar verification gate lives in RootNavigator now, so
+  // it covers every screen, not just Home.
 
   return (
     <>
@@ -91,11 +48,6 @@ export default function MainTabs({ navigation }: any) {
         <Tab.Screen
           name="HomeTab"
           component={HomeScreen}
-          listeners={{
-            focus: () => {
-              showVerificationPrompt().catch(() => {});
-            },
-          }}
           options={{
             title: 'Home',
             tabBarIcon: HomeTabIcon,
@@ -142,23 +94,6 @@ export default function MainTabs({ navigation }: any) {
           }}
         />
       </Tab.Navigator>
-      <VerificationPromptModal
-        visible={Boolean(verificationPrompt)}
-        status={verificationPrompt}
-        onClose={closeVerificationPrompt}
-        onVerifyPhoto={verifyPhoto}
-        onVerifyAadhaar={verifyAadhaar}
-      />
-      <AadhaarVerificationModal
-        visible={aadhaarPromptVisible}
-        photoVerified={aadhaarPhotoVerified}
-        userName={userName}
-        onClose={() => setAadhaarPromptVisible(false)}
-        onVerified={async () => {
-          await getMyFullProfile().catch(() => null);
-        }}
-        onVerifyPhoto={verifyPhoto}
-      />
     </>
   );
 }

@@ -10,6 +10,7 @@ import {
   Alert,
   Animated,
   Easing,
+  DeviceEventEmitter,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -22,10 +23,8 @@ import { openRazorpayOrder } from '../../utils/razorpayCheckout';
 import { formatMoney, getBillingBreakupFromAmount, type PaymentOrderResult } from '../../utils/paymentBreakup';
 import PaymentBreakupModal from '../../components/PaymentBreakupModal';
 import BottomNav from '../../components/BottomNav';
-import VerificationPromptModal from '../../components/VerificationPromptModal';
-import AadhaarVerificationModal from '../../components/AadhaarVerificationModal';
+import { VERIFICATION_CHECK_EVENT } from '../../components/VerificationGate';
 import { getVerificationPromptStatus } from '../../utils/verificationPrompt';
-import type { VerificationPromptStatus } from '../../utils/verificationPrompt';
 import BackArrowIcon from '../../components/BackArrowIcon';
 
 // "Valid for N Month" -- always singular unit, matching the client's
@@ -117,11 +116,6 @@ export default function PlansScreen({ navigation }: any) {
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(null);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
-  const [verificationPrompt, setVerificationPrompt] =
-    useState<VerificationPromptStatus | null>(null);
-  const [aadhaarPromptVisible, setAadhaarPromptVisible] = useState(false);
-  const [aadhaarPhotoVerified, setAadhaarPhotoVerified] = useState(false);
-  const [userName, setUserName] = useState('');
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -153,13 +147,12 @@ export default function PlansScreen({ navigation }: any) {
         getMyFullProfile(),
         getActiveMembership(),
       ]);
-      setUserName(profile?.profile?.basicInfo?.firstName || profile?.user?.firstName || '');
       const status = getVerificationPromptStatus(profile, activeMembership);
       if (status.shouldShow) {
-        setVerificationPrompt(status);
+        // The app-wide gate takes over and cannot be dismissed.
+        DeviceEventEmitter.emit(VERIFICATION_CHECK_EVENT);
         return true;
       }
-      setVerificationPrompt(null);
     } catch {
       // Keep membership success intact if this secondary check fails.
     }
@@ -226,18 +219,6 @@ export default function PlansScreen({ navigation }: any) {
     } else {
       Alert.alert('Payment', result.message || 'Payment failed');
     }
-  };
-
-  const verifyPhoto = () => {
-    setVerificationPrompt(null);
-    setAadhaarPromptVisible(false);
-    navigation.navigate('PhotoCompare');
-  };
-
-  const verifyAadhaar = () => {
-    setAadhaarPhotoVerified(Boolean(verificationPrompt?.profilePhotoVerified));
-    setVerificationPrompt(null);
-    setAadhaarPromptVisible(true);
   };
 
   return (
@@ -363,23 +344,6 @@ export default function PlansScreen({ navigation }: any) {
         loading={confirmingPayment}
         onClose={closePaymentBreakup}
         onPurchase={confirmPayment}
-      />
-      <VerificationPromptModal
-        visible={Boolean(verificationPrompt)}
-        status={verificationPrompt}
-        onClose={() => setVerificationPrompt(null)}
-        onVerifyPhoto={verifyPhoto}
-        onVerifyAadhaar={verifyAadhaar}
-      />
-      <AadhaarVerificationModal
-        visible={aadhaarPromptVisible}
-        photoVerified={aadhaarPhotoVerified}
-        userName={userName}
-        onClose={() => setAadhaarPromptVisible(false)}
-        onVerified={async () => {
-          await getMyFullProfile().catch(() => null);
-        }}
-        onVerifyPhoto={verifyPhoto}
       />
     </SafeAreaView>
   );

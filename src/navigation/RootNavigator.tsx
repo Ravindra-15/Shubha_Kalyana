@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import AppSplash from '../components/AppSplash';
@@ -53,10 +56,15 @@ import PrivacySettingsScreen from '../screens/profile/PrivacySettingsScreen';
 import VendorListScreen from '../screens/vendor/VendorListScreen';
 import VendorDetailScreen from '../screens/vendor/VendorDetailScreen';
 import ProfileViewersScreen from '../screens/profile/ProfileViewersScreen';
+import VerificationGate from '../components/VerificationGate';
 const Stack = createNativeStackNavigator();
+const navigationRef = createNavigationContainerRef<any>();
 
 export default function RootNavigator() {
   const { token, loading, hasSeenOnboarding } = useAuth();
+  // Name of the screen on top, so the verification gate knows where we are.
+  const [currentRoute, setCurrentRoute] = useState<string | undefined>();
+  const trackRoute = () => setCurrentRoute(navigationRef.getCurrentRoute()?.name);
 
   // Branded red splash on every app open (not just for brand-new users) --
   // held for at least this long even if the saved-session check resolves
@@ -84,7 +92,7 @@ export default function RootNavigator() {
     : 'Splash';
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef} onReady={trackRoute} onStateChange={trackRoute}>
       <Stack.Navigator
         key={token ? 'app' : 'auth'}
         screenOptions={{ headerShown: false }}
@@ -182,6 +190,11 @@ export default function RootNavigator() {
           </>
         )}
       </Stack.Navigator>
+      {/* Paid plan but photo / Aadhaar not verified: blocks every screen.
+          Keyed by the token so a different login starts a fresh check. */}
+      {token ? (
+        <VerificationGate key={token} navigationRef={navigationRef} currentRoute={currentRoute} />
+      ) : null}
     </NavigationContainer>
   );
 }

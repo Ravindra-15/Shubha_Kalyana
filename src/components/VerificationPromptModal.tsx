@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Modal, Platform, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
-import { BadgeCheck, Camera, Fingerprint, Share2, X } from 'lucide-react-native';
+import { BadgeCheck, Camera, Fingerprint, Share2 } from 'lucide-react-native';
 import type { VerificationPromptStatus } from '../utils/verificationPrompt';
 import { createVerificationShareLink } from '../api/profile';
 
 type Props = {
   visible: boolean;
   status: VerificationPromptStatus | null;
-  onClose: () => void;
   onVerifyPhoto: () => void;
   onVerifyAadhaar: () => void;
 };
@@ -40,7 +39,6 @@ const blurProps =
 export default function VerificationPromptModal({
   visible,
   status,
-  onClose,
   onVerifyPhoto,
   onVerifyAadhaar,
 }: Props) {
@@ -66,8 +64,10 @@ export default function VerificationPromptModal({
     }
   };
 
+  // No way to dismiss it: the phone back button does nothing here, and it
+  // only goes away once the photo and Aadhaar are both verified.
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={() => {}}>
       <View style={styles.overlay}>
         <BlurView pointerEvents="none" style={styles.blurLayer} {...blurProps} />
         <View pointerEvents="none" style={styles.dimLayer} />
@@ -77,9 +77,6 @@ export default function VerificationPromptModal({
               <Text style={styles.eyebrow}>Account Verification</Text>
               <Text style={styles.title}>Complete your verification</Text>
             </View>
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-              <X color="#666" size={18} />
-            </TouchableOpacity>
           </View>
 
           <View style={styles.body}>
@@ -152,9 +149,6 @@ export default function VerificationPromptModal({
               </TouchableOpacity>
             ) : null}
 
-            <TouchableOpacity style={styles.laterBtn} onPress={onClose}>
-              <Text style={styles.laterText}>Maybe later</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -219,14 +213,6 @@ const styles = StyleSheet.create({
     color: '#111',
     fontSize: 22,
     fontFamily: 'Outfit-Black',
-  },
-  closeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
-    backgroundColor: '#f6f6f6',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   body: {
     paddingHorizontal: 20,
@@ -314,10 +300,4 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   shareText: { color: '#555', fontSize: 13, fontFamily: 'Outfit-Bold' },
-  laterBtn: {
-    minHeight: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  laterText: { color: '#666', fontSize: 14, fontFamily: 'Outfit-ExtraBold' },
 });
