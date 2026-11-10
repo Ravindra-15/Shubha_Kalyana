@@ -866,7 +866,7 @@ export default function HomeScreen({ navigation }: any) {
                 activeOpacity={0.7}
                 onPress={() => navigation.navigate('VendorList')}
               >
-                <Text style={styles.viewAllVendorsText}>View all vendors</Text>
+                <Text style={styles.viewAllVendorsText}>View All</Text>
                 {/* Same grey circle as the back buttons. */}
                 <View style={styles.viewAllVendorsCircle}>
                   <ArrowRight color="#D20236" size={18} />
@@ -886,7 +886,13 @@ export default function HomeScreen({ navigation }: any) {
                 <TouchableOpacity
                   style={styles.vendorCard}
                   activeOpacity={0.9}
-                  onPress={() => navigation.navigate('VendorDetail', { vendor: item })}
+                  // A category card opens the vendor list with that category
+                  // already picked; a card without a category opens the vendor.
+                  onPress={() =>
+                    item.serviceCategory
+                      ? navigation.navigate('VendorList', { category: item.serviceCategory })
+                      : navigation.navigate('VendorDetail', { vendor: item })
+                  }
                 >
                   {item.image?.url ? (
                     <Image

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList,
   Image, ActivityIndicator, Linking,
@@ -15,11 +15,19 @@ import BackArrowIcon from '../../components/BackArrowIcon';
 const PAGE_SIZE = 6;
 const NO_FILTERS: VendorFilters = { state: '', city: '', minExperience: 0 };
 
-export default function VendorListScreen({ navigation }: any) {
+export default function VendorListScreen({ navigation, route }: any) {
+  // Category tapped on Home (e.g. "Photography"); "View All" sends none.
+  const requestedCategory: string = route?.params?.category || 'All';
   const [allVendors, setAllVendors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState(requestedCategory);
+  const chipsRef = useRef<FlatList<string>>(null);
+
+  // If this screen is opened again with a different category, follow it.
+  useEffect(() => {
+    setActiveCategory(requestedCategory);
+  }, [requestedCategory]);
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState<VendorFilters>(NO_FILTERS);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -44,6 +52,24 @@ export default function VendorListScreen({ navigation }: any) {
     const unique = Array.from(new Set(allVendors.map((v) => v.serviceCategory).filter(Boolean)));
     return ['All', ...unique];
   }, [allVendors]);
+
+  // Once the list is loaded: a category that no longer has vendors falls
+  // back to "All" (so the screen is never empty with no chip picked), and
+  // the picked chip is scrolled into view in case it is far to the right.
+  useEffect(() => {
+    if (loading) return;
+    const index = categories.indexOf(activeCategory);
+    if (index === -1) {
+      setActiveCategory('All');
+      return;
+    }
+    if (index > 0) {
+      const timer = setTimeout(() => {
+        chipsRef.current?.scrollToIndex({ index, viewPosition: 0.5, animated: true });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, categories, activeCategory]);
 
   const filtered = useMemo(() => {
     return allVendors.filter((v) => {
@@ -118,8 +144,12 @@ export default function VendorListScreen({ navigation }: any) {
 
       <View style={styles.chipsWrap}>
         <FlatList
+          ref={chipsRef}
           data={categories}
           horizontal
+          onScrollToIndexFailed={({ averageItemLength, index }) =>
+            chipsRef.current?.scrollToOffset({ offset: averageItemLength * index, animated: true })
+          }
           keyExtractor={(item) => item}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
