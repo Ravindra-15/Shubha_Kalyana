@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { AlertCircle, Camera, CheckCircle, Fingerprint, Smartphone, X } from 'lucide-react-native';
+import { AlertCircle, Camera, CheckCircle, Clock, Fingerprint, Smartphone, X } from 'lucide-react-native';
 import {
   confirmAadhaarOtp,
   getAadhaarVerificationStatus,
@@ -55,7 +55,7 @@ export default function AadhaarVerificationModal({
   const [editingAadhaar, setEditingAadhaar] = useState(false);
   const [maskedMobile, setMaskedMobile] = useState('');
   const [otp, setOtp] = useState('');
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error' | 'unavailable'>('idle');
   const [message, setMessage] = useState('');
   const [cooldown, setCooldown] = useState(0);
 
@@ -119,6 +119,7 @@ export default function AadhaarVerificationModal({
 
   const loading = status === 'submitting';
   const success = step === 'success';
+  const unavailable = status === 'unavailable';
 
   const close = () => {
     if (!loading) onClose();
@@ -153,7 +154,9 @@ export default function AadhaarVerificationModal({
       setCooldown(RESEND_COOLDOWN_SECONDS);
       setMessage("We've sent an OTP to the mobile number registered with your Aadhaar.");
     } catch (error: any) {
-      setStatus('error');
+      // The Aadhaar service itself is not live yet: show the server's
+      // "coming soon" notice as information, not as a red error.
+      setStatus(error?.response?.data?.code === 'AADHAAR_SERVICE_UNAVAILABLE' ? 'unavailable' : 'error');
       setMessage(error?.response?.data?.message || error?.message || 'Aadhaar verification failed.');
     }
   };
@@ -312,7 +315,7 @@ export default function AadhaarVerificationModal({
                         if (editingAadhaar) setAadhaarNumber(savedAadhaarNumber);
                         setEditingAadhaar((prev) => !prev);
                         setMessage('');
-                        if (status === 'error') setStatus('idle');
+                        if (status === 'error' || status === 'unavailable') setStatus('idle');
                       }}
                       disabled={loading}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -368,13 +371,25 @@ export default function AadhaarVerificationModal({
                 ) : null}
 
                 {message ? (
-                  <View style={[styles.messageBox, success ? styles.successBox : styles.errorBox]}>
+                  <View
+                    style={[
+                      styles.messageBox,
+                      success ? styles.successBox : unavailable ? styles.noticeBox : styles.errorBox,
+                    ]}
+                  >
                     {success ? (
                       <CheckCircle color="#1a7f37" size={17} />
+                    ) : unavailable ? (
+                      <Clock color="#92400e" size={17} />
                     ) : (
                       <AlertCircle color="#D20236" size={17} />
                     )}
-                    <Text style={[styles.messageText, success ? styles.successText : styles.errorText]}>
+                    <Text
+                      style={[
+                        styles.messageText,
+                        success ? styles.successText : unavailable ? styles.noticeText : styles.errorText,
+                      ]}
+                    >
                       {message}
                     </Text>
                   </View>
@@ -519,9 +534,11 @@ const styles = StyleSheet.create({
   },
   successBox: { backgroundColor: '#e9f8ee' },
   errorBox: { backgroundColor: '#fff1f3' },
+  noticeBox: { backgroundColor: '#fffbeb', borderWidth: 1, borderColor: '#fde68a' },
   messageText: { flex: 1, fontSize: 13, fontFamily: 'Outfit-Bold', lineHeight: 18, color: '#444' },
   successText: { color: '#1a7f37' },
   errorText: { color: '#D20236' },
+  noticeText: { color: '#92400e' },
   actions: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 18, gap: 10 },
   primaryBtn: {
     minHeight: 48,
