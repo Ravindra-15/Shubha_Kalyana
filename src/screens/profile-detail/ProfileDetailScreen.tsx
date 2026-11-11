@@ -79,7 +79,6 @@ import {
   revealContact,
 } from '../../api/membershipPayment';
 import { startChat, blockChatUser } from '../../api/chat';
-import { useFocusEffect } from '@react-navigation/native';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { useScreenSecure } from '../../hooks/useScreenSecure';
 import { useInterestBadge } from '../../context/InterestBadgeContext';
@@ -152,7 +151,6 @@ const formatAgeRange = (ageRange?: { min?: number; max?: number }) => {
 function Row({
   label,
   value,
-  onLockedPress,
   Icon,
 }: {
   label: string;
@@ -192,7 +190,6 @@ function ContactRow({
   label,
   value,
   isPremiumLocked,
-  onLockedPress,
 }: {
   Icon: any;
   iconColor: string;
@@ -559,7 +556,6 @@ export default function ProfileDetailScreen({ route, navigation }: any) {
     }
     try {
       const { chat, profileId: otherProfileId } = await startChat(otherUserId);
-      console.log('STARTED CHAT ID:', chat._id, 'for user:', otherUserId);
       navigation.navigate('Conversation', {
         chatId: chat._id,
         name,

@@ -51,7 +51,6 @@ export default function ConversationScreen({ route, navigation }: any) {
   const { user } = useAuth();
   const { refreshUnreadCount } = useChat();
   const myId = String(user?._id || user?.id || '');
-  console.log('MY ID:', myId, '| USER:', JSON.stringify(user));
 
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
@@ -137,14 +136,11 @@ export default function ConversationScreen({ route, navigation }: any) {
     };
 
     (async () => {
-      console.log('OPENING CHAT ID:', chatId);
       // history
       try {
         const data = await getMessages(chatId, 1);
-        console.log('HISTORY:', JSON.stringify(data));
         if (mounted) {
           const msgs = data.messages || [];
-          console.log('PARSED COUNT:', msgs.length);
           setMessages(msgs);
           setChatBlocked(Boolean(data.chat?.isRestricted));
           setBlockedByMe(Boolean(data.chat?.blockedByMe));
@@ -254,7 +250,6 @@ export default function ConversationScreen({ route, navigation }: any) {
     // send via REST (reliable). Socket send added once socket connects.
     try {
       const resp = await sendMessageApi(chatId, { text, clientMessageId });
-      console.log('SEND RESP:', JSON.stringify(resp));
       const saved = resp?.message || resp;
       if (saved) {
         setMessages(prev =>
@@ -266,11 +261,6 @@ export default function ConversationScreen({ route, navigation }: any) {
         );
       }
     } catch (err: any) {
-      console.log(
-        'SEND FAILED:',
-        err?.response?.status,
-        err?.response?.data?.message || err?.message,
-      );
       const message = err?.response?.data?.message || err?.message || '';
       if (/unlock this profile to send messages/i.test(message)) {
         setCanSendMessage(false);

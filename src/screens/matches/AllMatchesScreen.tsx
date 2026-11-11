@@ -7,7 +7,6 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,17 +17,13 @@ import ProfileCard from '../../components/ProfileCard';
 import FilterModal, { Filters } from '../../components/FilterModal';
 import BottomNav from '../../components/BottomNav';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
-import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { useOneCardPaging } from '../../hooks/useOneCardPaging';
-import { startChat } from '../../api/chat';
-import { useInterestBadge } from '../../context/InterestBadgeContext';
 import BackArrowIcon from '../../components/BackArrowIcon';
 
 const CARD_GAP = 14;
 
 export default function AllMatchesScreen({ navigation, route }: any) {
-  const { bumpInterestCount } = useInterestBadge();
   const pushed = route?.params?.pushed === true;
   // Home's "Explore Now" opens the full Find Matches list, so it keeps the
   // search box like the Search tab does.
@@ -158,119 +153,6 @@ export default function AllMatchesScreen({ navigation, route }: any) {
         return Array.isArray(val) ? val.length > 0 : !!val;
       }).length
     : 0;
-
-  const sendRequest = async (profileId: string) => {
-    try {
-      await apiClient.post(`/relationship/requests/${profileId}`, {});
-      setProfiles((prev) =>
-        prev.map((p) => (p.profileId === profileId ? { ...p, requestStatus: 'PENDING' } : p))
-      );
-    } catch (err: any) {
-      if (err?.response?.status === 402) {
-        const name = profiles.find((p) => p.profileId === profileId)?.name;
-        const access = await getProfileAccess(profileId);
-        setAccessPrompt({ profileId, name, access });
-        return;
-      }
-      Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
-    }
-  };
-
-  const viewContact = async (profileId: string) => {
-    try {
-      await unlockProfileWithMembership(profileId);
-      navigation.navigate('ProfileDetail', { profileId });
-    } catch (err: any) {
-      if (err?.response?.status === 402) {
-        const name = profiles.find((p) => p.profileId === profileId)?.name;
-        const access = await getProfileAccess(profileId);
-        setAccessPrompt({ profileId, name, access });
-        return;
-      }
-      Alert.alert('Error', err?.response?.data?.message || 'Could not view contact');
-    }
-  };
-
-  const chatWithProfile = async (p: any) => {
-    try {
-      const { chat, profileId } = await startChat(p.userId);
-      navigation.navigate('Conversation', {
-        chatId: chat._id,
-        name: p.name,
-        photo: p.image,
-        receiverId: p.userId,
-        profileId,
-      });
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not start chat');
-    }
-  };
-
-  const getCardActionProps = (p: any) => {
-    if (p.requestStatus === 'ACCEPTED') {
-      // Being connected alone doesn't unlock chat -- BOTH sides must have
-      // viewed each other's contact at least once (single unlock or
-      // membership grant). One-sided unlocking must not open chat.
-      if (p.isChatUnlocked) {
-        return {
-          actionLabel: 'Chat Now',
-          actionDisabled: false,
-          onAction: () => chatWithProfile(p),
-        };
-      }
-      if (p.isContactUnlocked) {
-        return {
-          actionLabel: 'Chat Now',
-          actionDisabled: false,
-          onAction: () =>
-            Alert.alert(
-              'Chat not available yet',
-              'Once they also view your contact, you both can chat.',
-            ),
-        };
-      }
-      return {
-        actionLabel: 'View Contact',
-        actionDisabled: false,
-        onAction: () => viewContact(p.profileId),
-      };
-    }
-    if (p.bothHaveActivePlans && !p.requestStatus) {
-      return {
-        actionLabel: 'View Contact',
-        actionDisabled: false,
-        onAction: () => viewContact(p.profileId),
-      };
-    }
-    return {
-      actionLabel:
-        p.requestStatus === 'PENDING'
-          ? 'Request Sent'
-          : 'Send Request',
-      actionDisabled: !!p.requestStatus,
-      onAction: () => sendRequest(p.profileId),
-    };
-  };
-
-  const toggleInterest = async (profileId: string, currentlyInterested: boolean) => {
-    try {
-      if (currentlyInterested) {
-        await apiClient.delete(`/relationship/interests/${profileId}`);
-        setProfiles((prev) =>
-          prev.map((p) => (p.profileId === profileId ? { ...p, isInterested: false } : p))
-        );
-        bumpInterestCount(-1);
-      } else {
-        await apiClient.post(`/relationship/interests/${profileId}`, {});
-        setProfiles((prev) =>
-          prev.map((p) => (p.profileId === profileId ? { ...p, isInterested: true } : p))
-        );
-        bumpInterestCount(1);
-      }
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not update interest');
-    }
-  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

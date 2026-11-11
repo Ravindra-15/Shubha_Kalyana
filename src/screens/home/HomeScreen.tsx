@@ -29,7 +29,6 @@ import { FlatList, Image, Dimensions } from 'react-native';
 import { getPublicVendors } from '../../api/vendor';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { useFocusEffect } from '@react-navigation/native';
-import { useInterestBadge } from '../../context/InterestBadgeContext';
 import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import { getProfileAccess } from '../../api/membershipPayment';
@@ -44,7 +43,6 @@ const PROFILE_CARD_WIDTH = SCREEN_WIDTH * 0.62;
 // Same frame as the profile cards (client spec: one card size everywhere).
 const REQUEST_CARD_WIDTH = PROFILE_CARD_WIDTH;
 export default function HomeScreen({ navigation }: any) {
-  const { bumpInterestCount } = useInterestBadge();
   const [firstName, setFirstName] = useState('');
   const [gender, setGender] = useState('');
   const [profilePhoto, setProfilePhoto] = useState('');
@@ -342,7 +340,6 @@ export default function HomeScreen({ navigation }: any) {
   };
   const loadVendors = async () => {
     const list = await getPublicVendors();
-    // console.log('VENDORS:', JSON.stringify(list));
     setVendors(list);
   };
 
@@ -898,14 +895,6 @@ export default function HomeScreen({ navigation }: any) {
                     <Image
                       source={{ uri: resolveImageUrl(item.image.url) }}
                       style={styles.vendorImg}
-                      onError={e =>
-                        console.log(
-                          'IMG ERR:',
-                          resolveImageUrl(item.image.url),
-                          e.nativeEvent,
-                        )
-                      }
-                      onLoad={() => console.log('IMG OK:', item.image.url)}
                     />
                   ) : (
                     <View

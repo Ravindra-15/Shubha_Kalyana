@@ -13,7 +13,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import ProgressBar from '../../../components/ProgressBar';
 import apiClient from '../../../api/client';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { validateProfilePhotoAsset } from '../../../utils/profilePhotoValidation';
 import { requestCameraPermission, showCameraPermissionAlert } from '../../../utils/cameraPermission';
 import GalleryPhotoRow from '../../../components/GalleryPhotoRow';
@@ -68,10 +67,6 @@ export default function ProfilePhotoScreen({ navigation }: any) {
   const [picking, setPicking] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem('onboardingToken').then(token => {
-      console.log('ONBOARDING TOKEN:', token);
-    });
-
     apiClient
       .get('/onboarding/status')
       .then(res => {
@@ -179,13 +174,6 @@ export default function ProfilePhotoScreen({ navigation }: any) {
       await apiClient.post('/onboarding/profile-photo', formData);
       navigation.navigate('Hobbies');
     } catch (err: any) {
-      console.log('PHOTO UPLOAD ERROR:', err?.message, err?.code);
-      console.log(
-        'RAW RESPONSE:',
-        JSON.stringify(err?.response?.data),
-        '| STATUS:',
-        err?.response?.status,
-      );
       Alert.alert('Error', err?.response?.data?.message || 'Upload failed');
     } finally {
       setLoading(false);

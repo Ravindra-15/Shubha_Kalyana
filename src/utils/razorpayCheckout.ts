@@ -52,8 +52,8 @@ const recordCheckoutFailure = async (
       gatewayPaymentId,
       error: serializeFailure(err),
     });
-  } catch (recordErr) {
-    console.log('PAYMENT FAILURE RECORD ERR:', JSON.stringify(recordErr));
+  } catch {
+    // Best-effort: recording the failure must never block the payment flow.
   }
 };
 
@@ -120,14 +120,6 @@ export async function openRazorpayOrder(
 
     return { success: true };
   } catch (err: any) {
-    console.log(
-      'RAZORPAY/VERIFY ERR:',
-      JSON.stringify(err),
-      '| STATUS:',
-      err?.response?.status,
-      '| DATA:',
-      JSON.stringify(err?.response?.data),
-    );
     await recordCheckoutFailure(order, err);
     return { success: false, message: paymentErrorMessage(err, 'Payment cancelled or failed') };
   }
@@ -141,14 +133,6 @@ export async function payForMembership(
     const data = await createMembershipOrder(planId);
     return openRazorpayOrder(data, 'Membership Plan', userInfo);
   } catch (err: any) {
-    console.log(
-      'MEMBERSHIP ORDER ERR:',
-      JSON.stringify(err),
-      '| STATUS:',
-      err?.response?.status,
-      '| DATA:',
-      JSON.stringify(err?.response?.data),
-    );
     return { success: false, message: paymentErrorMessage(err, 'Could not create membership order') };
   }
 }

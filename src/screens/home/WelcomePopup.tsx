@@ -15,7 +15,7 @@ type Props = {
   userName?: string;
 };
 
-export default function WelcomePopup({ visible, onClose, userName }: Props) {
+export default function WelcomePopup({ visible, onClose }: Props) {
   useEffect(() => {
     if (!visible) return;
     const timer = setTimeout(onClose, 5000); // auto-close after 5s

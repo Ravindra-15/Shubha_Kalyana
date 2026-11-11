@@ -10,9 +10,7 @@ export async function connectSocket(): Promise<Socket | null> {
   if (socket?.connected) return socket;
 
   const token = await AsyncStorage.getItem('token');
-  console.log('[SOCKET] connectSocket() called. SOCKET_URL:', SOCKET_URL, '| token present:', Boolean(token));
   if (!token) {
-    console.log('[SOCKET] No token in AsyncStorage — aborting connect.');
     return null;
   }
 
@@ -29,16 +27,7 @@ export async function connectSocket(): Promise<Socket | null> {
   });
 
   socket.on('connect', () => {
-    console.log('[SOCKET] connected! id:', socket?.id);
     socket?.emit('join_user');
-  });
-
-  socket.on('disconnect', (reason) => {
-    console.log('[SOCKET] disconnected. reason:', reason);
-  });
-
-  socket.on('connect_error', (err: any) => {
-    console.log('[SOCKET] connect_error:', err.message, '| data:', JSON.stringify(err.data), '| type:', err.type);
   });
 
   return socket;

@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -15,12 +14,10 @@ import ProfileCard from '../../components/ProfileCard';
 import RequestSentModal from '../../components/RequestSentModal';
 import UnlockAccessModal from '../../components/UnlockAccessModal';
 import apiClient from '../../api/client';
-import { getProfileAccess, unlockProfileWithMembership } from '../../api/membershipPayment';
 import { getProfileViewers } from '../../api/profile';
 import { resolveImageUrl } from '../../utils/imageUrl';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { useOneCardPaging } from '../../hooks/useOneCardPaging';
-import { startChat } from '../../api/chat';
 import BackArrowIcon from '../../components/BackArrowIcon';
 
 const getAge = (dob?: string) => {
@@ -175,82 +172,6 @@ export default function ProfileViewersScreen({ navigation }: any) {
   );
 
   const { refreshing, onRefresh } = usePullToRefresh(() => load(1, true));
-
-  const sendRequest = async (profileId: string) => {
-    try {
-      await apiClient.post(`/relationship/requests/${profileId}`, {});
-      const profile = items.find((item) => item.profileId === profileId);
-      setItems((prev) =>
-        prev.map((item) =>
-          item.profileId === profileId ? { ...item, requestStatus: 'PENDING' } : item
-        )
-      );
-      setSentModal({ show: true, name: profile?.name });
-    } catch (err: any) {
-      if (err?.response?.status === 402) {
-        const name = items.find((item) => item.profileId === profileId)?.name;
-        const access = await getProfileAccess(profileId);
-        setAccessPrompt({ profileId, name, access });
-        return;
-      }
-      Alert.alert('Error', err?.response?.data?.message || 'Could not send request');
-    }
-  };
-
-  const viewContact = async (profileId: string) => {
-    try {
-      await unlockProfileWithMembership(profileId);
-      navigation.navigate('ProfileDetail', { profileId });
-    } catch (err: any) {
-      if (err?.response?.status === 402) {
-        const name = items.find((item) => item.profileId === profileId)?.name;
-        const access = await getProfileAccess(profileId);
-        setAccessPrompt({ profileId, name, access });
-        return;
-      }
-      Alert.alert('Error', err?.response?.data?.message || 'Could not view contact');
-    }
-  };
-
-  const chatWithProfile = async (p: any) => {
-    try {
-      const { chat, profileId } = await startChat(p.userId);
-      navigation.navigate('Conversation', {
-        chatId: chat._id,
-        name: p.name,
-        photo: p.image,
-        receiverId: p.userId,
-        profileId,
-      });
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'Could not start chat');
-    }
-  };
-
-  const getCardActionProps = (p: any) => {
-    if (p.requestStatus === 'ACCEPTED') {
-      return {
-        actionLabel: 'Chat Now',
-        actionDisabled: false,
-        onAction: () => chatWithProfile(p),
-      };
-    }
-    if (p.bothHaveActivePlans && !p.requestStatus) {
-      return {
-        actionLabel: 'View Contact',
-        actionDisabled: false,
-        onAction: () => viewContact(p.profileId),
-      };
-    }
-    return {
-      actionLabel:
-        p.requestStatus === 'PENDING'
-          ? 'Request Sent'
-          : 'Send Request',
-      actionDisabled: !!p.requestStatus,
-      onAction: () => sendRequest(p.profileId),
-    };
-  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

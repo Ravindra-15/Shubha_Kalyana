@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import { useAuth } from './AuthContext';
 import { getChatList } from '../api/chat';
-import { connectSocket, getSocket } from '../services/socket';
+import { connectSocket } from '../services/socket';
 
 type ChatContextType = {
   unreadCount: number;

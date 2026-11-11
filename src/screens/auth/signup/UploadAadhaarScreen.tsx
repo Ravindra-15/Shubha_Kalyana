@@ -176,9 +176,6 @@ export default function UploadAadhaarScreen({ navigation }: any) {
       await apiClient.post('/onboarding/aadhaar', formData);
       navigation.navigate('ReviewProfile');
     } catch (err: any) {
-      console.log('AADHAAR UPLOAD ERROR:', err?.message, err?.code);
-      console.log('RAW RESPONSE:', JSON.stringify(err?.response?.data), '| STATUS:', err?.response?.status);
-      console.log('RESPONSE HEADERS:', JSON.stringify(err?.response?.headers));
       Alert.alert('Error', err?.response?.data?.message || 'Upload failed');
     } finally {
       setLoading(false);

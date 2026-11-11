@@ -36,7 +36,7 @@ export default function SignupContactScreen({ navigation }: any) {
   const [mobileSending, setMobileSending] = useState(false);
   const [mobileVerifying, setMobileVerifying] = useState(false);
   const [mobileCooldown, setMobileCooldown] = useState(0);
-  const [userId, setUserId] = useState('');
+  const [, setUserId] = useState('');
 
   const [emailOtpSent, setEmailOtpSent] = useState(false);
   const [emailOtpValue, setEmailOtpValue] = useState('');
@@ -149,7 +149,7 @@ export default function SignupContactScreen({ navigation }: any) {
     try {
       setEmailSending(true);
       setErrors((e) => ({ ...e, email: '' }));
-      const res = await apiClient.post('/onboarding/contact/email/send-otp', {
+      await apiClient.post('/onboarding/contact/email/send-otp', {
         email: email.trim().toLowerCase(),
       });
       setEmailOtpSent(true);

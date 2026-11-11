@@ -34,8 +34,8 @@ export const sendMessageApi = async (
 export const markChatRead = async (chatId: string) => {
   try {
     await apiClient.patch(`/chat/${chatId}/read`);
-  } catch (err) {
-    console.log('markChatRead failed:', chatId, err);
+  } catch {
+    // Best-effort: a failed read receipt is never shown to the user.
   }
 };
 

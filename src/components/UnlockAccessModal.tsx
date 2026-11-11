@@ -16,9 +16,7 @@ type Props = {
 export default function UnlockAccessModal({
   visible,
   name,
-  access,
   variant = 'profile',
-  action = 'accept',
   loading = false,
   onClose,
   onUpgrade,

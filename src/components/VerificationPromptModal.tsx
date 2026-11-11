@@ -57,7 +57,7 @@ export default function VerificationPromptModal({
       await Share.share({
         message: `Please complete verification for this ShubhaKalyana profile: ${shareUrl}`,
       });
-    } catch (error) {
+    } catch {
       // Sharing failure is non-critical; user can retry.
     } finally {
       setSharing(false);

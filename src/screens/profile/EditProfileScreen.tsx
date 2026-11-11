@@ -383,18 +383,17 @@ export default function EditProfileScreen({ navigation }: any) {
   const [prefResidentValues, setPrefResidentValues] = useState<string[]>([]);
 
   const [castes, setCastes] = useState<Caste[]>([]);
-  const [religions, setReligions] = useState<string[]>([]);
+  const [, setReligions] = useState<string[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [profilePictureVerified, setProfilePictureVerified] = useState(false);
-  const canVerifyProfilePhoto = true;
 
   // --- Tier 1 lock/change-request state (from backend) ---
   const [editLocks, setEditLocks] = useState<Record<string, { locked: boolean; lockedAt: string; editsUsed?: number }>>({});
   const [changeRequests, setChangeRequests] = useState<
     Array<{ field: string; requestedValue: any; status: string; requestedAt: string }>
   >([]);
-  const [recentlyUpdated, setRecentlyUpdated] = useState<{ flagged: boolean; fields: string[]; flaggedAt: string } | null>(null);
+  const [, setRecentlyUpdated] = useState<{ flagged: boolean; fields: string[]; flaggedAt: string } | null>(null);
 
   // Values typed into a "Request Change" reveal-input for a locked field.
   // Local-only until Save is pressed — not sent anywhere until then.
@@ -753,31 +752,6 @@ export default function EditProfileScreen({ navigation }: any) {
     }
   };
 
-  const openProfileVerification = () => {
-    if (!canVerifyProfilePhoto) {
-      Alert.alert(
-        'Membership required',
-        'Photo verification is available with an active membership plan.',
-      );
-      return;
-    }
-
-    if (!readonly.photoUrl) {
-      Alert.alert('Profile photo required', 'Please upload a profile photo before verification.');
-      return;
-    }
-
-    if (hasChanges) {
-      Alert.alert(
-        'Unsaved changes',
-        'Please save or discard your profile changes before verification.',
-      );
-      return;
-    }
-
-    navigation.navigate('FaceTecTest');
-  };
-
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
 
@@ -1025,7 +999,6 @@ export default function EditProfileScreen({ navigation }: any) {
       await updateMyPartnerPreference(cleanPayload(preferencePayload));
       setHasChanges(false);
 
-      const appliedFields: string[] = result?.appliedFields || [];
       const queuedFields: string[] = result?.queuedFields || [];
 
       let message = 'Profile updated successfully';
@@ -1052,17 +1025,6 @@ export default function EditProfileScreen({ navigation }: any) {
   }
 
   const displayName = [firstName, lastName].filter(Boolean).join(' ').trim() || 'Your Profile';
-  const religionOptions = religions.length
-    ? religions.map((religion) => ({ label: religion, value: religion }))
-    : [
-        { label: 'Hindu', value: 'Hindu' },
-        { label: 'Muslim', value: 'Muslim' },
-        { label: 'Christian', value: 'Christian' },
-        { label: 'Jain', value: 'Jain' },
-        { label: 'Sikh', value: 'Sikh' },
-        { label: 'Buddhist', value: 'Buddhist' },
-      ];
-
   // Group-level edit limits (must match LIMITED_FIELD_LIMITS in
   // matrimony-server/src/modules/user/user.service.js).
   const addressLocked = isGroupLocked('address', 1);
@@ -1103,18 +1065,6 @@ export default function EditProfileScreen({ navigation }: any) {
                 <Text style={styles.photoNoticeRequiredStar}>*</Text> Profile and gallery photos cannot be changed from here. Please contact support if you need to update them.
               </Text>
             </View>
-            {/* {canVerifyProfilePhoto && (
-              <TouchableOpacity
-                style={[
-                  styles.verifyProfileBtn,
-                  !readonly.photoUrl && styles.verifyProfileBtnDisabled,
-                ]}
-                onPress={openProfileVerification}
-                disabled={!readonly.photoUrl}
-              >
-                <Text style={styles.verifyProfileText}>Verify Profile Photo</Text>
-              </TouchableOpacity>
-            )} */}
             <View style={styles.profileNameRow}>
               <Text style={styles.profileName} numberOfLines={1}>{displayName}</Text>
               {profilePictureVerified && (
@@ -2438,18 +2388,6 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
   },
   changePhotoText: { fontSize: 13, fontFamily: 'Outfit-SemiBold', color: '#D20236', marginTop: 8 },
-  verifyProfileBtn: {
-    minWidth: 150,
-    minHeight: 42,
-    borderRadius: 10,
-    backgroundColor: '#D20236',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
-    paddingHorizontal: 18,
-  },
-  verifyProfileBtnDisabled: { backgroundColor: '#e9a9b6' },
-  verifyProfileText: { fontSize: 14, fontFamily: 'Outfit-Bold', color: '#fff' },
   profileNameRow: {
     flexDirection: 'row',
     alignItems: 'center',

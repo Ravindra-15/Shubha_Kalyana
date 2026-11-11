@@ -14,7 +14,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import apiClient from '../../api/client';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { handleLoginOtpError } from '../../utils/loginOtpErrors';
 
 const RESEND_SECONDS = 120;
