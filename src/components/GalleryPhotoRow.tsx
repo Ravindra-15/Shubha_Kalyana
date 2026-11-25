@@ -35,7 +35,13 @@ export default function GalleryPhotoRow({
   const pickPhoto = async () => {
     if (readOnly || isUploading || !onAdd) return;
 
-    const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8 });
+    // Max 1600px so a ~300KB photo is uploaded instead of the full 3-5MB one.
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      quality: 0.8,
+      maxWidth: 1600,
+      maxHeight: 1600,
+    });
     if (result.didCancel || result.errorCode) return;
 
     const asset = result.assets?.[0];

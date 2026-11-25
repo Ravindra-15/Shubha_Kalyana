@@ -41,21 +41,21 @@ export default function OnboardingScreen({ navigation }: any) {
   const slides = [
     {
       id: '1',
-      image: require('../../assets/images/onboarding1.png'),
+      image: require('../../assets/images/onboarding1.jpg'),
       line1: t('onboarding.slide1Line1'),
       highlight: t('onboarding.slide1Highlight'),
       line2: t('onboarding.slide1Line2'),
     },
     {
       id: '2',
-      image: require('../../assets/images/onboarding2.png'),
+      image: require('../../assets/images/onboarding2.jpg'),
       line1: t('onboarding.slide2Line1'),
       highlight: t('onboarding.slide2Highlight'),
       line2: '',
     },
     {
       id: '3',
-      image: require('../../assets/images/onboarding3.png'),
+      image: require('../../assets/images/onboarding3.jpg'),
       line1: t('onboarding.slide3Line1'),
       highlight: t('onboarding.slide3Highlight'),
       line2: t('onboarding.slide3Line2'),

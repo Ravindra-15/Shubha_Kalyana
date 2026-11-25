@@ -44,7 +44,7 @@ export default function ReviewProfileScreen({ navigation }: any) {
           <Text style={styles.subtitle}>{t('signup.review.subtitle')}</Text>
 
           <Image
-            source={require('../../../assets/images/review-profile.png')}
+            source={require('../../../assets/images/review-profile.jpg')}
             style={styles.reviewImage}
             resizeMode="contain"
           />

@@ -122,7 +122,14 @@ export default function ProfilePhotoScreen({ navigation }: any) {
       return;
     }
     setPicking(true);
-    const result = await launchCamera({ mediaType: 'photo', quality: 0.8 });
+    // Max 1600px: sharp enough for the profile (and face match), but ~300KB
+    // to upload instead of a 3-5MB full camera photo.
+    const result = await launchCamera({
+      mediaType: 'photo',
+      quality: 0.8,
+      maxWidth: 1600,
+      maxHeight: 1600,
+    });
     handleResult(result);
   };
 
@@ -131,6 +138,8 @@ export default function ProfilePhotoScreen({ navigation }: any) {
     const result = await launchImageLibrary({
       mediaType: 'photo',
       quality: 0.8,
+      maxWidth: 1600,
+      maxHeight: 1600,
     });
     handleResult(result);
   };
